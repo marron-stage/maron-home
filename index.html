@@ -109,4 +109,129 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 10px 20px;
-      border
+      border-radius: 20px;
+      font-size: 0.9rem;
+      color: #fbd38d;
+      backdrop-filter: blur(5px);
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 6px;
+    }
+    .footer {
+      margin-bottom: 8px;
+    }
+    .message {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .sub {
+      font-size: 0.7rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">🌙 マロンの添い寝部屋</div>
+    
+    <div class="audio-player">
+      <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
+      <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
+      <button class="audio-btn" onclick="nextBgm()">⏭</button>
+    </div>
+  </div>
+
+  <div class="main-stage" onclick="tapMarron()">
+    <div class="marron-card">
+      <img src="marron.gif" alt="マロン">
+    </div>
+    <div class="bubble" id="bubbleText">
+      スピー… すやすや… 💤
+    </div>
+    <div class="hint">（タップするとなでなでできるワン）</div>
+  </div>
+
+  <div class="footer">
+    <div class="message">今日も一日、本当によく頑張ったワン。</div>
+    <div class="sub">画面を開いたまま、枕元に置いて休んでね</div>
+  </div>
+
+  <audio id="bgmAudio" preload="auto"></audio>
+
+  <script>
+    const bgmList = [
+      'bgm1.mp3',
+      'bgm2.mp3',
+      'bgm3.mp3',
+      'bgm4.mp3'
+    ];
+
+    let currentTrackIndex = -1;
+    const audio = document.getElementById('bgmAudio');
+    const playBtn = document.getElementById('playBtn');
+    const trackInfo = document.getElementById('trackInfo');
+
+    audio.volume = 0.3;
+
+    function playRandomBgm() {
+      let nextIndex;
+      do {
+        nextIndex = Math.floor(Math.random() * bgmList.length);
+      } while (bgmList.length > 1 && nextIndex === currentTrackIndex);
+
+      currentTrackIndex = nextIndex;
+      audio.src = bgmList[currentTrackIndex];
+      audio.play().then(() => {
+        playBtn.innerText = '⏸ 停止';
+        trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
+      }).catch(err => {
+        console.log('再生待機中:', err);
+      });
+    }
+
+    function toggleBgm() {
+      if (audio.paused) {
+        if (!audio.src || currentTrackIndex === -1) {
+          playRandomBgm();
+        } else {
+          audio.play();
+          playBtn.innerText = '⏸ 停止';
+        }
+      } else {
+        audio.pause();
+        playBtn.innerText = '▶ 再生';
+      }
+    }
+
+    function nextBgm() {
+      playRandomBgm();
+    }
+
+    audio.addEventListener('ended', () => {
+      playRandomBgm();
+    });
+
+    const messages = [
+      "スピー… すやすや… 💤",
+      "むにゃ… なでなで、あったかいワン… ✨",
+      "今日も生きててえらいワン… 🐾",
+      "マロンはずっと隣にいるからね… 🌙",
+      "ふがっ… 大丈夫、ぜんぶうまくいくワン…"
+    ];
+    let msgIndex = 0;
+
+    function tapMarron() {
+      msgIndex = (msgIndex + 1) % messages.length;
+      document.getElementById('bubbleText').innerText = messages[msgIndex];
+
+      if (navigator.vibrate) {
+        navigator.vibrate([40]);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
   <title>マロンのお家</title>
   <style>
     * {
@@ -21,31 +21,34 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px;
+      padding: 12px 14px;
       text-align: center;
       overflow-x: hidden;
       overflow-y: auto;
     }
 
-    /* 上部タブ切り替えバー */
+    /* 上部タブバー */
     .tab-bar {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       background: rgba(255, 255, 255, 0.05);
       padding: 4px;
       border-radius: 30px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      max-width: 95vw;
+      overflow-x: auto;
     }
     .tab-btn {
       background: none;
       border: none;
       color: #94a3b8;
-      padding: 8px 18px;
+      padding: 7px 14px;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
+      white-space: nowrap;
       transition: all 0.2s ease;
     }
     .tab-btn.active {
@@ -54,7 +57,7 @@
       border: 1px solid rgba(246, 173, 85, 0.4);
     }
 
-    /* 各部屋の表示切替 */
+    /* 各部屋のコンテナ */
     .room-content {
       display: none;
       width: 100%;
@@ -65,7 +68,59 @@
       display: flex;
     }
 
-    /* BGMコントローラー */
+    /* ================= 部屋1：お散歩リビング ================= */
+    .room-stage-wrapper {
+      position: relative;
+      width: 320px;
+      max-width: 92vw;
+      height: 520px;
+      max-height: 68vh;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 2px solid rgba(246, 173, 85, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      background-size: cover;
+      background-position: center bottom;
+      /* 背景画像の指定（pngの場合は room.png に変更） */
+      background-image: url('room.jpg');
+    }
+
+    /* 歩くマロン（白背景を透過） */
+    .walking-marron-box {
+      position: absolute;
+      bottom: 35px; /* 床の位置に合わせて調整可能 */
+      left: 20px;
+      width: 110px;
+      height: 110px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      will-change: left, transform;
+    }
+    .walking-marron-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      /* 白背景を透明化して床に馴染ませる */
+      mix-blend-mode: multiply;
+      display: block;
+    }
+
+    /* 音声切り替えボタンバッジ */
+    .sound-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ================= 共通パーツ & 添い寝部屋 ================= */
     .audio-player {
       display: inline-flex;
       align-items: center;
@@ -91,7 +146,6 @@
       min-width: 80px;
     }
 
-    /* 添い寝部屋：GIFカード */
     .marron-sleep-card {
       width: 260px;
       max-width: 82vw;
@@ -123,7 +177,7 @@
       }
     }
 
-    /* 日常部屋：YouTube風動画カード */
+    /* ================= YouTube風動画カード ================= */
     .youtube-card {
       width: 290px;
       max-width: 88vw;
@@ -133,7 +187,6 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
       cursor: pointer;
-      position: relative;
     }
     .video-thumbnail-box {
       position: relative;
@@ -149,11 +202,10 @@
       height: 100%;
       object-fit: cover;
     }
-    /* YouTube風再生ボタンバッジ */
     .play-badge {
       position: absolute;
-      width: 54px;
-      height: 54px;
+      width: 52px;
+      height: 52px;
       background: rgba(0, 0, 0, 0.65);
       border: 2px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
@@ -161,37 +213,29 @@
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 1.5rem;
-      padding-left: 4px;
+      font-size: 1.4rem;
+      padding-left: 3px;
       backdrop-filter: blur(4px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      transition: transform 0.15s ease;
-    }
-    .youtube-card:active .play-badge {
-      transform: scale(0.9);
-      background: rgba(239, 68, 68, 0.85);
-      border-color: #ef4444;
     }
     .video-meta {
-      padding: 12px 14px;
+      padding: 10px 14px;
       text-align: left;
     }
     .video-meta-title {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: #f1f5f9;
-      margin-bottom: 4px;
     }
     .video-meta-sub {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #94a3b8;
+      margin-top: 2px;
     }
 
-    /* 動画切り替えセレクター */
     .video-selector {
       display: flex;
       gap: 8px;
-      margin: 8px 0 14px 0;
+      margin: 8px 0 12px 0;
       overflow-x: auto;
       max-width: 90vw;
       padding: 4px;
@@ -212,7 +256,7 @@
       color: #fbd38d;
     }
 
-    /* カウンターバー */
+    /* 共通バー & 吹き出し */
     .stats-bar {
       margin-top: 10px;
       display: flex;
@@ -237,7 +281,6 @@
       transform: scale(0.92);
     }
 
-    /* 飛び出すハート */
     .floating-heart {
       position: absolute;
       pointer-events: none;
@@ -246,41 +289,34 @@
       z-index: 100;
     }
     @keyframes flyUp {
-      0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(0.8);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(var(--dx), -90px) scale(1.4);
-      }
+      0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+      100% { opacity: 0; transform: translate(var(--dx), -90px) scale(1.4); }
     }
 
-    /* 吹き出し */
     .bubble {
-      margin-top: 12px;
+      margin-top: 10px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 10px 20px;
+      padding: 8px 18px;
       border-radius: 20px;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: #fbd38d;
       backdrop-filter: blur(5px);
     }
     .hint {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #64748b;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
     .footer {
-      margin-top: 12px;
+      margin-top: 10px;
       margin-bottom: 4px;
     }
     .message {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #cbd5e1;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
     .sub {
       font-size: 0.7rem;
@@ -290,14 +326,40 @@
 </head>
 <body>
 
-  <!-- タブバー -->
+  <!-- 3つのタブ -->
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('sleep')">🌙 マロンの添い寝部屋</button>
+    <button class="tab-btn active" onclick="switchTab('living')">🏡 マロンのお部屋</button>
+    <button class="tab-btn" onclick="switchTab('sleep')">🌙 添い寝部屋</button>
     <button class="tab-btn" onclick="switchTab('daily')">🐾 マロンの日常</button>
   </div>
 
-  <!-- ================= タブ1：添い寝部屋 ================= -->
-  <div id="sleepRoom" class="room-content active">
+  <!-- ================= タブ1：お部屋（トコトコ歩き） ================= -->
+  <div id="livingRoom" class="room-content active">
+    <div class="room-stage-wrapper" id="stageWrapper">
+      <!-- 足音スイッチ -->
+      <button class="sound-badge" id="stepSoundBtn" onclick="toggleWalkSound(event)">🔇 足音OFF</button>
+
+      <!-- 歩行マロン -->
+      <div class="walking-marron-box" id="marronWalker" onclick="tapLivingMarron(event)">
+        <video id="walkVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <button class="like-btn" onclick="addLike('living', event)">
+        <span>❤️ なでる</span>
+        <span id="livingLikeCount">0</span>
+      </button>
+    </div>
+
+    <div class="bubble" id="livingBubble">
+      ぽてぽて… お部屋をお散歩中だワン！🐾
+    </div>
+    <div class="hint">（マロンをタップするとなでなでできるワン）</div>
+  </div>
+
+  <!-- ================= タブ2：添い寝部屋 ================= -->
+  <div id="sleepRoom" class="room-content">
     <div class="audio-player">
       <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
       <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
@@ -321,12 +383,10 @@
     <div class="hint">（タップするとなでなでできるワン）</div>
   </div>
 
-  <!-- ================= タブ2：日常（YouTube風全画面プレイヤー） ================= -->
+  <!-- ================= タブ3：日常（YouTube風全画面） ================= -->
   <div id="dailyRoom" class="room-content">
-    <!-- 動画切り替え -->
     <div class="video-selector" id="videoChips"></div>
 
-    <!-- YouTube風カード -->
     <div class="youtube-card" onclick="playFullScreenVideo(event)">
       <div class="video-thumbnail-box">
         <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
@@ -352,8 +412,8 @@
   </div>
 
   <div class="footer">
-    <div class="message" id="footerMessage">今日も一日、本当によく頑張ったワン。</div>
-    <div class="sub">画面を開いたまま、枕元に置いて休んでね</div>
+    <div class="message" id="footerMessage">マロンはお部屋でのんびり過ごしてるワン。</div>
+    <div class="sub">画面を開いたまま、いつでも会いに来てね</div>
   </div>
 
   <audio id="bgmAudio" preload="auto"></audio>
@@ -364,7 +424,11 @@
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.room-content').forEach(room => room.classList.remove('active'));
 
-      if (tab === 'sleep') {
+      if (tab === 'living') {
+        event.target.classList.add('active');
+        document.getElementById('livingRoom').classList.add('active');
+        document.getElementById('footerMessage').innerText = "マロンはお部屋でのんびり過ごしてるワン。";
+      } else if (tab === 'sleep') {
         event.target.classList.add('active');
         document.getElementById('sleepRoom').classList.add('active');
         document.getElementById('footerMessage').innerText = "今日も一日、本当によく頑張ったワン。";
@@ -375,80 +439,82 @@
       }
     }
 
-    // --- 2. 動画リスト ---
-    const videoList = [
-      { id: 'v1', title: 'まったりマロン', src: 'marron.mp4', desc: 'タップすると全画面で再生するワン！' }
-      // 動画を増やしたらここに追加
-    ];
+    // --- 2. トコトコ歩行アニメーション ---
+    const walker = document.getElementById('marronWalker');
+    const stage = document.getElementById('stageWrapper');
+    const walkVideo = document.getElementById('walkVideo');
+    const soundBtn = document.getElementById('stepSoundBtn');
 
-    let currentVideoIdx = 0;
-    const videoPlayer = document.getElementById('dailyVideoPlayer');
-    const chipsContainer = document.getElementById('videoChips');
+    let posX = 20;
+    let speed = 0.8; // 歩く速度
+    let direction = 1; // 1: 右向き, -1: 左向き
+    let isWalking = true;
 
-    function initVideoSelector() {
-      chipsContainer.innerHTML = '';
-      videoList.forEach((v, idx) => {
-        const chip = document.createElement('button');
-        chip.className = `video-chip ${idx === currentVideoIdx ? 'active' : ''}`;
-        chip.innerText = v.title;
-        chip.onclick = (e) => {
-          e.stopPropagation();
-          selectVideo(idx);
-        };
-        chipsContainer.appendChild(chip);
-      });
-      loadVideoStats();
-    }
+    function walkLoop() {
+      if (isWalking && document.getElementById('livingRoom').classList.contains('active')) {
+        const stageWidth = stage.clientWidth;
+        const marronWidth = walker.clientWidth;
+        const maxRight = stageWidth - marronWidth - 20;
+        const minLeft = 15;
 
-    function selectVideo(idx) {
-      currentVideoIdx = idx;
-      document.querySelectorAll('.video-chip').forEach((c, i) => {
-        c.classList.toggle('active', i === idx);
-      });
-      videoPlayer.src = videoList[idx].src;
-      document.getElementById('videoTitle').innerText = videoList[idx].title;
-      document.getElementById('videoSubDesc').innerText = videoList[idx].desc;
-      loadVideoStats();
-    }
+        posX += speed * direction;
 
-    // --- 3. YouTube風：タップで全画面再生！ ---
-    function playFullScreenVideo(e) {
-      // 再生回数を加算
-      const vid = videoList[currentVideoIdx].id;
-      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10) + 1;
-      localStorage.setItem(`views_${vid}`, vCount);
-      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
+        // 右端に着いたら反転して左へ
+        if (posX >= maxRight) {
+          direction = -1;
+          walker.style.transform = 'scaleX(-1)';
+        }
+        // 左端に着いたら反転して右へ
+        else if (posX <= minLeft) {
+          direction = 1;
+          walker.style.transform = 'scaleX(1)';
+        }
 
-      // 音声を有効にして再生開始
-      videoPlayer.muted = false;
-      videoPlayer.play();
-
-      // iPhone/スマホのネイティブ全画面プレイヤーを起動
-      if (videoPlayer.webkitEnterFullscreen) {
-        videoPlayer.webkitEnterFullscreen(); // iOS Safari
-      } else if (videoPlayer.requestFullscreen) {
-        videoPlayer.requestFullscreen();     // Android / PC
+        walker.style.left = posX + 'px';
       }
+      requestAnimationFrame(walkLoop);
+    }
+    requestAnimationFrame(walkLoop);
 
-      spawnHeart(e);
+    // 足音ON/OFF
+    function toggleWalkSound(e) {
+      e.stopPropagation();
+      if (walkVideo.muted) {
+        walkVideo.muted = false;
+        soundBtn.innerText = '🔊 足音ON';
+      } else {
+        walkVideo.muted = true;
+        soundBtn.innerText = '🔇 足音OFF';
+      }
     }
 
-    function loadVideoStats() {
-      const vid = videoList[currentVideoIdx].id;
-      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10);
-      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
-
-      let lCount = parseInt(localStorage.getItem(`likes_${vid}`) || '0', 10);
-      document.getElementById('dailyLikeCount').innerText = lCount;
+    // お部屋タップ演出
+    const livingMessages = [
+      "ぽてぽて… なにか落ちてないかパトロール中ワン！🐾",
+      "なでなでしてくれた！えへへ… ✨",
+      "このラグの上が一番落ち着くんだワン〜 🛋️",
+      "ワンッ！今日も一緒にいてくれて嬉しいな！🐶"
+    ];
+    let livingMsgIdx = 0;
+    function tapLivingMarron(e) {
+      livingMsgIdx = (livingMsgIdx + 1) % livingMessages.length;
+      document.getElementById('livingBubble').innerText = livingMessages[livingMsgIdx];
+      addLike('living', e);
     }
 
-    // --- 4. いいね & ハート演出 ---
+    // --- 3. いいね & ハート演出 ---
+    let livingLikes = parseInt(localStorage.getItem('marron_living_likes') || '0', 10);
+    document.getElementById('livingLikeCount').innerText = livingLikes;
     let sleepLikes = parseInt(localStorage.getItem('marron_sleep_likes') || '0', 10);
     document.getElementById('sleepLikeCount').innerText = sleepLikes;
 
     function addLike(type, e) {
       if (e) e.stopPropagation();
-      if (type === 'sleep') {
+      if (type === 'living') {
+        livingLikes += 1;
+        localStorage.setItem('marron_living_likes', livingLikes);
+        document.getElementById('livingLikeCount').innerText = livingLikes;
+      } else if (type === 'sleep') {
         sleepLikes += 1;
         localStorage.setItem('marron_sleep_likes', sleepLikes);
         document.getElementById('sleepLikeCount').innerText = sleepLikes;
@@ -480,7 +546,7 @@
       setTimeout(() => heart.remove(), 1200);
     }
 
-    // --- 5. 添い寝部屋タップ演出 ---
+    // --- 4. 添い寝部屋演出 ---
     const sleepMessages = [
       "スピー… すやすや… 💤",
       "むにゃ… なでなで、あったかいワン… ✨",
@@ -493,6 +559,60 @@
       sleepMsgIdx = (sleepMsgIdx + 1) % sleepMessages.length;
       document.getElementById('sleepBubble').innerText = sleepMessages[sleepMsgIdx];
       addLike('sleep', e);
+    }
+
+    // --- 5. 日常部屋（全画面再生） ---
+    const videoList = [
+      { id: 'v1', title: 'まったりマロン', src: 'marron.mp4', desc: 'タップすると全画面で再生するワン！' }
+    ];
+    let currentVideoIdx = 0;
+    const dailyVideoPlayer = document.getElementById('dailyVideoPlayer');
+    const chipsContainer = document.getElementById('videoChips');
+
+    function initVideoSelector() {
+      chipsContainer.innerHTML = '';
+      videoList.forEach((v, idx) => {
+        const chip = document.createElement('button');
+        chip.className = `video-chip ${idx === currentVideoIdx ? 'active' : ''}`;
+        chip.innerText = v.title;
+        chip.onclick = (e) => { e.stopPropagation(); selectVideo(idx); };
+        chipsContainer.appendChild(chip);
+      });
+      loadVideoStats();
+    }
+
+    function selectVideo(idx) {
+      currentVideoIdx = idx;
+      document.querySelectorAll('.video-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
+      dailyVideoPlayer.src = videoList[idx].src;
+      document.getElementById('videoTitle').innerText = videoList[idx].title;
+      document.getElementById('videoSubDesc').innerText = videoList[idx].desc;
+      loadVideoStats();
+    }
+
+    function playFullScreenVideo(e) {
+      const vid = videoList[currentVideoIdx].id;
+      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10) + 1;
+      localStorage.setItem(`views_${vid}`, vCount);
+      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
+
+      dailyVideoPlayer.muted = false;
+      dailyVideoPlayer.play();
+
+      if (dailyVideoPlayer.webkitEnterFullscreen) {
+        dailyVideoPlayer.webkitEnterFullscreen();
+      } else if (dailyVideoPlayer.requestFullscreen) {
+        dailyVideoPlayer.requestFullscreen();
+      }
+      spawnHeart(e);
+    }
+
+    function loadVideoStats() {
+      const vid = videoList[currentVideoIdx].id;
+      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10);
+      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
+      let lCount = parseInt(localStorage.getItem(`likes_${vid}`) || '0', 10);
+      document.getElementById('dailyLikeCount').innerText = lCount;
     }
 
     // --- 6. BGMプレイヤー ---
@@ -534,7 +654,6 @@
     function nextBgm() {
       playRandomBgm();
     }
-
     audio.addEventListener('ended', () => playRandomBgm());
 
     // 初期化

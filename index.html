@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>マロンのお家</title>
   <style>
     * {
@@ -27,7 +27,7 @@
       overflow-y: auto;
     }
 
-    /* 上部タブバー */
+    /* タブバー */
     .tab-bar {
       display: flex;
       gap: 6px;
@@ -37,7 +37,6 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 10px;
       max-width: 95vw;
-      overflow-x: auto;
     }
     .tab-btn {
       background: none;
@@ -57,7 +56,6 @@
       border: 1px solid rgba(246, 173, 85, 0.4);
     }
 
-    /* 各部屋のコンテナ */
     .room-content {
       display: none;
       width: 100%;
@@ -68,7 +66,7 @@
       display: flex;
     }
 
-    /* ================= 部屋1：お散歩リビング ================= */
+    /* ================= 部屋1：お部屋（Canvas透過歩行） ================= */
     .room-stage-wrapper {
       position: relative;
       width: 320px;
@@ -81,31 +79,20 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       background-size: cover;
       background-position: center bottom;
-      /* 背景画像の指定（pngの場合は room.png に変更） */
       background-image: url('room.jpg');
     }
 
-    /* 歩くマロン（白背景を透過） */
-    .walking-marron-box {
+    /* マロン描画用Canvas */
+    #marronCanvas {
       position: absolute;
-      bottom: 35px; /* 床の位置に合わせて調整可能 */
+      bottom: 25px; /* 床の高さ位置 */
       left: 20px;
-      width: 110px;
-      height: 110px;
+      width: 115px;
+      height: 115px;
       cursor: pointer;
-      transition: transform 0.2s ease;
       will-change: left, transform;
     }
-    .walking-marron-box video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      /* 白背景を透明化して床に馴染ませる */
-      mix-blend-mode: multiply;
-      display: block;
-    }
 
-    /* 音声切り替えボタンバッジ */
     .sound-badge {
       position: absolute;
       top: 12px;
@@ -118,9 +105,10 @@
       font-size: 0.75rem;
       cursor: pointer;
       backdrop-filter: blur(4px);
+      z-index: 10;
     }
 
-    /* ================= 共通パーツ & 添い寝部屋 ================= */
+    /* ================= 部屋2：添い寝部屋 ================= */
     .audio-player {
       display: inline-flex;
       align-items: center;
@@ -177,7 +165,7 @@
       }
     }
 
-    /* ================= YouTube風動画カード ================= */
+    /* ================= 部屋3：日常部屋 ================= */
     .youtube-card {
       width: 290px;
       max-width: 88vw;
@@ -256,7 +244,7 @@
       color: #fbd38d;
     }
 
-    /* 共通バー & 吹き出し */
+    /* 共通UI */
     .stats-bar {
       margin-top: 10px;
       display: flex;
@@ -326,23 +314,23 @@
 </head>
 <body>
 
-  <!-- 3つのタブ -->
+  <!-- タブバー -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('living')">🏡 マロンのお部屋</button>
     <button class="tab-btn" onclick="switchTab('sleep')">🌙 添い寝部屋</button>
     <button class="tab-btn" onclick="switchTab('daily')">🐾 マロンの日常</button>
   </div>
 
-  <!-- ================= タブ1：お部屋（トコトコ歩き） ================= -->
+  <!-- ================= タブ1：お部屋 ================= -->
   <div id="livingRoom" class="room-content active">
     <div class="room-stage-wrapper" id="stageWrapper">
-      <!-- 足音スイッチ -->
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleWalkSound(event)">🔇 足音OFF</button>
 
-      <!-- 歩行マロン -->
-      <div class="walking-marron-box" id="marronWalker" onclick="tapLivingMarron(event)">
-        <video id="walkVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
-      </div>
+      <!-- 白背景透過用のCanvas -->
+      <canvas id="marronCanvas" width="200" height="200" onclick="tapLivingMarron(event)"></canvas>
+
+      <!-- 裏で再生させる歩行動画（非表示） -->
+      <video id="sourceVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline crossorigin="anonymous" style="display:none;"></video>
     </div>
 
     <div class="stats-bar">
@@ -383,7 +371,7 @@
     <div class="hint">（タップするとなでなでできるワン）</div>
   </div>
 
-  <!-- ================= タブ3：日常（YouTube風全画面） ================= -->
+  <!-- ================= タブ3：日常部屋 ================= -->
   <div id="dailyRoom" class="room-content">
     <div class="video-selector" id="videoChips"></div>
 
@@ -439,56 +427,80 @@
       }
     }
 
-    // --- 2. トコトコ歩行アニメーション ---
-    const walker = document.getElementById('marronWalker');
+    // --- 2. JavaScriptによる動画の白背景リアルタイム透過 ＆ 往復歩行 ---
+    const canvas = document.getElementById('marronCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const video = document.getElementById('sourceVideo');
     const stage = document.getElementById('stageWrapper');
-    const walkVideo = document.getElementById('walkVideo');
     const soundBtn = document.getElementById('stepSoundBtn');
 
     let posX = 20;
-    let speed = 0.8; // 歩く速度
-    let direction = 1; // 1: 右向き, -1: 左向き
-    let isWalking = true;
+    let speed = 0.8;
+    let direction = 1;
 
-    function walkLoop() {
-      if (isWalking && document.getElementById('livingRoom').classList.contains('active')) {
+    // 白を透過してCanvasに描画するループ
+    function renderChromaLoop() {
+      if (document.getElementById('livingRoom').classList.contains('active')) {
+        if (video.readyState >= 2) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = frame.data;
+
+          // RGBが一定以上の白（明るい背景）を透明化
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // 白に近いピクセル判定
+            if (r > 215 && g > 215 && b > 215) {
+              data[i + 3] = 0; // 不透明度を0（透明）にする
+            }
+          }
+          ctx.putImageData(frame, 0, 0);
+        }
+
+        // 床の往復歩行
         const stageWidth = stage.clientWidth;
-        const marronWidth = walker.clientWidth;
+        const marronWidth = canvas.clientWidth;
         const maxRight = stageWidth - marronWidth - 20;
         const minLeft = 15;
 
         posX += speed * direction;
 
-        // 右端に着いたら反転して左へ
         if (posX >= maxRight) {
           direction = -1;
-          walker.style.transform = 'scaleX(-1)';
-        }
-        // 左端に着いたら反転して右へ
-        else if (posX <= minLeft) {
+          canvas.style.transform = 'scaleX(-1)';
+        } else if (posX <= minLeft) {
           direction = 1;
-          walker.style.transform = 'scaleX(1)';
+          canvas.style.transform = 'scaleX(1)';
         }
 
-        walker.style.left = posX + 'px';
+        canvas.style.left = posX + 'px';
       }
-      requestAnimationFrame(walkLoop);
-    }
-    requestAnimationFrame(walkLoop);
 
-    // 足音ON/OFF
+      requestAnimationFrame(renderChromaLoop);
+    }
+
+    // 動画の自動再生トリガー
+    video.play().catch(() => {
+      document.addEventListener('touchstart', () => video.play(), { once: true });
+    });
+    requestAnimationFrame(renderChromaLoop);
+
+    // 足音切り替え
     function toggleWalkSound(e) {
       e.stopPropagation();
-      if (walkVideo.muted) {
-        walkVideo.muted = false;
+      if (video.muted) {
+        video.muted = false;
         soundBtn.innerText = '🔊 足音ON';
       } else {
-        walkVideo.muted = true;
+        video.muted = true;
         soundBtn.innerText = '🔇 足音OFF';
       }
     }
 
-    // お部屋タップ演出
+    // お部屋タップ
     const livingMessages = [
       "ぽてぽて… なにか落ちてないかパトロール中ワン！🐾",
       "なでなでしてくれた！えへへ… ✨",
@@ -502,7 +514,7 @@
       addLike('living', e);
     }
 
-    // --- 3. いいね & ハート演出 ---
+    // --- 3. いいね ＆ ハート ---
     let livingLikes = parseInt(localStorage.getItem('marron_living_likes') || '0', 10);
     document.getElementById('livingLikeCount').innerText = livingLikes;
     let sleepLikes = parseInt(localStorage.getItem('marron_sleep_likes') || '0', 10);
@@ -561,7 +573,7 @@
       addLike('sleep', e);
     }
 
-    // --- 5. 日常部屋（全画面再生） ---
+    // --- 5. 日常部屋（全画面） ---
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4', desc: 'タップすると全画面で再生するワン！' }
     ];
@@ -615,7 +627,7 @@
       document.getElementById('dailyLikeCount').innerText = lCount;
     }
 
-    // --- 6. BGMプレイヤー ---
+    // --- 6. BGM ---
     const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
     let currentTrackIndex = -1;
     const audio = document.getElementById('bgmAudio');

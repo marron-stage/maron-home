@@ -21,38 +21,77 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 30px 20px;
+      padding: 24px 20px;
       text-align: center;
       overflow: hidden;
     }
     .header {
-      margin-top: 10px;
+      margin-top: 6px;
     }
     .title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       letter-spacing: 0.1em;
       color: #94a3b8;
     }
+
+    /* BGMコントローラー */
+    .audio-player {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 16px;
+      border-radius: 30px;
+      backdrop-filter: blur(8px);
+    }
+    .audio-btn {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      transition: opacity 0.2s;
+    }
+    .audio-btn:active {
+      opacity: 0.6;
+    }
+    .track-info {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      min-width: 90px;
+    }
+
+    /* マロンのサークル */
     .main-stage {
       display: flex;
       flex-direction: column;
       align-items: center;
       cursor: pointer;
     }
-    /* すやすや呼吸するアニメーション */
     .marron-circle {
-      width: 160px;
-      height: 160px;
+      width: 170px;
+      height: 170px;
       background: radial-gradient(circle, #2d3748 0%, #1a202c 100%);
       border: 3px solid #f6ad55;
       border-radius: 50%;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 70px;
       box-shadow: 0 0 35px rgba(246, 173, 85, 0.25);
       animation: breathe 4s ease-in-out infinite;
       transition: transform 0.2s ease;
+    }
+    .marron-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .marron-circle:active {
       transform: scale(0.95);
@@ -63,12 +102,12 @@
         box-shadow: 0 0 25px rgba(246, 173, 85, 0.2);
       }
       50% {
-        transform: scale(1.06);
+        transform: scale(1.05);
         box-shadow: 0 0 45px rgba(246, 173, 85, 0.4);
       }
     }
     .bubble {
-      margin-top: 25px;
+      margin-top: 22px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 12px 24px;
@@ -84,7 +123,7 @@
       margin-top: 8px;
     }
     .footer {
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
     .message {
       font-size: 0.9rem;
@@ -101,12 +140,19 @@
 
   <div class="header">
     <div class="title">🌙 マロンの添い寝部屋</div>
+    
+    <!-- BGMコントローラー -->
+    <div class="audio-player">
+      <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
+      <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
+      <button class="audio-btn" onclick="nextBgm()">⏭</button>
+    </div>
   </div>
 
   <div class="main-stage" onclick="tapMarron()">
-    <!-- ここにいずれマロンの寝姿GIF/動画が入ります -->
     <div class="marron-circle">
       <img src="marron.gif"　style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+      <img src="marron.gif" alt="マロン">
     </div>
     <div class="bubble" id="bubbleText">
       スピー… すやすや… 💤
@@ -119,7 +165,69 @@
     <div class="sub">画面を開いたまま、枕元に置いて休んでね</div>
   </div>
 
+  <!-- BGM用オーディオタグ -->
+  <audio id="bgmAudio" preload="auto"></audio>
+
   <script>
+    // 4曲のリスト（※実際のファイル名に合わせて変更してください）
+    const bgmList = [
+      'bgm1.mp3',
+      'bgm2.mp3',
+      'bgm3.mp3',
+      'bgm4.mp3'
+    ];
+
+    let currentTrackIndex = -1;
+    const audio = document.getElementById('bgmAudio');
+    const playBtn = document.getElementById('playBtn');
+    const trackInfo = document.getElementById('trackInfo');
+
+    // 眠りを妨げない優しい音量（30%）
+    audio.volume = 0.3;
+
+    // ランダムに曲を選んで再生
+    function playRandomBgm() {
+      let nextIndex;
+      do {
+        nextIndex = Math.floor(Math.random() * bgmList.length);
+      } while (bgmList.length > 1 && nextIndex === currentTrackIndex);
+
+      currentTrackIndex = nextIndex;
+      audio.src = bgmList[currentTrackIndex];
+      audio.play().then(() => {
+        playBtn.innerText = '⏸ 停止';
+        trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
+      }).catch(err => {
+        console.log('再生待機中:', err);
+      });
+    }
+
+    // 再生 / 停止の切り替え
+    function toggleBgm() {
+      if (audio.paused) {
+        if (!audio.src || currentTrackIndex === -1) {
+          playRandomBgm();
+        } else {
+          audio.play();
+          playBtn.innerText = '⏸ 停止';
+        }
+      } else {
+        audio.pause();
+        playBtn.innerText = '▶ 再生';
+      }
+    }
+
+    // 次の曲へスキップ
+    function nextBgm() {
+      playRandomBgm();
+    }
+
+    // 1曲終わったら自動で次の曲をランダム再生
+    audio.addEventListener('ended', () => {
+      playRandomBgm();
+    });
+
+    // メッセージリスト
     const messages = [
       "スピー… すやすや… 💤",
       "むにゃ… なでなで、あったかいワン… ✨",
@@ -129,38 +237,11 @@
     ];
     let msgIndex = 0;
 
-    // Web Audio APIによる優しいオルゴール風の単音再生
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playChime() {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      // 優しい高めのオルゴール音
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-      const randomNote = notes[Math.floor(Math.random() * notes.length)];
-      osc.frequency.setValueAtTime(randomNote, audioCtx.currentTime);
-      
-      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
-      
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 1.2);
-    }
-
+    // タップ時のお返事
     function tapMarron() {
-      // メッセージの切り替え
       msgIndex = (msgIndex + 1) % messages.length;
       document.getElementById('bubbleText').innerText = messages[msgIndex];
 
-      // 優しい音を鳴らす
-      playChime();
-
-      // スマホの軽い振動（対応端末のみ）
       if (navigator.vibrate) {
         navigator.vibrate([40]);
       }

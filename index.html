@@ -20,10 +20,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-around;
+      justify-content: space-between;
       padding: 16px 20px;
       text-align: center;
-      overflow-y: auto; /* はみ出してもスクロールできるように変更 */
+      overflow-x: hidden;
+      overflow-y: auto;
     }
     .header {
       margin-top: 4px;
@@ -63,33 +64,32 @@
       min-width: 80px;
     }
 
-    /* マロンのカード（画面からはみ出さないサイズ制限） */
+    /* マロンの動画ステージ */
     .main-stage {
       display: flex;
       flex-direction: column;
       align-items: center;
-      cursor: pointer;
+      position: relative;
       margin: 12px 0;
+      cursor: pointer;
     }
     .marron-card {
-      width: 240px;
-      max-width: 75vw;
-      max-height: 40vh; /* 縦長になりすぎないよう制限 */
-      border-radius: 20px;
+      width: 260px;
+      max-width: 80vw;
+      max-height: 42vh;
+      border-radius: 22px;
       overflow: hidden;
       border: 2px solid rgba(246, 173, 85, 0.45);
       box-shadow: 0 0 25px rgba(246, 173, 85, 0.25);
       animation: breathe 4s ease-in-out infinite;
-      background: rgba(0, 0, 0, 0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #000;
+      position: relative;
     }
-    .marron-card img {
+    .marron-card video {
       width: 100%;
       height: 100%;
-      max-height: 40vh;
-      object-fit: contain;
+      max-height: 42vh;
+      object-fit: cover;
       display: block;
     }
 
@@ -104,8 +104,53 @@
       }
     }
 
+    /* 再生数 & いいね カウンター */
+    .stats-bar {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .like-btn {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.1s;
+    }
+    .like-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 飛び出すハート */
+    .floating-heart {
+      position: absolute;
+      pointer-events: none;
+      font-size: 1.5rem;
+      animation: flyUp 1.2s ease-out forwards;
+      z-index: 100;
+    }
+    @keyframes flyUp {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.8);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--dx), -90px) scale(1.4);
+      }
+    }
+
     .bubble {
-      margin-top: 14px;
+      margin-top: 12px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 10px 20px;
@@ -120,7 +165,7 @@
       margin-top: 6px;
     }
     .footer {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .message {
       font-size: 0.85rem;
@@ -145,14 +190,25 @@
     </div>
   </div>
 
-  <div class="main-stage" onclick="tapMarron()">
-    <div class="marron-card">
-      <img src="marron.gif" alt="マロン">
+  <div class="main-stage">
+    <!-- マロンの動画枠 -->
+    <div class="marron-card" onclick="tapMarron(event)">
+      <video src="marron.mp4" autoplay loop muted playsinline webkit-playsinline></video>
     </div>
+
+    <!-- カウンターバー -->
+    <div class="stats-bar">
+      <span id="viewCount">👁️ 0 views</span>
+      <button class="like-btn" onclick="addLike(event)">
+        <span>❤️</span>
+        <span id="likeCount">0</span>
+      </button>
+    </div>
+
     <div class="bubble" id="bubbleText">
       スピー… すやすや… 💤
     </div>
-    <div class="hint">（タップするとなでなでできるワン）</div>
+    <div class="hint">（タップするとなでなで＆いいねできるワン）</div>
   </div>
 
   <div class="footer">
@@ -163,6 +219,61 @@
   <audio id="bgmAudio" preload="auto"></audio>
 
   <script>
+    // --- 1. カウンター管理（ローカル保存） ---
+    let views = parseInt(localStorage.getItem('marron_views') || '0', 10) + 1;
+    localStorage.setItem('marron_views', views);
+    document.getElementById('viewCount').innerText = `👁️ ${views} views`;
+
+    let likes = parseInt(localStorage.getItem('marron_likes') || '0', 10);
+    document.getElementById('likeCount').innerText = likes;
+
+    function addLike(e) {
+      if (e) e.stopPropagation();
+      likes += 1;
+      localStorage.setItem('marron_likes', likes);
+      document.getElementById('likeCount').innerText = likes;
+      spawnHeart(e);
+      if (navigator.vibrate) navigator.vibrate(30);
+    }
+
+    function spawnHeart(e) {
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      heart.innerText = ['❤️', '🐾', '✨', '💖'][Math.floor(Math.random() * 4)];
+      
+      const dx = (Math.random() - 0.5) * 80 + 'px';
+      heart.style.setProperty('--dx', dx);
+      
+      const stage = document.querySelector('.main-stage');
+      const rect = stage.getBoundingClientRect();
+      
+      const x = (e ? e.clientX - rect.left : rect.width / 2) - 12;
+      const y = (e ? e.clientY - rect.top : rect.height / 2) - 20;
+      
+      heart.style.left = `${x}px`;
+      heart.style.top = `${y}px`;
+      
+      stage.appendChild(heart);
+      setTimeout(() => heart.remove(), 1200);
+    }
+
+    // --- 2. タップ演出 ---
+    const messages = [
+      "スピー… すやすや… 💤",
+      "むにゃ… なでなで、あったかいワン… ✨",
+      "今日も生きててえらいワン… 🐾",
+      "マロンはずっと隣にいるからね… 🌙",
+      "ふがっ… 大丈夫、ぜんぶうまくいくワン…"
+    ];
+    let msgIndex = 0;
+
+    function tapMarron(e) {
+      msgIndex = (msgIndex + 1) % messages.length;
+      document.getElementById('bubbleText').innerText = messages[msgIndex];
+      addLike(e);
+    }
+
+    // --- 3. BGMプレイヤー ---
     const bgmList = [
       'bgm1.mp3',
       'bgm2.mp3',
@@ -174,7 +285,6 @@
     const audio = document.getElementById('bgmAudio');
     const playBtn = document.getElementById('playBtn');
     const trackInfo = document.getElementById('trackInfo');
-
     audio.volume = 0.3;
 
     function playRandomBgm() {
@@ -214,24 +324,6 @@
     audio.addEventListener('ended', () => {
       playRandomBgm();
     });
-
-    const messages = [
-      "スピー… すやすや… 💤",
-      "むにゃ… なでなで、あったかいワン… ✨",
-      "今日も生きててえらいワン… 🐾",
-      "マロンはずっと隣にいるからね… 🌙",
-      "ふがっ… 大丈夫、ぜんぶうまくいくワン…"
-    ];
-    let msgIndex = 0;
-
-    function tapMarron() {
-      msgIndex = (msgIndex + 1) % messages.length;
-      document.getElementById('bubbleText').innerText = messages[msgIndex];
-
-      if (navigator.vibrate) {
-        navigator.vibrate([40]);
-      }
-    }
   </script>
 </body>
 </html>

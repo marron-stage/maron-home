@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マロンのお家 - おやすみモード</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background-color: #121624;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 30px 20px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .header {
+      margin-top: 10px;
+    }
+    .title {
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      color: #94a3b8;
+    }
+    .main-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    /* すやすや呼吸するアニメーション */
+    .marron-circle {
+      width: 160px;
+      height: 160px;
+      background: radial-gradient(circle, #2d3748 0%, #1a202c 100%);
+      border: 3px solid #f6ad55;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 70px;
+      box-shadow: 0 0 35px rgba(246, 173, 85, 0.25);
+      animation: breathe 4s ease-in-out infinite;
+      transition: transform 0.2s ease;
+    }
+    .marron-circle:active {
+      transform: scale(0.95);
+    }
+    @keyframes breathe {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 25px rgba(246, 173, 85, 0.2);
+      }
+      50% {
+        transform: scale(1.06);
+        box-shadow: 0 0 45px rgba(246, 173, 85, 0.4);
+      }
+    }
+    .bubble {
+      margin-top: 25px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 24px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      color: #fbd38d;
+      backdrop-filter: blur(5px);
+      line-height: 1.5;
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 8px;
+    }
+    .footer {
+      margin-bottom: 10px;
+    }
+    .message {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    .sub {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">🌙 マロンの添い寝部屋</div>
+  </div>
+
+  <div class="main-stage" onclick="tapMarron()">
+    <!-- ここにいずれマロンの寝姿GIF/動画が入ります -->
+    <div class="marron-circle">
+      🐕‍🦺
+    </div>
+    <div class="bubble" id="bubbleText">
+      スピー… すやすや… 💤
+    </div>
+    <div class="hint">（タップするとなでなでできるワン）</div>
+  </div>
+
+  <div class="footer">
+    <div class="message">今日も一日、本当によく頑張ったワン。</div>
+    <div class="sub">画面を開いたまま、枕元に置いて休んでね</div>
+  </div>
+
+  <script>
+    const messages = [
+      "スピー… すやすや… 💤",
+      "むにゃ… なでなで、あったかいワン… ✨",
+      "今日も生きててえらいワン… 🐾",
+      "マロンはずっと隣にいるからね… 🌙",
+      "ふがっ… 大丈夫、ぜんぶうまくいくワン…"
+    ];
+    let msgIndex = 0;
+
+    // Web Audio APIによる優しいオルゴール風の単音再生
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playChime() {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      // 優しい高めのオルゴール音
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      const randomNote = notes[Math.floor(Math.random() * notes.length)];
+      osc.frequency.setValueAtTime(randomNote, audioCtx.currentTime);
+      
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.2);
+    }
+
+    function tapMarron() {
+      // メッセージの切り替え
+      msgIndex = (msgIndex + 1) % messages.length;
+      document.getElementById('bubbleText').innerText = messages[msgIndex];
+
+      // 優しい音を鳴らす
+      playChime();
+
+      // スマホの軽い振動（対応端末のみ）
+      if (navigator.vibrate) {
+        navigator.vibrate([40]);
+      }
+    }
+  </script>
+</body>
+</html>

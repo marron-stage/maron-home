@@ -324,8 +324,47 @@
       padding-left: 1.5px;
     }
 
-    #hiddenFullPlayer {
+    /* 全画面シネマモーダルプレイヤー */
+    #shortsModal {
+      position: fixed;
+      inset: 0;
+      background-color: #000;
+      z-index: 1000;
       display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #shortsModal.active {
+      display: flex;
+    }
+    #modalVideo {
+      width: 100%;
+      height: 100%;
+      max-height: 100dvh;
+      object-fit: contain;
+      background: #000;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 10px) + 14px);
+      right: 16px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1010;
+      backdrop-filter: blur(8px);
+    }
+    .modal-close-btn:active {
+      transform: scale(0.9);
     }
   </style>
 </head>
@@ -386,7 +425,11 @@
     </section>
   </div>
 
-  <video id="hiddenFullPlayer" playsinline></video>
+  <!-- 全画面シネマモーダル -->
+  <div id="shortsModal" onclick="closeShortsModal()">
+    <button class="modal-close-btn" onclick="closeShortsModal(event)">✕</button>
+    <video id="modalVideo" playsinline webkit-playsinline controls></video>
+  </div>
 
   <script>
     // 1. タブ切り替え
@@ -719,7 +762,7 @@
       if (playBtn) playBtn.innerText = '▶ 再生';
     }
 
-    // 4. 日常部屋（YouTubeショート風 3列グリッド制御）
+    // 4. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダルプレイヤー）
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' },
       { id: 'v2', title: 'ココアであったまるワン', src: 'marron_cocoa.mp4' },
@@ -730,16 +773,16 @@
     ];
 
     const shortsGrid = document.getElementById('shortsGrid');
-    const fullPlayer = document.getElementById('hiddenFullPlayer');
+    const shortsModal = document.getElementById('shortsModal');
+    const modalVideo = document.getElementById('modalVideo');
 
     function initShortsGrid() {
       shortsGrid.innerHTML = '';
       videoList.forEach((v) => {
         const item = document.createElement('div');
         item.className = 'short-item-card';
-        item.onclick = () => playShortVideo(v.src);
+        item.onclick = () => openShortsModal(v.src);
 
-        // iPhone対策として #t=0.001 を追加（1コマ目を強制描画）
         item.innerHTML = `
           <video src="${v.src}#t=0.001" preload="metadata" muted playsinline></video>
           <div class="short-play-icon">▶</div>
@@ -751,16 +794,20 @@
       });
     }
 
-    function playShortVideo(src) {
-      fullPlayer.src = src;
-      fullPlayer.muted = false;
-      fullPlayer.play();
+    function openShortsModal(src) {
+      modalVideo.src = src;
+      shortsModal.classList.add('active');
+      modalVideo.muted = false;
+      modalVideo.play().catch(err => {
+        console.log('再生待機中:', err);
+      });
+    }
 
-      if (fullPlayer.webkitEnterFullscreen) {
-        fullPlayer.webkitEnterFullscreen();
-      } else if (fullPlayer.requestFullscreen) {
-        fullPlayer.requestFullscreen();
-      }
+    function closeShortsModal(e) {
+      if (e) e.stopPropagation();
+      modalVideo.pause();
+      modalVideo.src = '';
+      shortsModal.classList.remove('active');
     }
 
     // 5. 添い寝部屋用BGM

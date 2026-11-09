@@ -82,12 +82,12 @@
       background-image: url('room.jpg');
     }
 
-    /* マロン描画Canvas（比率維持） */
+    /* マロン描画Canvas（大きめサイズ・縦横比維持） */
     #marronCanvas {
       position: absolute;
-      bottom: 25px;
-      left: 20px;
-      height: 120px;
+      bottom: 18px;
+      left: 15px;
+      height: 175px;
       width: auto;
       cursor: pointer;
       will-change: left, transform;
@@ -325,8 +325,8 @@
   <div id="livingRoom" class="room-content active">
     <div class="room-stage-wrapper" id="stageWrapper">
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleWalkSound(event)">🔇 足音OFF</button>
-      <canvas id="marronCanvas" onclick="tapLivingMarron(event)"></canvas>
-      <video id="sourceVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline crossorigin="anonymous" style="display:none;"></video>
+      <canvas id="marronCanvas" width="300" height="300" onclick="tapLivingMarron(event)"></canvas>
+      <video id="sourceVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
     </div>
 
     <div class="stats-bar">
@@ -423,22 +423,22 @@
       }
     }
 
-    // 2. 白背景透過 ＆ 往復歩行
+    // 2. 青背景（#007BFF）クロマキー透過 ＆ 往復歩行
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const video = document.getElementById('sourceVideo');
     const stage = document.getElementById('stageWrapper');
     const soundBtn = document.getElementById('stepSoundBtn');
 
-    let posX = 20;
+    let posX = 15;
     let speed = 0.8;
     let direction = 1;
 
     function renderChromaLoop() {
       if (document.getElementById('livingRoom').classList.contains('active')) {
         if (video.readyState >= 2) {
-          // 動画の縦横比に合わせてCanvasサイズを自動同期（歪み防止）
-          if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+          // 動画の縦横比に合わせてCanvasサイズを自動同期
+          if (video.videoWidth > 0 && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
           }
@@ -447,22 +447,29 @@
           const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = frame.data;
 
+          // #007BFF (RGB: 0, 123, 255) ブルーバッククロマキー処理
           for (let i = 0; i < data.length; i += 4) {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
 
-            if (r > 215 && g > 215 && b > 215) {
-              data[i + 3] = 0;
+            // 青色成分が強く、赤色成分が低い青背景ピクセルを判定して透明化
+            // （口元の白や黒・茶色の毛はBが突出しないため消えずに残ります）
+            const isBlueBackground = (b > 150 && b > r + 60 && b > g + 15) || 
+                                     (r < 60 && g > 70 && g < 170 && b > 190);
+
+            if (isBlueBackground) {
+              data[i + 3] = 0; // 不透明度を0にして完全透過
             }
           }
           ctx.putImageData(frame, 0, 0);
         }
 
+        // 床の往復歩行計算
         const stageWidth = stage.clientWidth;
-        const marronWidth = canvas.clientWidth;
-        const maxRight = stageWidth - marronWidth - 20;
-        const minLeft = 15;
+        const marronWidth = canvas.clientWidth || 150;
+        const maxRight = stageWidth - marronWidth - 10;
+        const minLeft = 10;
 
         posX += speed * direction;
 

@@ -316,9 +316,10 @@
       <!-- マロンCanvas -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 4本の動画（裏でループ再生） -->
+      <!-- 5本の動画（裏でループ再生） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
+      <video id="videoDiagBack" src="marron_diagonal_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoBack" src="marron_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
     </main>
@@ -404,12 +405,13 @@
       }
     }
 
-    // 2. 3Dパース歩行（前後左右）＆ 青背景（#007BFF）クロマキー
+    // 2. 3Dパース歩行（角度別方向一致）＆ 青背景（#007BFF）クロマキー
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     const videoWalk = document.getElementById('videoWalk');
     const videoDiag = document.getElementById('videoDiag');
+    const videoDiagBack = document.getElementById('videoDiagBack');
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
     const soundBtn = document.getElementById('stepSoundBtn');
@@ -418,15 +420,15 @@
     let isSoundOn = true;
     let hasUserInteracted = false;
 
-    // 床の行動エリア（窓枠の真下・壁際まで大幅に拡大）
+    // 床の行動エリア（窓際〜手前）
     function getBounds() {
       const w = window.innerWidth;
       const h = window.innerHeight;
       return {
         minX: 10,
         maxX: w - 150,
-        minY: h * 0.38, // 窓のすぐ下（奥の壁際）まで到達可能
-        maxY: h * 0.80  // 手前（画面下端近く）
+        minY: h * 0.38, // 窓際奥まで
+        maxY: h * 0.80  // 手前
       };
     }
 
@@ -442,26 +444,35 @@
       updateMotionState();
     }
 
+    // 移動角度（ベクトル）と歩行アニメーションを完全一致させる判定
     function updateMotionState() {
       const dx = targetX - posX;
       const dy = targetY - posY;
       const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
 
-      if (absDy > absDx * 0.75) {
-        if (dy < -5) {
-          // 奥（窓方向）へ向かう
-          currentVideo = videoBack;
-          canvas.style.transform = 'scaleX(1)';
-        } else if (dy > 5) {
-          // 手前へ向かう
-          currentVideo = videoFront;
-          canvas.style.transform = 'scaleX(1)';
-        }
-      } else {
-        // 左右へ歩く
-        currentVideo = Math.random() > 0.4 ? videoWalk : videoDiag;
+      // 上下が正負、左右が absDx の角度（-90度: 真奥 〜 0度: 真横 〜 +90度: 真手前）
+      const angleDeg = Math.atan2(dy, absDx) * (180 / Math.PI);
+
+      if (angleDeg < -67.5) {
+        // ほぼ真上（真奥の窓へ直進）
+        currentVideo = videoBack;
+        canvas.style.transform = 'scaleX(1)';
+      } else if (angleDeg < -22.5) {
+        // 斜め上（斜め奥の角へ向かう）
+        currentVideo = videoDiagBack;
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      } else if (angleDeg <= 22.5) {
+        // ほぼ真横（水平移動）
+        currentVideo = videoWalk;
+        canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      } else if (angleDeg <= 67.5) {
+        // 斜め下（斜め手前へ向かう）
+        currentVideo = videoDiag;
+        canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+      } else {
+        // ほぼ真下（真手前へ直進）
+        currentVideo = videoFront;
+        canvas.style.transform = 'scaleX(1)';
       }
 
       syncAudio();
@@ -471,7 +482,7 @@
       if (!hasUserInteracted) return;
 
       const isLivingActive = document.getElementById('livingRoom').classList.contains('active');
-      const allVideos = [videoWalk, videoDiag, videoFront, videoBack];
+      const allVideos = [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack];
 
       allVideos.forEach(v => {
         if (v === currentVideo && isSoundOn && isLivingActive) {
@@ -483,7 +494,7 @@
     }
 
     function muteAllWalkVideos() {
-      [videoWalk, videoDiag, videoFront, videoBack].forEach(v => {
+      [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack].forEach(v => {
         v.muted = true;
       });
     }
@@ -553,7 +564,7 @@
           }
         }
 
-        // 遠近法の計算（一番奥の窓際は約110px、手前は約235px）
+        // 遠近法（奥＝約110px、手前＝約235px）
         const b = getBounds();
         const depthRatio = Math.max(0, Math.min(1, (posY - b.minY) / (b.maxY - b.minY)));
         const marronHeight = 110 + depthRatio * 125;
@@ -567,7 +578,7 @@
     }
 
     function startAllVideos() {
-      [videoWalk, videoDiag, videoFront, videoBack].forEach(v => {
+      [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack].forEach(v => {
         v.play().catch(() => {});
       });
     }

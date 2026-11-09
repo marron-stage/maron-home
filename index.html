@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
-  <!-- favicon 404防止用 -->
   <link rel="icon" href="data:,">
   <style>
     * {
@@ -20,7 +19,7 @@
       height: 100dvh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f7f3eb; /* 真っ黒防止ベースカラー */
+      background-color: #f7f3eb;
       color: #333;
     }
 
@@ -478,7 +477,6 @@
 <body>
 
   <div id="app-container">
-    <!-- 固定タブナビゲーション -->
     <nav id="tab-bar">
       <button class="tab-btn active" data-room="home-room">🏡 お家</button>
       <button class="tab-btn" data-room="counsel-room">🐾 相談部屋</button>
@@ -501,10 +499,9 @@
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- 歩行動画読み込み用（非表示） -->
       <video id="marronWalkVideo" playsinline muted loop style="display: none;"></video>
 
-      <!-- 音声：お部屋BGM & 足音 -->
+      <!-- お部屋BGM & 足音 -->
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
       <audio id="footstepAudio" src="footstep.MP3" loop></audio>
     </section>
@@ -560,7 +557,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       /* ==============================================
-         1. タブ切り替え制御（絶対停止させない安全構造）
+         1. タブ切り替え制御
          ============================================== */
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
@@ -706,23 +703,19 @@
           const diffY = targetY - currentY;
 
           let selectedVideo = 'marron_walk.mp4';
-          let flipX = 1;
+          // ★修正：右に進む（diffX >= 0）ときはそのまま1、左へ進むときは反転-1
+          let flipX = diffX >= 0 ? 1 : -1;
 
           if (diffY > 4 && Math.abs(diffX) < 14) {
             selectedVideo = 'marron_back.mp4';
-            flipX = diffX >= 0 ? -1 : 1;
           } else if (diffY < -4 && Math.abs(diffX) < 14) {
             selectedVideo = 'marron_front.mp4';
-            flipX = diffX >= 0 ? -1 : 1;
           } else if (diffY > 4) {
             selectedVideo = 'marron_diagonal_back.mp4';
-            flipX = diffX >= 0 ? -1 : 1;
           } else if (diffY < -4) {
             selectedVideo = 'marron_diagonal.mp4';
-            flipX = diffX >= 0 ? -1 : 1;
           } else {
             selectedVideo = 'marron_walk.mp4';
-            flipX = diffX >= 0 ? -1 : 1;
           }
 
           const depthFactor = 1.15 - ((targetY - 6) / 15) * 0.35;
@@ -794,7 +787,7 @@
       }
 
       /* ==============================================
-         3. 添い寝部屋（BGMループ＆寝息4回＋寝言1回）
+         3. 添い寝部屋（BGMループ＆寝息4回＋寝言1回ループ完全保護）
          ============================================== */
       const lightToggleBtn = document.getElementById('lightToggleBtn');
       const sleepOverlay = document.getElementById('sleepOverlay');
@@ -808,6 +801,23 @@
       const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
       let currentBgmIndex = 0;
       let sleepCycleCount = 0;
+      let sleepNextTimer = null;
+
+      // 大文字・小文字404の自動フォールバック
+      if (sleepVoiceAudio) {
+        sleepVoiceAudio.onerror = () => {
+          if (sleepVoiceAudio.src.endsWith('.MP3')) {
+            sleepVoiceAudio.src = 'sleep_voice01.mp3';
+          }
+        };
+      }
+      if (sleepBreathAudio) {
+        sleepBreathAudio.onerror = () => {
+          if (sleepBreathAudio.src.endsWith('.MP3')) {
+            sleepBreathAudio.src = 'sleep_breath.mp3';
+          }
+        };
+      }
 
       if (sleepBgmAudio) {
         sleepBgmAudio.addEventListener('ended', () => {
@@ -817,28 +827,47 @@
         });
       }
 
+      // 次の寝息・寝言を再生するコア関数
       function playNextSleepSound() {
         if (!isSleepSoundOn) return;
+        clearTimeout(sleepNextTimer);
         sleepCycleCount++;
 
+        // 5回に1回は寝言（それ以外は寝息）
         if (sleepCycleCount % 5 === 0 && sleepVoiceAudio) {
           sleepVoiceAudio.currentTime = 0;
-          sleepVoiceAudio.play().catch(() => {});
+          sleepVoiceAudio.play().catch(() => {
+            // 万が一寝言の再生に失敗しても止まらずに寝息へ進む
+            sleepNextTimer = setTimeout(playNextSleepSound, 2000);
+          });
+          // 音声が万が一途中で固まっても復帰させる安全タイマー（最大4秒）
+          sleepNextTimer = setTimeout(playNextSleepSound, 4000);
         } else if (sleepBreathAudio) {
           sleepBreathAudio.currentTime = 0;
-          sleepBreathAudio.play().catch(() => {});
+          sleepBreathAudio.play().catch(() => {
+            sleepNextTimer = setTimeout(playNextSleepSound, 2000);
+          });
+          sleepNextTimer = setTimeout(playNextSleepSound, 4500);
         }
       }
 
+      // 寝息が正常終了したら1.2秒後に次へ
       if (sleepBreathAudio) {
         sleepBreathAudio.addEventListener('ended', () => {
-          if (isSleepSoundOn) setTimeout(playNextSleepSound, 1000);
+          if (isSleepSoundOn) {
+            clearTimeout(sleepNextTimer);
+            sleepNextTimer = setTimeout(playNextSleepSound, 1200);
+          }
         });
       }
 
+      // 寝言が正常終了したら1.8秒後に寝息へ戻る
       if (sleepVoiceAudio) {
         sleepVoiceAudio.addEventListener('ended', () => {
-          if (isSleepSoundOn) setTimeout(playNextSleepSound, 1500);
+          if (isSleepSoundOn) {
+            clearTimeout(sleepNextTimer);
+            sleepNextTimer = setTimeout(playNextSleepSound, 1800);
+          }
         });
       }
 
@@ -854,6 +883,8 @@
       if (soundToggleBtn) {
         soundToggleBtn.addEventListener('click', () => {
           isSleepSoundOn = !isSleepSoundOn;
+          clearTimeout(sleepNextTimer);
+
           if (isSleepSoundOn) {
             if (sleepBgmAudio) {
               if (!sleepBgmAudio.src || sleepBgmAudio.src === '') {
@@ -877,7 +908,7 @@
       }
 
       /* ==============================================
-         4. 相談部屋（2本立て動画連動＆音声ON）
+         4. 相談部屋
          ============================================== */
       const talkVideo = document.getElementById('counselingVideo');
       const talkBubble = document.getElementById('counselingBubble');
@@ -938,7 +969,7 @@
       }
 
       /* ==============================================
-         5. 日常部屋（モーダル再生）
+         5. 日常部屋
          ============================================== */
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
+  <!-- favicon 404防止用 -->
   <link rel="icon" href="data:,">
   <style>
     * {
@@ -19,7 +20,7 @@
       height: 100dvh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f7f3eb;
+      background-color: #f7f3eb; /* 真っ黒防止ベースカラー */
       color: #333;
     }
 
@@ -312,7 +313,7 @@
     }
 
     /* =======================================
-       3. 添い寝部屋（完全全画面表示）
+       3. 添い寝部屋（完全全画面・BGM特化）
        ======================================= */
     #sleep-room {
       position: fixed;
@@ -529,7 +530,7 @@
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-      <!-- 添い寝用：BGMプレイヤー（1〜4曲ループ） -->
+      <!-- 添い寝用：BGMプレイヤー（1〜4曲連続ループ） -->
       <audio id="sleepBgmAudio"></audio>
     </section>
 
@@ -700,7 +701,7 @@
           const diffY = targetY - currentY;
 
           let selectedVideo = 'marron_walk.mp4';
-          let flipX = diffX >= 0 ? 1 : -1; // 進行方向を向く
+          let flipX = diffX >= 0 ? 1 : -1; // 進行方向を向く（ムーンウォーク解消）
 
           if (diffY > 4 && Math.abs(diffX) < 14) {
             selectedVideo = 'marron_back.mp4';
@@ -788,7 +789,6 @@
       let currentBgmIndex = 0;
 
       if (sleepBgmAudio) {
-        // 曲が終わったら自動で次の曲へ
         sleepBgmAudio.addEventListener('ended', () => {
           currentBgmIndex = (currentBgmIndex + 1) % sleepPlaylist.length;
           sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];

@@ -17,7 +17,7 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: #121624;
+      background-color: #0b0e17;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: #e2e8f0;
     }
@@ -115,7 +115,6 @@
       font-weight: 600;
     }
 
-    /* マロン描画Canvas */
     #marronCanvas {
       position: absolute;
       will-change: left, top, transform, height;
@@ -123,16 +122,18 @@
       pointer-events: none;
     }
 
-    /* ================= 画面2＆3：添い寝・日常 ================= */
-    .centered-screen {
+    /* ================= 画面2：添い寝部屋（シアターナイト風） ================= */
+    #sleepRoom {
+      background: radial-gradient(circle at center 40%, #171d33 0%, #07090f 100%);
+    }
+    .sleep-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: 70px 16px 20px 16px;
+      padding: calc(env(safe-area-inset-top, 10px) + 60px) 16px calc(env(safe-area-inset-bottom, 10px) + 16px) 16px;
       text-align: center;
-      background: radial-gradient(circle at center, #1b2238 0%, #0d101b 100%);
     }
 
     .audio-player {
@@ -144,7 +145,8 @@
       padding: 6px 16px;
       border-radius: 30px;
       backdrop-filter: blur(8px);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      z-index: 10;
     }
     .audio-btn {
       background: none;
@@ -159,41 +161,46 @@
       min-width: 80px;
     }
 
+    /* 寝姿動画カード（縦動画 ＋ 呼吸グロー） */
     .marron-sleep-card {
-      width: 270px;
-      max-width: 84vw;
-      border-radius: 24px;
+      position: relative;
+      width: 250px;
+      height: 380px;
+      max-width: 78vw;
+      max-height: 52vh;
+      border-radius: 26px;
       overflow: hidden;
-      border: 2px solid rgba(246, 173, 85, 0.45);
-      box-shadow: 0 0 25px rgba(246, 173, 85, 0.25);
+      border: 1.5px solid rgba(246, 173, 85, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(246, 173, 85, 0.15);
       background: #000;
-      animation: breathe 4s ease-in-out infinite;
       cursor: pointer;
+      animation: nightGlow 5s ease-in-out infinite alternate;
     }
-    .marron-sleep-card img {
+    .marron-sleep-card video {
       width: 100%;
       height: 100%;
+      object-fit: cover;
       display: block;
     }
-    @keyframes breathe {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(246, 173, 85, 0.2); }
-      50% { transform: scale(1.03); box-shadow: 0 0 35px rgba(246, 173, 85, 0.4); }
+    @keyframes nightGlow {
+      0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(246, 173, 85, 0.12); }
+      100% { box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 30px rgba(246, 173, 85, 0.32); }
     }
 
     .like-btn {
-      background: rgba(239, 68, 68, 0.3);
-      border: 1px solid rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(239, 68, 68, 0.45);
       color: #fca5a5;
-      padding: 8px 16px;
+      padding: 7px 16px;
       border-radius: 30px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
       backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
     }
     .like-btn:active {
       transform: scale(0.92);
@@ -201,15 +208,26 @@
 
     .bubble {
       background: rgba(25, 28, 40, 0.75);
-      border: 1px solid rgba(246, 173, 85, 0.4);
+      border: 1px solid rgba(246, 173, 85, 0.35);
       padding: 8px 14px;
       border-radius: 18px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: #fef3c7;
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       line-height: 1.4;
+    }
+
+    /* ================= 画面3：日常部屋 ================= */
+    .centered-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 70px 16px 20px 16px;
+      text-align: center;
+      background: radial-gradient(circle at center, #1b2238 0%, #0d101b 100%);
     }
 
     .youtube-card {
@@ -316,35 +334,32 @@
 
     <!-- ================= 画面1：全画面お部屋 ================= -->
     <main id="livingRoom" class="screen active">
-      <!-- 起動時はサウンドOFF（このボタンを押した時だけ切り替え） -->
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleLivingAudio(event)">🔇 サウンドOFF</button>
-
-      <!-- マロンCanvas（等速・自律歩行） -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 5本の動画（映像のみ） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiagBack" src="marron_diagonal_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoBack" src="marron_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
 
-      <!-- お部屋用BGM（bgm1.mp3） ＆ 足音（音量20%） -->
       <audio id="livingBgmAudio" src="bgm1.mp3" loop preload="auto"></audio>
       <audio id="footstepAudio" src="footstep.MP3" preload="auto"></audio>
     </main>
 
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
-      <div class="centered-screen">
+      <div class="sleep-container">
+        <!-- おやすみBGMプレーヤー -->
         <div class="audio-player">
           <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
           <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
           <button class="audio-btn" onclick="nextBgm()">⏭</button>
         </div>
 
+        <!-- マロン添い寝縦動画カード -->
         <div class="marron-sleep-card" onclick="tapSleepMarron(event)">
-          <img src="marron.gif" alt="マロン">
+          <video id="marronSleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline webkit-playsinline></video>
         </div>
 
         <div style="margin-top: 14px;">
@@ -354,10 +369,15 @@
           </button>
         </div>
 
-        <div class="bubble" id="sleepBubble" style="margin-top: 14px; max-width: 280px; text-align: center;">
+        <div class="bubble" id="sleepBubble" style="margin-top: 12px; max-width: 280px; text-align: center;">
           スピー… すやすや… 💤
         </div>
       </div>
+
+      <!-- 添い寝部屋用オーディオ（BGM ＆ 2種類の寝言） -->
+      <audio id="bgmAudio" preload="auto"></audio>
+      <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
+      <audio id="sleepVoice02" src="sleep_voice02.MP3" preload="auto"></audio>
     </section>
 
     <!-- ================= 画面3：日常部屋 ================= -->
@@ -391,8 +411,6 @@
     </section>
   </div>
 
-  <audio id="bgmAudio" preload="auto"></audio>
-
   <script>
     // 1. タブ切り替え
     function switchTab(tab) {
@@ -402,20 +420,22 @@
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
+        stopSleepRoomAudio();
         if (isSoundOn) startLivingAudio();
-      } else {
-        if (tab === 'sleep') {
-          event.target.classList.add('active');
-          document.getElementById('sleepRoom').classList.add('active');
-        } else {
-          event.target.classList.add('active');
-          document.getElementById('dailyRoom').classList.add('active');
-        }
+      } else if (tab === 'sleep') {
+        event.target.classList.add('active');
+        document.getElementById('sleepRoom').classList.add('active');
         stopLivingAudio();
+        startSleepRoomTimer();
+      } else {
+        event.target.classList.add('active');
+        document.getElementById('dailyRoom').classList.add('active');
+        stopLivingAudio();
+        stopSleepRoomAudio();
       }
     }
 
-    // 2. 4秒間完全等速（歩幅完全固定）自律歩行システム
+    // 2. お部屋自律歩行（等速・4秒サイクル・クロマキー透過）
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -430,10 +450,10 @@
     const soundBtn = document.getElementById('stepSoundBtn');
 
     livingBgm.volume = 0.35;
-    footstepAudio.volume = 0.20; // 足音は控えめに20%
+    footstepAudio.volume = 0.20;
 
     let currentVideo = videoWalk;
-    let isSoundOn = false; // 起動時は完全にOFF
+    let isSoundOn = false;
 
     function getBounds() {
       const w = window.innerWidth;
@@ -450,8 +470,8 @@
       return (x < w * 0.32 && y < h * 0.56);
     }
 
-    const CYCLE_DURATION = 4000; // 4秒セッション
-    const STEP_DISTANCE = 110;   // 4秒で進む距離を完全固定（速度一定）
+    const CYCLE_DURATION = 4000;
+    const STEP_DISTANCE = 110;
 
     let sessionStartTime = 0;
     let startX = 60;
@@ -589,7 +609,6 @@
       requestAnimationFrame(renderChromaLoop);
     }
 
-    // サウンド制御：ボタン専用切り替え
     function toggleLivingAudio(e) {
       if (e) e.stopPropagation();
       isSoundOn = !isSoundOn;
@@ -632,13 +651,53 @@
         v.muted = true;
         v.play().catch(() => {});
       });
+      const sleepVid = document.getElementById('marronSleepVideo');
+      if (sleepVid) sleepVid.play().catch(() => {});
     }
 
     startAllVideos();
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出
+    // 3. 添い寝部屋演出（2種類のランダム寝言 ＆ BGM）
+    const voice01 = document.getElementById('sleepVoice01');
+    const voice02 = document.getElementById('sleepVoice02');
+    voice01.volume = 0.45;
+    voice02.volume = 0.45;
+
+    let sleepVoiceTimer = null;
+
+    // 2種類の寝言からランダムに1つ再生する関数
+    function playRandomSleepVoice() {
+      const isSleep = document.getElementById('sleepRoom').classList.contains('active');
+      if (!isSleep) return;
+
+      const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
+      chosenVoice.currentTime = 0;
+      chosenVoice.play().catch(() => {});
+
+      // 次の寝言までのランダム間隔（45秒〜80秒）
+      const nextDelay = 45000 + Math.random() * 35000;
+      sleepVoiceTimer = setTimeout(playRandomSleepVoice, nextDelay);
+    }
+
+    function startSleepRoomTimer() {
+      clearTimeout(sleepVoiceTimer);
+      // 添い寝部屋に入ってから最初の寝言は少し早め（15〜30秒後）
+      const initialDelay = 15000 + Math.random() * 15000;
+      sleepVoiceTimer = setTimeout(playRandomSleepVoice, initialDelay);
+    }
+
+    function stopSleepRoomAudio() {
+      clearTimeout(sleepVoiceTimer);
+      voice01.pause();
+      voice02.pause();
+      const bgm = document.getElementById('bgmAudio');
+      if (bgm) bgm.pause();
+      const playBtn = document.getElementById('playBtn');
+      if (playBtn) playBtn.innerText = '▶ 再生';
+    }
+
     let sleepLikes = parseInt(localStorage.getItem('marron_sleep_likes') || '0', 10);
     document.getElementById('sleepLikeCount').innerText = sleepLikes;
 
@@ -687,6 +746,13 @@
     function tapSleepMarron(e) {
       sleepMsgIdx = (sleepMsgIdx + 1) % sleepMessages.length;
       document.getElementById('sleepBubble').innerText = sleepMessages[sleepMsgIdx];
+      
+      // なでなで時、35%の確率で寝言を小さく返す
+      if (Math.random() < 0.35) {
+        const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
+        chosenVoice.currentTime = 0;
+        chosenVoice.play().catch(() => {});
+      }
       addLike('sleep', e);
     }
 

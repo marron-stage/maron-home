@@ -89,7 +89,6 @@
       background-size: cover;
       background-position: center bottom;
       background-repeat: no-repeat;
-      cursor: pointer;
     }
 
     .sound-badge {
@@ -114,7 +113,7 @@
       position: absolute;
       will-change: left, top, transform, height;
       z-index: 40;
-      cursor: pointer;
+      pointer-events: none;
     }
 
     /* ================= 画面2＆3：添い寝・日常 ================= */
@@ -309,19 +308,21 @@
     </header>
 
     <!-- ================= 画面1：全画面お部屋 ================= -->
-    <main id="livingRoom" class="screen active" onclick="onRoomClick(event)">
-      <!-- 足音切り替えボタン -->
+    <main id="livingRoom" class="screen active">
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleWalkSound(event)">🔊 足音ON</button>
 
-      <!-- マロンCanvas -->
+      <!-- マロンCanvas（完全自律歩行） -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 5本の動画（裏でループ再生） -->
+      <!-- 5本の動画（映像のみ・完全消音で再生） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiagBack" src="marron_diagonal_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoBack" src="marron_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
+
+      <!-- 足音専用オーディオ（.MP3対応） -->
+      <audio id="footstepAudio" src="footstep.MP3" loop preload="auto"></audio>
     </main>
 
     <!-- ================= 画面2：添い寝部屋 ================= -->
@@ -384,7 +385,7 @@
   <audio id="bgmAudio" preload="auto"></audio>
 
   <script>
-    // 1. タブ切り替え ＆ 足音の連動制御
+    // 1. タブ切り替え
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
@@ -392,7 +393,7 @@
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
-        syncAudio();
+        syncFootstepAudio();
       } else {
         if (tab === 'sleep') {
           event.target.classList.add('active');
@@ -401,11 +402,11 @@
           event.target.classList.add('active');
           document.getElementById('dailyRoom').classList.add('active');
         }
-        muteAllWalkVideos();
+        stopFootstepAudio();
       }
     }
 
-    // 2. 3Dパース歩行（角度別方向一致）＆ 青背景（#007BFF）クロマキー
+    // 2. 4秒サイクル完全同期 自律歩行システム
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -414,115 +415,79 @@
     const videoDiagBack = document.getElementById('videoDiagBack');
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
+    const footstepAudio = document.getElementById('footstepAudio');
     const soundBtn = document.getElementById('stepSoundBtn');
 
     let currentVideo = videoWalk;
     let isSoundOn = true;
     let hasUserInteracted = false;
 
-    // 床の行動エリア（窓際〜手前）
     function getBounds() {
       const w = window.innerWidth;
       const h = window.innerHeight;
       return {
-        minX: 10,
+        minX: 15,
         maxX: w - 150,
-        minY: h * 0.38, // 窓際奥まで
-        maxY: h * 0.80  // 手前
+        minY: h * 0.38,
+        maxY: h * 0.80
       };
     }
 
-    let posX = 40;
-    let posY = window.innerHeight * 0.65;
-    let targetX = posX;
-    let targetY = posY;
+    const CYCLE_DURATION = 4000;
+    let sessionStartTime = 0;
+    let startX = 40;
+    let startY = window.innerHeight * 0.65;
+    let currentX = startX;
+    let currentY = startY;
+    let targetX = startX;
+    let targetY = startY;
 
-    function pickNewTarget() {
+    function startNextWalkSession() {
       const b = getBounds();
-      targetX = b.minX + Math.random() * (b.maxX - b.minX);
-      targetY = b.minY + Math.random() * (b.maxY - b.minY);
-      updateMotionState();
-    }
+      startX = currentX;
+      startY = currentY;
 
-    // 移動角度（ベクトル）と歩行アニメーションを完全一致させる判定
-    function updateMotionState() {
-      const dx = targetX - posX;
-      const dy = targetY - posY;
+      let destX, destY, dist;
+      let attempts = 0;
+      do {
+        destX = b.minX + Math.random() * (b.maxX - b.minX);
+        destY = b.minY + Math.random() * (b.maxY - b.minY);
+        dist = Math.hypot(destX - startX, destY - startY);
+        attempts++;
+      } while ((dist < 60 || dist > 260) && attempts < 10);
+
+      targetX = destX;
+      targetY = destY;
+      sessionStartTime = performance.now();
+
+      const dx = targetX - startX;
+      const dy = targetY - startY;
       const absDx = Math.abs(dx);
-
-      // 上下が正負、左右が absDx の角度（-90度: 真奥 〜 0度: 真横 〜 +90度: 真手前）
       const angleDeg = Math.atan2(dy, absDx) * (180 / Math.PI);
 
       if (angleDeg < -67.5) {
-        // ほぼ真上（真奥の窓へ直進）
         currentVideo = videoBack;
         canvas.style.transform = 'scaleX(1)';
       } else if (angleDeg < -22.5) {
-        // 斜め上（斜め奥の角へ向かう）
         currentVideo = videoDiagBack;
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else if (angleDeg <= 22.5) {
-        // ほぼ真横（水平移動）
         currentVideo = videoWalk;
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else if (angleDeg <= 67.5) {
-        // 斜め下（斜め手前へ向かう）
         currentVideo = videoDiag;
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else {
-        // ほぼ真下（真手前へ直進）
         currentVideo = videoFront;
         canvas.style.transform = 'scaleX(1)';
       }
 
-      syncAudio();
-    }
-
-    function syncAudio() {
-      if (!hasUserInteracted) return;
-
-      const isLivingActive = document.getElementById('livingRoom').classList.contains('active');
-      const allVideos = [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack];
-
-      allVideos.forEach(v => {
-        if (v === currentVideo && isSoundOn && isLivingActive) {
-          v.muted = false;
-        } else {
-          v.muted = true;
-        }
-      });
-    }
-
-    function muteAllWalkVideos() {
-      [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack].forEach(v => {
-        v.muted = true;
-      });
-    }
-
-    // 床をタップした場所へトコトコ移動
-    function onRoomClick(e) {
-      if (e.target.closest('.sound-badge')) return;
-      unlockAudioInteraction();
-
-      const b = getBounds();
-      const clickX = e.clientX - 60;
-      const clickY = e.clientY - 90;
-
-      targetX = Math.max(b.minX, Math.min(b.maxX, clickX));
-      targetY = Math.max(b.minY, Math.min(b.maxY, clickY));
-      updateMotionState();
-    }
-
-    function unlockAudioInteraction() {
-      if (!hasUserInteracted) {
-        hasUserInteracted = true;
-        startAllVideos();
-        syncAudio();
+      if (currentVideo.readyState >= 2) {
+        currentVideo.currentTime = 0;
       }
     }
 
-    // 描画ループ
-    function renderChromaLoop() {
+    function renderChromaLoop(now) {
       if (document.getElementById('livingRoom').classList.contains('active')) {
         const vid = currentVideo;
 
@@ -551,34 +516,64 @@
           ctx.putImageData(frame, 0, 0);
         }
 
-        const dx = targetX - posX;
-        const dy = targetY - posY;
-        const dist = Math.hypot(dx, dy);
+        const elapsed = now - sessionStartTime;
+        let progress = elapsed / CYCLE_DURATION;
 
-        if (dist > 4) {
-          posX += (dx / dist) * 0.95;
-          posY += (dy / dist) * 0.75;
+        if (progress >= 1.0) {
+          currentX = targetX;
+          currentY = targetY;
+          startNextWalkSession();
+          progress = 0;
         } else {
-          if (Math.random() < 0.015) {
-            pickNewTarget();
-          }
+          currentX = startX + (targetX - startX) * progress;
+          currentY = startY + (targetY - startY) * progress;
         }
 
-        // 遠近法（奥＝約110px、手前＝約235px）
         const b = getBounds();
-        const depthRatio = Math.max(0, Math.min(1, (posY - b.minY) / (b.maxY - b.minY)));
+        const depthRatio = Math.max(0, Math.min(1, (currentY - b.minY) / (b.maxY - b.minY)));
         const marronHeight = 110 + depthRatio * 125;
 
         canvas.style.height = `${marronHeight}px`;
-        canvas.style.left = `${posX}px`;
-        canvas.style.top = `${posY}px`;
+        canvas.style.left = `${currentX}px`;
+        canvas.style.top = `${currentY}px`;
       }
 
       requestAnimationFrame(renderChromaLoop);
     }
 
+    function syncFootstepAudio() {
+      if (!hasUserInteracted) return;
+      const isLiving = document.getElementById('livingRoom').classList.contains('active');
+      if (isLiving && isSoundOn) {
+        footstepAudio.play().catch(() => {});
+      } else {
+        stopFootstepAudio();
+      }
+    }
+
+    function stopFootstepAudio() {
+      footstepAudio.pause();
+    }
+
+    function toggleWalkSound(e) {
+      e.stopPropagation();
+      unlockAudioInteraction();
+      isSoundOn = !isSoundOn;
+      soundBtn.innerText = isSoundOn ? '🔊 足音ON' : '🔇 足音OFF';
+      syncFootstepAudio();
+    }
+
+    function unlockAudioInteraction() {
+      if (!hasUserInteracted) {
+        hasUserInteracted = true;
+        startAllVideos();
+        syncFootstepAudio();
+      }
+    }
+
     function startAllVideos() {
       [videoWalk, videoDiag, videoDiagBack, videoFront, videoBack].forEach(v => {
+        v.muted = true;
         v.play().catch(() => {});
       });
     }
@@ -586,15 +581,8 @@
     startAllVideos();
     document.addEventListener('touchstart', unlockAudioInteraction, { once: true });
     document.addEventListener('click', unlockAudioInteraction, { once: true });
+    startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
-
-    function toggleWalkSound(e) {
-      e.stopPropagation();
-      unlockAudioInteraction();
-      isSoundOn = !isSoundOn;
-      soundBtn.innerText = isSoundOn ? '🔊 足音ON' : '🔇 足音OFF';
-      syncAudio();
-    }
 
     // 3. 添い寝部屋演出
     let sleepLikes = parseInt(localStorage.getItem('marron_sleep_likes') || '0', 10);
@@ -748,7 +736,6 @@
     audio.addEventListener('ended', () => playRandomBgm());
 
     initVideoSelector();
-    pickNewTarget();
   </script>
 </body>
 </html>

@@ -255,7 +255,6 @@
       margin: 0 auto;
     }
 
-    /* 横3列グリッド（アスペクト比 9:16 の縦長サムネイル） */
     .shorts-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -287,7 +286,6 @@
       pointer-events: none;
     }
 
-    /* サムネイル下部のグラデーションとタイトル */
     .short-item-overlay {
       position: absolute;
       inset: 0;
@@ -326,7 +324,6 @@
       padding-left: 1.5px;
     }
 
-    /* 非表示のフルスクリーン再生用プレイヤー */
     #hiddenFullPlayer {
       display: none;
     }
@@ -389,7 +386,6 @@
     </section>
   </div>
 
-  <!-- フルスクリーン再生用の共通プレイヤー -->
   <video id="hiddenFullPlayer" playsinline></video>
 
   <script>
@@ -724,7 +720,6 @@
     }
 
     // 4. 日常部屋（YouTubeショート風 3列グリッド制御）
-    // ※今後動画が増えたらここに { title: '...', src: '...' } を追加するだけ
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' }
     ];
@@ -739,8 +734,9 @@
         item.className = 'short-item-card';
         item.onclick = () => playShortVideo(v.src);
 
+        // iPhone対策として #t=0.001 を追加（1コマ目を強制描画）
         item.innerHTML = `
-          <video src="${v.src}" preload="metadata" muted playsinline></video>
+          <video src="${v.src}#t=0.001" preload="metadata" muted playsinline></video>
           <div class="short-play-icon">▶</div>
           <div class="short-item-overlay">
             <div class="short-item-title">${v.title}</div>
@@ -750,7 +746,6 @@
       });
     }
 
-    // タップされた動画を全画面で即座に再生
     function playShortVideo(src) {
       fullPlayer.src = src;
       fullPlayer.muted = false;

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
   <style>
     * {
@@ -14,38 +14,39 @@
     }
 
     body, html {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100dvh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: #000;
       color: #333;
     }
 
-    /* 共通アプリコンテナ */
+    /* アプリ全体基盤 */
     #app-container {
       position: relative;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
     }
 
-    /* 上部固定 ナビゲーションタブバー */
+    /* 固定タブバー（最前面） */
     #tab-bar {
-      position: absolute;
+      position: fixed;
       top: 16px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: 6px 10px;
       border-radius: 24px;
       z-index: 1000;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      width: max-content;
     }
 
     .tab-btn {
@@ -53,26 +54,26 @@
       border: none;
       padding: 6px 14px;
       border-radius: 16px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      color: #444;
+      color: #333;
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease;
     }
 
     .tab-btn.active {
       background: #fff;
       color: #2e7d32;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    /* 各部屋共通スタイル */
+    /* 部屋共通レイアウト */
     .room-panel {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100dvh;
       display: none;
       overflow: hidden;
     }
@@ -82,61 +83,65 @@
     }
 
     /* =======================================
-       1. 添い寝部屋（全画面＆タブ下ボタン）
+       1. 添い寝部屋（余白なし完全全画面表示）
        ======================================= */
     #sleep-room {
-      position: relative;
-      background: #111;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: #000;
+      z-index: 10;
     }
 
     #sleepVideo {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100dvh;
       object-fit: cover;
+      object-position: center center;
       z-index: 1;
     }
 
     #sleepOverlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.55);
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: rgba(0, 0, 0, 0.65);
       z-index: 2;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.6s ease;
     }
 
-    /* タブのすぐ下に浮かせる操作ボタン群 */
+    /* タブ直下の操作ボタン群（上から72px・中央揃え） */
     .sleep-controls-top {
       position: absolute;
-      top: 72px; /* タブバー直下 */
+      top: 72px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 10px;
-      z-index: 10;
+      z-index: 20;
       width: max-content;
     }
 
     .sleep-btn {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
       color: #fff;
-      padding: 7px 15px;
+      padding: 7px 16px;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
       transition: background 0.2s ease, transform 0.1s ease;
     }
 
@@ -145,53 +150,53 @@
     }
 
     .sleep-btn.active {
-      background: rgba(46, 125, 50, 0.8);
+      background: rgba(46, 125, 50, 0.85);
       border-color: rgba(255, 255, 255, 0.8);
     }
 
     /* =======================================
-       2. 相談部屋（全画面映像＋頭上吹き出し＋操作盤）
+       2. 相談部屋（全画面映像＋一本化UI）
        ======================================= */
     #counsel-room {
       position: relative;
-      background: #fbf8f3;
+      background: #111;
     }
 
     #counselingVideo {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100dvh;
       object-fit: cover;
+      object-position: center center;
       z-index: 1;
     }
 
-    /* マロンの頭上吹き出し（タブの少し下・画面上部20〜25%） */
+    /* マロンの頭上吹き出しメッセージ */
     #counselingBubble {
       position: absolute;
-      top: 22%;
+      top: 18%;
       left: 50%;
       transform: translateX(-50%);
       width: 86%;
       max-width: 360px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 2px solid #a5d6a7;
       border-radius: 18px;
-      padding: 14px 18px;
+      padding: 16px 20px;
       font-size: 0.92rem;
-      line-height: 1.5;
-      color: #2e4a2d;
+      line-height: 1.55;
+      color: #204022;
       font-weight: 600;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-      z-index: 20;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+      z-index: 30;
       display: none;
       animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    /* 吹き出しの三角の尻尾 */
     #counselingBubble::after {
       content: "";
       position: absolute;
@@ -206,25 +211,25 @@
     }
 
     @keyframes popIn {
-      0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+      0% { opacity: 0; transform: translateX(-50%) scale(0.85); }
       100% { opacity: 1; transform: translateX(-50%) scale(1); }
     }
 
-    /* 画面下部の入力・アクションパネル */
+    /* 入力エリア（画面下部・一本化） */
     #counselingActionArea {
       position: absolute;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
       transform: translateX(-50%);
       width: 90%;
       max-width: 380px;
       background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: 14px;
-      border-radius: 20px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
-      z-index: 30;
+      border-radius: 22px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      z-index: 25;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -233,14 +238,15 @@
 
     #counselingInput {
       width: 100%;
-      height: 60px;
-      border: 1px solid #dcdcdc;
-      border-radius: 12px;
-      padding: 8px 12px;
-      font-size: 0.88rem;
+      height: 64px;
+      border: 1px solid #d4d4d4;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
       resize: none;
       outline: none;
       background: #fafafa;
+      line-height: 1.4;
     }
 
     #counselingInput:focus {
@@ -248,63 +254,50 @@
       background: #fff;
     }
 
-    .counsel-btn-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .counsel-action-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 14px;
+    /* 手紙を渡す一本化ボタン */
+    #sendLetterBtn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 16px;
       border: none;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      transition: transform 0.1s ease, filter 0.2s ease;
-    }
-
-    .counsel-action-btn:active {
-      transform: scale(0.96);
-    }
-
-    .btn-bury {
-      background: linear-gradient(135deg, #8d6e63, #6d4c41);
+      gap: 6px;
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
       color: #fff;
-      box-shadow: 0 3px 10px rgba(109, 76, 65, 0.3);
+      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+      transition: transform 0.1s ease;
     }
 
-    .btn-highfive {
-      background: linear-gradient(135deg, #ffb74d, #f57c00);
-      color: #fff;
-      box-shadow: 0 3px 10px rgba(245, 124, 0, 0.3);
+    #sendLetterBtn:active {
+      transform: scale(0.97);
     }
 
-    /* 待機へ戻るリセットボタン（吹き出しが出ている時に表示） */
+    /* リセットボタン */
     #counselResetBtn {
       position: absolute;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #c8e6c9;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #a5d6a7;
       color: #2e7d32;
-      padding: 10px 24px;
-      border-radius: 20px;
-      font-size: 0.85rem;
+      padding: 12px 26px;
+      border-radius: 22px;
+      font-size: 0.88rem;
       font-weight: 700;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-      z-index: 30;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+      z-index: 35;
       display: none;
       cursor: pointer;
     }
 
     /* =======================================
-       3. お家・時計部屋 & 日常部屋（ベース）
+       3. お家（時計）部屋 & 日常部屋
        ======================================= */
     #home-room {
       background: linear-gradient(180deg, #ffe082 0%, #ffecb3 100%);
@@ -315,28 +308,27 @@
     }
 
     .home-clock {
-      font-size: 3.2rem;
+      font-size: 3.4rem;
       font-weight: 800;
-      color: #5d4037;
+      color: #4e342e;
       letter-spacing: 2px;
       text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
     }
 
     .home-date {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      color: #795548;
-      margin-top: 4px;
+      color: #6d4c41;
+      margin-top: 6px;
     }
 
     #daily-room {
       background: #000;
-      position: relative;
     }
 
     #dailyVideo {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100dvh;
       object-fit: cover;
     }
   </style>
@@ -344,7 +336,7 @@
 <body>
 
   <div id="app-container">
-    <!-- 固定タブバー -->
+    <!-- 固定ナビゲーションタブ -->
     <nav id="tab-bar">
       <button class="tab-btn active" data-room="counsel-room">🐾 相談部屋</button>
       <button class="tab-btn" data-room="sleep-room">🌙 添い寝</button>
@@ -354,37 +346,33 @@
 
     <!-- 1. 相談部屋 -->
     <section id="counsel-room" class="room-panel active">
+      <!-- 待機映像（手紙を書くマロン） -->
       <video id="counselingVideo" src="marron_talk.mp4" autoplay loop muted playsinline></video>
       
-      <!-- マロンの頭上吹き出し（セリフ） -->
+      <!-- 頭上メッセージ吹き出し -->
       <div id="counselingBubble"></div>
 
-      <!-- 入力＆アクションエリア -->
+      <!-- 入力パネル（一本化） -->
       <div id="counselingActionArea">
-        <textarea id="counselingInput" placeholder="マロンに愚痴や嬉しいことをお話ししてみてね..."></textarea>
-        <div class="counsel-btn-group">
-          <button id="buryBtn" class="counsel-action-btn btn-bury">🕳️ 土に埋める</button>
-          <button id="highfiveBtn" class="counsel-action-btn btn-highfive">🐾 ハイタッチ！</button>
-        </div>
+        <textarea id="counselingInput" placeholder="マロンに手紙を書いてみてね（愚痴も、嬉しかったことも何でもいいワン）..."></textarea>
+        <button id="sendLetterBtn">✉️ マロンに手紙を渡す</button>
       </div>
 
-      <!-- もう一度お話しするボタン -->
+      <!-- 読み終えた後の戻るボタン -->
       <button id="counselResetBtn">ありがとう、またお話しするワン🐾</button>
     </section>
 
-    <!-- 2. 添い寝部屋 -->
+    <!-- 2. 添い寝部屋（完全全画面） -->
     <section id="sleep-room" class="room-panel">
-      <!-- 全画面動画 -->
       <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline></video>
       <div id="sleepOverlay"></div>
 
-      <!-- タブバー直下のコンパクト操作パネル -->
+      <!-- タブ直下の操作ボタン群 -->
       <div class="sleep-controls-top">
         <button id="soundToggleBtn" class="sleep-btn">🎵 添い寝サウンド</button>
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-      <!-- 添い寝BGM（必要に応じて差し替え可能） -->
       <audio id="sleepAudio" src="sleep_bgm.mp3" loop></audio>
     </section>
 
@@ -394,7 +382,7 @@
       <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
     </section>
 
-    <!-- 4. 日常（ショート風）部屋 -->
+    <!-- 4. 日常部屋 -->
     <section id="daily-room" class="room-panel">
       <video id="dailyVideo" src="marron_daily.mp4" autoplay loop muted playsinline></video>
     </section>
@@ -402,7 +390,7 @@
 
   <script>
     /* ==============================================
-       1. タブ切り替え制御
+       1. タブ切り替え処理
        ============================================== */
     const tabBtns = document.querySelectorAll('.tab-btn');
     const roomPanels = document.querySelectorAll('.room-panel');
@@ -420,7 +408,7 @@
     });
 
     /* ==============================================
-       2. 添い寝部屋 ロジック（全画面＆ボタン制御）
+       2. 添い寝部屋 ロジック
        ============================================== */
     const lightToggleBtn = document.getElementById('lightToggleBtn');
     const sleepOverlay = document.getElementById('sleepOverlay');
@@ -443,7 +431,7 @@
       }
     });
 
-    // 添い寝サウンド オン/オフ
+    // 添い寝サウンド
     soundToggleBtn.addEventListener('click', () => {
       isSoundOn = !isSoundOn;
       if (isSoundOn) {
@@ -458,72 +446,54 @@
     });
 
     /* ==============================================
-       3. 相談部屋 ロジック（2本立て動画切り替え）
+       3. 相談部屋 ロジック（手紙を渡して埋める一本化）
        ============================================== */
     const talkVideo = document.getElementById('counselingVideo');
     const talkBubble = document.getElementById('counselingBubble');
     const actionArea = document.getElementById('counselingActionArea');
+    const sendBtn = document.getElementById('sendLetterBtn');
     const resetBtn = document.getElementById('counselResetBtn');
     const counselInput = document.getElementById('counselingInput');
-    const buryBtn = document.getElementById('buryBtn');
-    const highfiveBtn = document.getElementById('highfiveBtn');
 
-    // 愚痴昇華のランダムメッセージ
-    const buryMessages = [
+    // どんな感情も包み込む温かいメッセージ集
+    const comfortMessages = [
       "全部ふかふかの土に埋めて、きれいなお花が咲いたワン。もうここには何もないよ。大丈夫。",
       "今日を最後まで生き抜いただけでもう100点満点だよ。本当にお疲れさま。もう何も考えなくていいワン。",
       "嫌だったね、悔しかったね…。その気持ち、マロンが全部預かったよ。今日はお布団で丸まろ？",
       "あなたが悪いんじゃないワン。頑張りすぎちゃう優しいあなたが、マロンは大好きなんだよ。",
-      "ぜーんぶ土に還して栄養にしちゃった！胸のつかえ、少しは軽くなったかな？ずっとそばにいるワン。",
+      "ぜーんぶ土に還してきれいなお花にしちゃった！胸のつかえ、少しは軽くなったかな？ずっとそばにいるワン。",
       "無理に前を向かなくていいんだよ。立ち止まって、マロンをなでなでして、深呼吸しよ。",
-      "吐き出してくれてありがとう。心に溜まってたトゲトゲ、マロンがペロペロしてまるくしといたワン！",
-      "世の中のみんなが敵になっても、マロンはずーっとあなたの味方だからね。約束だワン。"
+      "手紙を届けてくれてありがとう。心に溜まってたトゲトゲ、マロンがペロペロしてまるくしといたワン！",
+      "世の中のみんなが敵になっても、マロンはずーっとあなたの味方だからね。約束だワン。",
+      "嬉しいことも、悔しいことも、全部マロンに話してくれてありがとう。あなたの一番の理解者でいるワン！"
     ];
 
-    // ハイタッチのランダムメッセージ
-    const highfiveMessages = [
-      "わあぁぁ！すごーいっ！！マロンもしっぽブンブン振っちゃうワン！本当によくやったね！",
-      "見てたよ、ずっと頑張ってたもんね！自分のことみたいに誇らしいワン！今日はお祝いだー！",
-      "イェーイ！ナイスハイタッチ！あなたの嬉しそうな顔が見られて、マロンも胸がポカポカだよ🐾",
-      "えらいえらい！世界で一番かっこいいワン！大好きなもの食べて、自分をめいっぱい褒めてあげてね！",
-      "わふっ！あなたの笑顔はマロンの一番の宝物だよ！今日は嬉しい気持ちのまま、いい夢見ようね！"
-    ];
-
-    // ①「土に埋める」を押したとき
-    buryBtn.addEventListener('click', () => {
+    // 「手紙を渡す」を押したときの動画フロー
+    sendBtn.addEventListener('click', () => {
+      // 1. 入力欄を隠す
       actionArea.style.display = 'none';
       talkBubble.style.display = 'none';
 
-      // 1本目：お部屋を出てお花が咲くまでの演出動画
+      // 2. 演出動画（部屋を出て土をかけ、お花が咲く）を再生
       talkVideo.src = 'bury_and_bloom.mp4';
       talkVideo.loop = false;
       talkVideo.play();
 
-      // 1本目が終わった瞬間に待機ループ動画へバトンタッチ
+      // 3. 演出動画が終わった瞬間に待機ループ動画へバトンタッチ
       talkVideo.onended = () => {
         talkVideo.src = 'marron_happy_loop.mp4';
         talkVideo.loop = true;
         talkVideo.play();
 
-        // ランダムメッセージを吹き出しに表示
-        const msg = buryMessages[Math.floor(Math.random() * buryMessages.length)];
+        // 4. ランダムメッセージとリセットボタンを表示
+        const msg = comfortMessages[Math.floor(Math.random() * comfortMessages.length)];
         talkBubble.textContent = msg;
         talkBubble.style.display = 'block';
         resetBtn.style.display = 'block';
       };
     });
 
-    // ②「ハイタッチ！」を押したとき
-    highfiveBtn.addEventListener('click', () => {
-      actionArea.style.display = 'none';
-      
-      const msg = highfiveMessages[Math.floor(Math.random() * highfiveMessages.length)];
-      talkBubble.textContent = msg;
-      talkBubble.style.display = 'block';
-      resetBtn.style.display = 'block';
-    });
-
-    // ③ 通常の待機状態へ戻す処理
+    // 最初の状態へ戻す処理
     resetBtn.addEventListener('click', () => {
       talkVideo.onended = null;
       talkVideo.src = 'marron_talk.mp4';

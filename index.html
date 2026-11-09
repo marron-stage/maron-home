@@ -321,8 +321,8 @@
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoBack" src="marron_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
 
-      <!-- 足音専用オーディオ（.MP3対応） -->
-      <audio id="footstepAudio" src="footstep.MP3" loop preload="auto"></audio>
+      <!-- 足音専用オーディオ（ループなし・セッションごとに同期再生） -->
+      <audio id="footstepAudio" src="footstep.MP3" preload="auto"></audio>
     </main>
 
     <!-- ================= 画面2：添い寝部屋 ================= -->
@@ -393,7 +393,7 @@
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
-        syncFootstepAudio();
+        playStepSound();
       } else {
         if (tab === 'sleep') {
           event.target.classList.add('active');
@@ -402,7 +402,7 @@
           event.target.classList.add('active');
           document.getElementById('dailyRoom').classList.add('active');
         }
-        stopFootstepAudio();
+        stopStepSound();
       }
     }
 
@@ -422,20 +422,27 @@
     let isSoundOn = true;
     let hasUserInteracted = false;
 
+    // 基本行動エリア
     function getBounds() {
       const w = window.innerWidth;
       const h = window.innerHeight;
       return {
-        minX: 15,
+        minX: 20,
         maxX: w - 150,
-        minY: h * 0.38,
-        maxY: h * 0.80
+        minY: h * 0.40, // 窓際奥
+        maxY: h * 0.80  // 手前床
       };
     }
 
-    const CYCLE_DURATION = 4000;
+    // 左上の植木鉢・観葉植物エリアへの侵入チェック
+    function isPlantObstacle(x, y, w, h) {
+      // 画面の左側 32% かつ 窓の左下（高さ 56% 未満）は植木鉢エリアとして除外
+      return (x < w * 0.32 && y < h * 0.56);
+    }
+
+    const CYCLE_DURATION = 4000; // 4秒セッション
     let sessionStartTime = 0;
-    let startX = 40;
+    let startX = 60;
     let startY = window.innerHeight * 0.65;
     let currentX = startX;
     let currentY = startY;
@@ -444,6 +451,9 @@
 
     function startNextWalkSession() {
       const b = getBounds();
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
       startX = currentX;
       startY = currentY;
 
@@ -454,37 +464,49 @@
         destY = b.minY + Math.random() * (b.maxY - b.minY);
         dist = Math.hypot(destX - startX, destY - startY);
         attempts++;
-      } while ((dist < 60 || dist > 260) && attempts < 10);
+      } while (
+        (dist < 70 || dist > 260 || isPlantObstacle(destX, destY, w, h)) && 
+        attempts < 20
+      );
+
+      // 万が一植木に入りそうな場合は安全な中央へフォールバック
+      if (isPlantObstacle(destX, destY, w, h)) {
+        destX = w * 0.45;
+        destY = h * 0.65;
+      }
 
       targetX = destX;
       targetY = destY;
       sessionStartTime = performance.now();
 
+      // 移動角度から動画を厳密に決定
       const dx = targetX - startX;
       const dy = targetY - startY;
       const absDx = Math.abs(dx);
       const angleDeg = Math.atan2(dy, absDx) * (180 / Math.PI);
 
       if (angleDeg < -67.5) {
-        currentVideo = videoBack;
+        currentVideo = videoBack; // 真奥（後ろ姿）
         canvas.style.transform = 'scaleX(1)';
       } else if (angleDeg < -22.5) {
-        currentVideo = videoDiagBack;
+        currentVideo = videoDiagBack; // 斜め奥
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else if (angleDeg <= 22.5) {
-        currentVideo = videoWalk;
+        currentVideo = videoWalk; // 真横
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else if (angleDeg <= 67.5) {
-        currentVideo = videoDiag;
+        currentVideo = videoDiag; // 斜め手前
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       } else {
-        currentVideo = videoFront;
+        currentVideo = videoFront; // 真手前（正面）
         canvas.style.transform = 'scaleX(1)';
       }
 
+      // 動画と足音をセッション開始の瞬間に完全同期
       if (currentVideo.readyState >= 2) {
         currentVideo.currentTime = 0;
       }
+      playStepSound();
     }
 
     function renderChromaLoop(now) {
@@ -529,6 +551,7 @@
           currentY = startY + (targetY - startY) * progress;
         }
 
+        // 遠近法（奥＝110px、手前＝235px）
         const b = getBounds();
         const depthRatio = Math.max(0, Math.min(1, (currentY - b.minY) / (b.maxY - b.minY)));
         const marronHeight = 110 + depthRatio * 125;
@@ -541,18 +564,19 @@
       requestAnimationFrame(renderChromaLoop);
     }
 
-    function syncFootstepAudio() {
+    // 4秒ごとの頭出し足音再生
+    function playStepSound() {
       if (!hasUserInteracted) return;
       const isLiving = document.getElementById('livingRoom').classList.contains('active');
       if (isLiving && isSoundOn) {
+        footstepAudio.currentTime = 0;
         footstepAudio.play().catch(() => {});
-      } else {
-        stopFootstepAudio();
       }
     }
 
-    function stopFootstepAudio() {
+    function stopStepSound() {
       footstepAudio.pause();
+      footstepAudio.currentTime = 0;
     }
 
     function toggleWalkSound(e) {
@@ -560,14 +584,18 @@
       unlockAudioInteraction();
       isSoundOn = !isSoundOn;
       soundBtn.innerText = isSoundOn ? '🔊 足音ON' : '🔇 足音OFF';
-      syncFootstepAudio();
+      if (isSoundOn) {
+        playStepSound();
+      } else {
+        stopStepSound();
+      }
     }
 
     function unlockAudioInteraction() {
       if (!hasUserInteracted) {
         hasUserInteracted = true;
         startAllVideos();
-        syncFootstepAudio();
+        playStepSound();
       }
     }
 

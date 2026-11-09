@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
+
+  <!-- ファビコン設定（ファイル未配置でも即座に🐕アイコン表示 ＋ favicon.ico/png対応） -->
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐕</text></svg>">
+  <link rel="apple-touch-icon" href="favicon.png">
+
   <style>
     * {
       box-sizing: border-box;
@@ -142,7 +149,7 @@
       text-align: center;
     }
 
-    /* コントロールバー（BGM再生 ＋ 寝言再生 ＋ 間接照明） */
+    /* コントロールバー（BGM再生 ＋ 寝息寝言 ＋ 間接照明） */
     .sleep-controls-bar {
       display: flex;
       align-items: center;
@@ -176,7 +183,7 @@
       min-width: 75px;
     }
 
-    /* 寝言の再生 / 停止トグルボタン */
+    /* 寝息・寝言の再生 / 停止トグルボタン */
     .sleep-voice-toggle {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.18);
@@ -404,15 +411,15 @@
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
-        <!-- 上部コントロールバー（BGM再生 ＋ 寝言再生 ＋ 間接照明） -->
+        <!-- コントロールバー（BGM再生 ＋ 寝息・寝言再生 ＋ 間接照明） -->
         <div class="sleep-controls-bar">
           <div class="audio-player">
             <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
             <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
             <button class="audio-btn" onclick="nextBgm()">⏭</button>
           </div>
-          <!-- 寝言の再生 / 停止トグルボタン -->
-          <button class="sleep-voice-toggle" id="voiceToggleBtn" onclick="toggleSleepVoiceLoop()">💤 寝言再生</button>
+          <!-- 寝息・寝言の再生 / 停止トグルボタン -->
+          <button class="sleep-voice-toggle" id="voiceToggleBtn" onclick="toggleSleepVoiceLoop()">💤 寝息・寝言再生</button>
           <!-- 間接照明切り替えスイッチ -->
           <button class="lamp-toggle-btn" id="lampBtn" onclick="toggleBedLamp()">💡 明かりON</button>
         </div>
@@ -423,6 +430,8 @@
       </div>
 
       <audio id="bgmAudio" preload="auto"></audio>
+      <!-- 寝息 ＆ 2種類の寝言 -->
+      <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
       <audio id="sleepVoice02" src="sleep_voice02.MP3" preload="auto"></audio>
     </section>
@@ -701,7 +710,8 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（寝言再生ループ ＆ 間接照明 ＆ BGM）
+    // 3. 添い寝部屋演出（寝息 ＆ 寝言 ランダムループ）
+    const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
     const voice02 = document.getElementById('sleepVoice02');
     const sleepCard = document.getElementById('sleepCard');
@@ -709,52 +719,64 @@
     const sleepRoom = document.getElementById('sleepRoom');
     const voiceToggleBtn = document.getElementById('voiceToggleBtn');
 
-    // 耳元で心地よく聴こえる音量に設定
-    voice01.volume = 0.25;
-    voice02.volume = 0.25;
+    // 睡眠を邪魔しない穏やかな音量に設定
+    breathAudio.volume = 0.20;
+    voice01.volume = 0.22;
+    voice02.volume = 0.22;
 
     let isVoiceLoopActive = false;
     let voiceLoopTimer = null;
+    let currentPlayingAudio = null;
 
-    // 寝言の再生 / 停止切り替え
     function toggleSleepVoiceLoop() {
       isVoiceLoopActive = !isVoiceLoopActive;
       if (isVoiceLoopActive) {
-        voiceToggleBtn.innerText = '💤 寝言停止';
+        voiceToggleBtn.innerText = '💤 寝息・寝言停止';
         voiceToggleBtn.classList.add('active');
-        playNextSleepVoice();
+        playNextSleepSound();
       } else {
         stopSleepVoiceLoop();
       }
     }
 
-    function playNextSleepVoice() {
+    // 寝息（70%）と寝言（30%）を自然な呼吸間隔でランダム再生
+    function playNextSleepSound() {
       if (!isVoiceLoopActive) return;
       const isSleep = document.getElementById('sleepRoom').classList.contains('active');
       if (!isSleep) return;
 
-      const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
-      chosenVoice.currentTime = 0;
-      chosenVoice.play().catch(() => {});
+      // 70%の確率で寝息、30%の確率で寝言（01または02）
+      const rand = Math.random();
+      let chosenAudio;
+      if (rand < 0.70) {
+        chosenAudio = breathAudio;
+      } else if (rand < 0.85) {
+        chosenAudio = voice01;
+      } else {
+        chosenAudio = voice02;
+      }
 
-      // 音声が鳴り終わったら、自然な呼吸間隔（4〜7秒）を置いて次の寝言を鳴らす
-      chosenVoice.onended = () => {
+      currentPlayingAudio = chosenAudio;
+      chosenAudio.currentTime = 0;
+      chosenAudio.play().catch(() => {});
+
+      // 音が鳴り終わったら、自然な呼吸間隔（3〜6秒）を置いて次の音へ
+      chosenAudio.onended = () => {
         if (!isVoiceLoopActive) return;
-        const breathDelay = 4000 + Math.random() * 3000;
-        voiceLoopTimer = setTimeout(playNextSleepVoice, breathDelay);
+        const breathDelay = 3000 + Math.random() * 3000;
+        voiceLoopTimer = setTimeout(playNextSleepSound, breathDelay);
       };
     }
 
     function stopSleepVoiceLoop() {
       isVoiceLoopActive = false;
       clearTimeout(voiceLoopTimer);
-      voice01.pause();
-      voice02.pause();
-      voice01.currentTime = 0;
-      voice02.currentTime = 0;
-      voice01.onended = null;
-      voice02.onended = null;
-      voiceToggleBtn.innerText = '💤 寝言再生';
+      [breathAudio, voice01, voice02].forEach(a => {
+        a.pause();
+        a.currentTime = 0;
+        a.onended = null;
+      });
+      voiceToggleBtn.innerText = '💤 寝息・寝言再生';
       voiceToggleBtn.classList.remove('active');
     }
 

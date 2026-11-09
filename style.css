@@ -128,23 +128,26 @@ body, html {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 自律歩行マロン（Canvas） */
+/* 自律歩行マロン（1:1の正方形制限を解除し比率維持） */
 #marronWalker {
   position: absolute;
-  bottom: 10%;
+  bottom: 8%;
   left: 50%;
-  transform: translate(-50%, 0);
-  width: 140px;
-  height: 140px;
+  transform: translateX(-50%);
+  width: auto;
+  height: auto;
   cursor: pointer;
   z-index: 20;
   transition: left 4s ease-in-out, bottom 4s ease-in-out;
 }
 
 #marronCanvas {
-  width: 100%;
-  height: 100%;
+  display: block;
+  width: 170px; /* 基準幅 */
+  height: auto;
   pointer-events: none;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
+  transition: width 4s ease-in-out;
 }
 
 #homeBubble {
@@ -360,7 +363,7 @@ body, html {
   border-color: rgba(255, 255, 255, 0.8);
 }
 
-/* 4. 日常部屋（グリッド） */
+/* 4. 日常部屋 */
 #daily-room {
   position: relative;
   background: #1a1a1a;

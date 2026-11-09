@@ -22,7 +22,6 @@
       color: #333;
     }
 
-    /* アプリ全体基盤 */
     #app-container {
       position: relative;
       width: 100vw;
@@ -33,15 +32,15 @@
     /* 固定タブバー（最前面） */
     #tab-bar {
       position: fixed;
-      top: 16px;
+      top: 14px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.45);
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.5);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      padding: 6px 10px;
+      padding: 5px 8px;
       border-radius: 24px;
       z-index: 1000;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -52,9 +51,9 @@
     .tab-btn {
       background: transparent;
       border: none;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 16px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: #333;
       cursor: pointer;
@@ -67,7 +66,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    /* 部屋共通レイアウト */
     .room-panel {
       position: absolute;
       top: 0;
@@ -83,7 +81,121 @@
     }
 
     /* =======================================
-       1. 添い寝部屋（余白なし完全全画面表示）
+       1. マロンのお部屋（リビング・お家）
+       ======================================= */
+    #home-room {
+      position: relative;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.8s ease;
+    }
+
+    /* 部屋の時計ウィジェット */
+    .home-clock-widget {
+      position: absolute;
+      top: 72px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+
+    .home-clock {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #4e342e;
+      line-height: 1;
+    }
+
+    .home-date {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #6d4c41;
+      margin-top: 3px;
+    }
+
+    /* お部屋BGMボタン（右上） */
+    #homeBgmBtn {
+      position: absolute;
+      top: 72px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      color: #333;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 自律歩行マロン */
+    #marronWalker {
+      position: absolute;
+      bottom: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 140px;
+      cursor: pointer;
+      z-index: 20;
+      transition: left 3.5s ease-in-out;
+    }
+
+    #marronWalker video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    /* マロンの吹き出し */
+    #homeBubble {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid #a5d6a7;
+      border-radius: 16px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2e4a2d;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      display: none;
+      animation: popIn 0.25s ease;
+      z-index: 25;
+    }
+
+    #homeBubble::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 7px 0;
+      border-style: solid;
+      border-color: #a5d6a7 transparent transparent;
+      display: block;
+      width: 0;
+    }
+
+    /* =======================================
+       2. 添い寝部屋（完全全画面表示）
        ======================================= */
     #sleep-room {
       position: fixed;
@@ -117,7 +229,6 @@
       transition: opacity 0.6s ease;
     }
 
-    /* タブ直下の操作ボタン群（上から72px・中央揃え） */
     .sleep-controls-top {
       position: absolute;
       top: 72px;
@@ -145,17 +256,14 @@
       transition: background 0.2s ease, transform 0.1s ease;
     }
 
-    .sleep-btn:active {
-      transform: scale(0.95);
-    }
-
+    .sleep-btn:active { transform: scale(0.95); }
     .sleep-btn.active {
       background: rgba(46, 125, 50, 0.85);
       border-color: rgba(255, 255, 255, 0.8);
     }
 
     /* =======================================
-       2. 相談部屋（全画面映像＋一本化UI）
+       3. 相談部屋（2本立て動画連動＆一本化UI）
        ======================================= */
     #counsel-room {
       position: relative;
@@ -173,7 +281,6 @@
       z-index: 1;
     }
 
-    /* マロンの頭上吹き出しメッセージ */
     #counselingBubble {
       position: absolute;
       top: 18%;
@@ -210,12 +317,6 @@
       width: 0;
     }
 
-    @keyframes popIn {
-      0% { opacity: 0; transform: translateX(-50%) scale(0.85); }
-      100% { opacity: 1; transform: translateX(-50%) scale(1); }
-    }
-
-    /* 入力エリア（画面下部・一本化） */
     #counselingActionArea {
       position: absolute;
       bottom: 28px;
@@ -254,7 +355,6 @@
       background: #fff;
     }
 
-    /* 手紙を渡す一本化ボタン */
     #sendLetterBtn {
       width: 100%;
       padding: 12px;
@@ -273,11 +373,8 @@
       transition: transform 0.1s ease;
     }
 
-    #sendLetterBtn:active {
-      transform: scale(0.97);
-    }
+    #sendLetterBtn:active { transform: scale(0.97); }
 
-    /* リセットボタン */
     #counselResetBtn {
       position: absolute;
       bottom: 28px;
@@ -297,100 +394,181 @@
     }
 
     /* =======================================
-       3. お家（時計）部屋 & 日常部屋
+       4. 日常部屋（6本動画グリッド＆モーダル）
        ======================================= */
-    #home-room {
-      background: linear-gradient(180deg, #ffe082 0%, #ffecb3 100%);
-      display: flex;
-      flex-direction: column;
+    #daily-room {
+      position: relative;
+      background: #1a1a1a;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 75px 12px 30px;
+    }
+
+    .daily-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .daily-item {
+      position: relative;
+      width: 100%;
+      padding-top: 177.7%; /* 9:16比率 */
+      background: #2a2a2a;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .daily-item video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .daily-title {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 6px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* シネマモーダル */
+    #cinemaModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      display: none;
       align-items: center;
       justify-content: center;
     }
 
-    .home-clock {
-      font-size: 3.4rem;
-      font-weight: 800;
-      color: #4e342e;
-      letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+    #cinemaModal video {
+      width: 100%;
+      max-height: 90dvh;
+      object-fit: contain;
     }
 
-    .home-date {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #6d4c41;
-      margin-top: 6px;
+    #closeCinemaBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    #daily-room {
-      background: #000;
-    }
-
-    #dailyVideo {
-      width: 100vw;
-      height: 100dvh;
-      object-fit: cover;
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.85); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1); }
     }
   </style>
 </head>
 <body>
 
   <div id="app-container">
-    <!-- 固定ナビゲーションタブ -->
+    <!-- 固定タブナビゲーション -->
     <nav id="tab-bar">
-      <button class="tab-btn active" data-room="counsel-room">🐾 相談部屋</button>
+      <button class="tab-btn active" data-room="home-room">🏡 お家</button>
+      <button class="tab-btn" data-room="counsel-room">🐾 相談部屋</button>
       <button class="tab-btn" data-room="sleep-room">🌙 添い寝</button>
-      <button class="tab-btn" data-room="home-room">🏡 お家</button>
       <button class="tab-btn" data-room="daily-room">📱 日常</button>
     </nav>
 
-    <!-- 1. 相談部屋 -->
-    <section id="counsel-room" class="room-panel active">
-      <!-- 待機映像（手紙を書くマロン） -->
+    <!-- 1. マロンのお部屋（お家） -->
+    <section id="home-room" class="room-panel active">
+      <div class="home-clock-widget">
+        <div class="home-clock" id="clockDisplay">12:00</div>
+        <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
+      </div>
+
+      <button id="homeBgmBtn">🎵 BGM ON</button>
+
+      <!-- 自律歩行マロン -->
+      <div id="marronWalker">
+        <div id="homeBubble"></div>
+        <video src="marron_walk.mp4" autoplay loop muted playsinline></video>
+      </div>
+
+      <!-- お部屋のBGM -->
+      <audio id="homeAudio" src="bgm1.mp3" loop></audio>
+    </section>
+
+    <!-- 2. 相談部屋 -->
+    <section id="counsel-room" class="room-panel">
       <video id="counselingVideo" src="marron_talk.mp4" autoplay loop muted playsinline></video>
-      
-      <!-- 頭上メッセージ吹き出し -->
       <div id="counselingBubble"></div>
 
-      <!-- 入力パネル（一本化） -->
       <div id="counselingActionArea">
         <textarea id="counselingInput" placeholder="マロンに手紙を書いてみてね（愚痴も、嬉しかったことも何でもいいワン）..."></textarea>
         <button id="sendLetterBtn">✉️ マロンに手紙を渡す</button>
       </div>
 
-      <!-- 読み終えた後の戻るボタン -->
       <button id="counselResetBtn">ありがとう、またお話しするワン🐾</button>
     </section>
 
-    <!-- 2. 添い寝部屋（完全全画面） -->
+    <!-- 3. 添い寝部屋（完全全画面） -->
     <section id="sleep-room" class="room-panel">
       <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline></video>
       <div id="sleepOverlay"></div>
 
-      <!-- タブ直下の操作ボタン群 -->
       <div class="sleep-controls-top">
         <button id="soundToggleBtn" class="sleep-btn">🎵 添い寝サウンド</button>
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-      <audio id="sleepAudio" src="sleep_bgm.mp3" loop></audio>
+      <!-- 添い寝の寝息音源 -->
+      <audio id="sleepAudio" src="sleep_breath.MP3" loop></audio>
     </section>
 
-    <!-- 3. お家（時計）部屋 -->
-    <section id="home-room" class="room-panel">
-      <div class="home-clock" id="clockDisplay">12:00</div>
-      <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
-    </section>
-
-    <!-- 4. 日常部屋 -->
+    <!-- 4. 日常部屋（6本グリッド） -->
     <section id="daily-room" class="room-panel">
-      <video id="dailyVideo" src="marron_daily.mp4" autoplay loop muted playsinline></video>
+      <div class="daily-grid">
+        <div class="daily-item" data-video="marron.mp4"><video src="marron.mp4" muted playsinline></video><div class="daily-title">まったりマロン</div></div>
+        <div class="daily-item" data-video="marron_cocoa.mp4"><video src="marron_cocoa.mp4" muted playsinline></video><div class="daily-title">ココアとマロン</div></div>
+        <div class="daily-item" data-video="marron_wait.mp4"><video src="marron_wait.mp4" muted playsinline></video><div class="daily-title">おやつ待て！</div></div>
+        <div class="daily-item" data-video="marron_proposal.mp4"><video src="marron_proposal.mp4" muted playsinline></video><div class="daily-title">プロポーズ</div></div>
+        <div class="daily-item" data-video="marron_rescue.mp4"><video src="marron_rescue.mp4" muted playsinline></video><div class="daily-title">レスキュー隊</div></div>
+        <div class="daily-item" data-video="marron_autumn.mp4"><video src="marron_autumn.mp4" muted playsinline></video><div class="daily-title">秋のお散歩</div></div>
+      </div>
     </section>
+
+    <!-- 日常動画用 シネマモーダル -->
+    <div id="cinemaModal">
+      <button id="closeCinemaBtn">✕</button>
+      <video id="cinemaVideo" controls playsinline></video>
+    </div>
   </div>
 
   <script>
     /* ==============================================
-       1. タブ切り替え処理
+       1. タブ切り替え制御
        ============================================== */
     const tabBtns = document.querySelectorAll('.tab-btn');
     const roomPanels = document.querySelectorAll('.room-panel');
@@ -398,7 +576,6 @@
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const targetRoom = btn.getAttribute('data-room');
-        
         tabBtns.forEach(b => b.classList.remove('active'));
         roomPanels.forEach(p => p.classList.remove('active'));
 
@@ -408,16 +585,109 @@
     });
 
     /* ==============================================
-       2. 添い寝部屋 ロジック
+       2. お家部屋（時間帯背景・時計・BGM・自律歩行）
+       ============================================== */
+    const homeRoom = document.getElementById('home-room');
+    const clockDisplay = document.getElementById('clockDisplay');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const homeBgmBtn = document.getElementById('homeBgmBtn');
+    const homeAudio = document.getElementById('homeAudio');
+    const marronWalker = document.getElementById('marronWalker');
+    const homeBubble = document.getElementById('homeBubble');
+    let isHomeBgmOn = false;
+
+    // 時間帯背景の自動更新
+    function updateTimeAndBackground() {
+      const now = new Date();
+      const hour = now.getHours();
+      let bgImage = 'room.jpg';
+
+      if (hour >= 5 && hour < 11) {
+        bgImage = 'room_morning.jpg';
+      } else if (hour >= 11 && hour < 17) {
+        bgImage = 'room_day.jpg';
+      } else if (hour >= 17 && hour < 19) {
+        bgImage = 'room_sunset.jpg';
+      } else if (hour >= 19 && hour <= 23) {
+        bgImage = 'room_night.jpg';
+      } else {
+        bgImage = 'room_midnight.jpg';
+      }
+
+      // 画像の存在チェック用フォールバック
+      const img = new Image();
+      img.src = bgImage;
+      img.onload = () => { homeRoom.style.backgroundImage = `url('${bgImage}')`; };
+      img.onerror = () => { homeRoom.style.backgroundImage = `url('room.jpg')`; };
+
+      // 時計と日付の更新
+      const h = String(hour).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      clockDisplay.textContent = `${h}:${m}`;
+
+      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const y = now.getFullYear();
+      const mon = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
+    }
+    setInterval(updateTimeAndBackground, 1000);
+    updateTimeAndBackground();
+
+    // お部屋BGMボタン
+    homeBgmBtn.addEventListener('click', () => {
+      isHomeBgmOn = !isHomeBgmOn;
+      if (isHomeBgmOn) {
+        homeAudio.play().then(() => {
+          homeBgmBtn.textContent = '🔇 BGM OFF';
+        }).catch(() => {
+          isHomeBgmOn = false;
+        });
+      } else {
+        homeAudio.pause();
+        homeBgmBtn.textContent = '🎵 BGM ON';
+      }
+    });
+
+    // マロンの自律歩行（画面内をランダムにトコトコ移動）
+    function wanderMarron() {
+      const randomX = Math.floor(Math.random() * 60) + 20; // 画面幅の20%〜80%
+      marronWalker.style.left = `${randomX}%`;
+      // 進行方向に向きを変える
+      const currentLeft = parseFloat(marronWalker.style.left || 50);
+      marronWalker.querySelector('video').style.transform = randomX < currentLeft ? 'scaleX(1)' : 'scaleX(-1)';
+    }
+    setInterval(wanderMarron, 6000);
+
+    // マロンをタップした時のセリフ
+    const marronVoices = [
+      "わふっ！なでてくれるの？",
+      "クーン…そばにいてくれて嬉しいワン🐾",
+      "今日も一日お疲れさまだよ！",
+      "マロンはずーっと君の味方だワン！",
+      "えへへ、お腹なでて〜！"
+    ];
+    let bubbleTimer = null;
+    marronWalker.addEventListener('click', () => {
+      clearTimeout(bubbleTimer);
+      const voice = marronVoices[Math.floor(Math.random() * marronVoices.length)];
+      homeBubble.textContent = voice;
+      homeBubble.style.display = 'block';
+      bubbleTimer = setTimeout(() => {
+        homeBubble.style.display = 'none';
+      }, 3000);
+    });
+
+    /* ==============================================
+       3. 添い寝部屋（完全全画面＆サウンド）
        ============================================== */
     const lightToggleBtn = document.getElementById('lightToggleBtn');
     const sleepOverlay = document.getElementById('sleepOverlay');
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     const sleepAudio = document.getElementById('sleepAudio');
     let isLightOff = false;
-    let isSoundOn = false;
+    let isSleepSoundOn = false;
 
-    // 明かりオン/オフ
     lightToggleBtn.addEventListener('click', () => {
       isLightOff = !isLightOff;
       if (isLightOff) {
@@ -431,13 +701,15 @@
       }
     });
 
-    // 添い寝サウンド
     soundToggleBtn.addEventListener('click', () => {
-      isSoundOn = !isSoundOn;
-      if (isSoundOn) {
-        sleepAudio.play().catch(() => {});
-        soundToggleBtn.textContent = '🔇 サウンド停止';
-        soundToggleBtn.classList.add('active');
+      isSleepSoundOn = !isSleepSoundOn;
+      if (isSleepSoundOn) {
+        sleepAudio.play().then(() => {
+          soundToggleBtn.textContent = '🔇 サウンド停止';
+          soundToggleBtn.classList.add('active');
+        }).catch(() => {
+          isSleepSoundOn = false;
+        });
       } else {
         sleepAudio.pause();
         soundToggleBtn.textContent = '🎵 添い寝サウンド';
@@ -446,7 +718,7 @@
     });
 
     /* ==============================================
-       3. 相談部屋 ロジック（手紙を渡して埋める一本化）
+       4. 相談部屋（2本立て動画連動＆一本化）
        ============================================== */
     const talkVideo = document.getElementById('counselingVideo');
     const talkBubble = document.getElementById('counselingBubble');
@@ -455,7 +727,6 @@
     const resetBtn = document.getElementById('counselResetBtn');
     const counselInput = document.getElementById('counselingInput');
 
-    // どんな感情も包み込む温かいメッセージ集
     const comfortMessages = [
       "全部ふかふかの土に埋めて、きれいなお花が咲いたワン。もうここには何もないよ。大丈夫。",
       "今日を最後まで生き抜いただけでもう100点満点だよ。本当にお疲れさま。もう何も考えなくていいワン。",
@@ -468,24 +739,21 @@
       "嬉しいことも、悔しいことも、全部マロンに話してくれてありがとう。あなたの一番の理解者でいるワン！"
     ];
 
-    // 「手紙を渡す」を押したときの動画フロー
     sendBtn.addEventListener('click', () => {
-      // 1. 入力欄を隠す
       actionArea.style.display = 'none';
       talkBubble.style.display = 'none';
 
-      // 2. 演出動画（部屋を出て土をかけ、お花が咲く）を再生
+      // 1本目：埋めて開花する演出動画
       talkVideo.src = 'bury_and_bloom.mp4';
       talkVideo.loop = false;
       talkVideo.play();
 
-      // 3. 演出動画が終わった瞬間に待機ループ動画へバトンタッチ
+      // 演出動画が終わった瞬間に待機ループ動画へバトンタッチ
       talkVideo.onended = () => {
         talkVideo.src = 'marron_happy_loop.mp4';
         talkVideo.loop = true;
         talkVideo.play();
 
-        // 4. ランダムメッセージとリセットボタンを表示
         const msg = comfortMessages[Math.floor(Math.random() * comfortMessages.length)];
         talkBubble.textContent = msg;
         talkBubble.style.display = 'block';
@@ -493,7 +761,6 @@
       };
     });
 
-    // 最初の状態へ戻す処理
     resetBtn.addEventListener('click', () => {
       talkVideo.onended = null;
       talkVideo.src = 'marron_talk.mp4';
@@ -507,23 +774,27 @@
     });
 
     /* ==============================================
-       4. 時計更新（お家部屋）
+       5. 日常部屋（モーダル再生）
        ============================================== */
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clockDisplay').textContent = `${h}:${m}`;
-      
-      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-      const y = now.getFullYear();
-      const mon = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const day = days[now.getDay()];
-      document.getElementById('dateDisplay').textContent = `${y}.${mon}.${d} ${day}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    const cinemaModal = document.getElementById('cinemaModal');
+    const cinemaVideo = document.getElementById('cinemaVideo');
+    const closeCinemaBtn = document.getElementById('closeCinemaBtn');
+    const dailyItems = document.querySelectorAll('.daily-item');
+
+    dailyItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const videoSrc = item.getAttribute('data-video');
+        cinemaVideo.src = videoSrc;
+        cinemaModal.style.display = 'flex';
+        cinemaVideo.play();
+      });
+    });
+
+    closeCinemaBtn.addEventListener('click', () => {
+      cinemaModal.style.display = 'none';
+      cinemaVideo.pause();
+      cinemaVideo.src = '';
+    });
   </script>
 </body>
 </html>

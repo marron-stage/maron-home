@@ -95,9 +95,9 @@
       position: absolute;
       top: calc(env(safe-area-inset-top, 10px) + 60px);
       right: 14px;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.65);
       border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
+      color: #cbd5e1;
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.75rem;
@@ -106,6 +106,13 @@
       -webkit-backdrop-filter: blur(8px);
       z-index: 50;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s ease;
+    }
+    .sound-badge.on {
+      border-color: rgba(246, 173, 85, 0.7);
+      background: rgba(246, 173, 85, 0.25);
+      color: #fbd38d;
+      font-weight: 600;
     }
 
     /* マロン描画Canvas */
@@ -309,23 +316,21 @@
 
     <!-- ================= 画面1：全画面お部屋 ================= -->
     <main id="livingRoom" class="screen active">
-      <!-- サウンドON/OFFボタン -->
-      <button class="sound-badge" id="stepSoundBtn" onclick="toggleLivingAudio(event)">🔊 サウンドON</button>
+      <!-- 起動時はサウンドOFF（このボタンを押した時だけ切り替え） -->
+      <button class="sound-badge" id="stepSoundBtn" onclick="toggleLivingAudio(event)">🔇 サウンドOFF</button>
 
-      <!-- マロンCanvas（完全自律歩行） -->
+      <!-- マロンCanvas（等速・自律歩行） -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 5本の動画（映像のみ・完全消音で再生） -->
+      <!-- 5本の動画（映像のみ） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiagBack" src="marron_diagonal_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoBack" src="marron_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
 
-      <!-- お部屋専用BGM（bgm1.mp3 ループ再生） -->
+      <!-- お部屋用BGM（bgm1.mp3） ＆ 足音（音量20%） -->
       <audio id="livingBgmAudio" src="bgm1.mp3" loop preload="auto"></audio>
-
-      <!-- 足音専用オーディオ（音量20%） -->
       <audio id="footstepAudio" src="footstep.MP3" preload="auto"></audio>
     </main>
 
@@ -397,7 +402,7 @@
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
-        startLivingAudio();
+        if (isSoundOn) startLivingAudio();
       } else {
         if (tab === 'sleep') {
           event.target.classList.add('active');
@@ -410,7 +415,7 @@
       }
     }
 
-    // 2. 4秒サイクル完全同期 自律歩行システム
+    // 2. 4秒間完全等速（歩幅完全固定）自律歩行システム
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -424,13 +429,11 @@
     const footstepAudio = document.getElementById('footstepAudio');
     const soundBtn = document.getElementById('stepSoundBtn');
 
-    // 音量バランス：BGMは優しく40%、足音は20%（0.2）に設定
-    livingBgm.volume = 0.4;
-    footstepAudio.volume = 0.2;
+    livingBgm.volume = 0.35;
+    footstepAudio.volume = 0.20; // 足音は控えめに20%
 
     let currentVideo = videoWalk;
-    let isSoundOn = true;
-    let hasUserInteracted = false;
+    let isSoundOn = false; // 起動時は完全にOFF
 
     function getBounds() {
       const w = window.innerWidth;
@@ -443,12 +446,13 @@
       };
     }
 
-    // 左上の観葉植物エリアへの侵入チェック
     function isPlantObstacle(x, y, w, h) {
       return (x < w * 0.32 && y < h * 0.56);
     }
 
-    const CYCLE_DURATION = 4000;
+    const CYCLE_DURATION = 4000; // 4秒セッション
+    const STEP_DISTANCE = 110;   // 4秒で進む距離を完全固定（速度一定）
+
     let sessionStartTime = 0;
     let startX = 60;
     let startY = window.innerHeight * 0.65;
@@ -465,25 +469,39 @@
       startX = currentX;
       startY = currentY;
 
-      let destX, destY, dist;
-      let attempts = 0;
-      do {
-        destX = b.minX + Math.random() * (b.maxX - b.minX);
-        destY = b.minY + Math.random() * (b.maxY - b.minY);
-        dist = Math.hypot(destX - startX, destY - startY);
-        attempts++;
-      } while (
-        (dist < 70 || dist > 260 || isPlantObstacle(destX, destY, w, h)) && 
-        attempts < 20
-      );
+      const directions = [
+        0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4,
+        Math.PI, -(3 * Math.PI) / 4, -Math.PI / 2, -Math.PI / 4
+      ];
+      directions.sort(() => Math.random() - 0.5);
 
-      if (isPlantObstacle(destX, destY, w, h)) {
-        destX = w * 0.45;
-        destY = h * 0.65;
+      let chosenAngle = 0;
+      let validFound = false;
+
+      for (let angle of directions) {
+        const testX = startX + Math.cos(angle) * STEP_DISTANCE;
+        const testY = startY + Math.sin(angle) * STEP_DISTANCE;
+
+        if (
+          testX >= b.minX && testX <= b.maxX &&
+          testY >= b.minY && testY <= b.maxY &&
+          !isPlantObstacle(testX, testY, w, h)
+        ) {
+          chosenAngle = angle;
+          targetX = testX;
+          targetY = testY;
+          validFound = true;
+          break;
+        }
       }
 
-      targetX = destX;
-      targetY = destY;
+      if (!validFound) {
+        const angleToCenter = Math.atan2((h * 0.65) - startY, (w * 0.5) - startX);
+        chosenAngle = angleToCenter;
+        targetX = startX + Math.cos(chosenAngle) * STEP_DISTANCE;
+        targetY = startY + Math.sin(chosenAngle) * STEP_DISTANCE;
+      }
+
       sessionStartTime = performance.now();
 
       const dx = targetX - startX;
@@ -512,8 +530,9 @@
         currentVideo.currentTime = 0;
       }
 
-      // 4秒セッション開始に合わせて足音を頭出し再生（音量20%）
-      triggerStepSound();
+      if (isSoundOn) {
+        triggerStepSound();
+      }
     }
 
     function renderChromaLoop(now) {
@@ -570,9 +589,23 @@
       requestAnimationFrame(renderChromaLoop);
     }
 
-    // お部屋のサウンド制御（BGMループ ＋ 足音20%）
+    // サウンド制御：ボタン専用切り替え
+    function toggleLivingAudio(e) {
+      if (e) e.stopPropagation();
+      isSoundOn = !isSoundOn;
+
+      if (isSoundOn) {
+        soundBtn.innerText = '🔊 サウンドON';
+        soundBtn.classList.add('on');
+        startLivingAudio();
+      } else {
+        soundBtn.innerText = '🔇 サウンドOFF';
+        soundBtn.classList.remove('on');
+        stopLivingAudio();
+      }
+    }
+
     function startLivingAudio() {
-      if (!hasUserInteracted) return;
       const isLiving = document.getElementById('livingRoom').classList.contains('active');
       if (isLiving && isSoundOn) {
         livingBgm.play().catch(() => {});
@@ -587,31 +620,10 @@
     }
 
     function triggerStepSound() {
-      if (!hasUserInteracted) return;
       const isLiving = document.getElementById('livingRoom').classList.contains('active');
       if (isLiving && isSoundOn) {
         footstepAudio.currentTime = 0;
         footstepAudio.play().catch(() => {});
-      }
-    }
-
-    function toggleLivingAudio(e) {
-      e.stopPropagation();
-      unlockAudioInteraction();
-      isSoundOn = !isSoundOn;
-      soundBtn.innerText = isSoundOn ? '🔊 サウンドON' : '🔇 サウンドOFF';
-      if (isSoundOn) {
-        startLivingAudio();
-      } else {
-        stopLivingAudio();
-      }
-    }
-
-    function unlockAudioInteraction() {
-      if (!hasUserInteracted) {
-        hasUserInteracted = true;
-        startAllVideos();
-        startLivingAudio();
       }
     }
 
@@ -623,8 +635,6 @@
     }
 
     startAllVideos();
-    document.addEventListener('touchstart', unlockAudioInteraction, { once: true });
-    document.addEventListener('click', unlockAudioInteraction, { once: true });
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
@@ -634,7 +644,6 @@
 
     function addLike(type, e) {
       if (e) e.stopPropagation();
-      unlockAudioInteraction();
 
       if (type === 'sleep') {
         sleepLikes += 1;
@@ -711,7 +720,6 @@
     }
 
     function playFullScreenVideo(e) {
-      unlockAudioInteraction();
       const vid = videoList[currentVideoIdx].id;
       let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10) + 1;
       localStorage.setItem(`views_${vid}`, vCount);
@@ -736,7 +744,7 @@
       document.getElementById('dailyLikeCount').innerText = lCount;
     }
 
-    // 5. 添い寝部屋用BGM制御
+    // 5. 添い寝部屋用BGM
     const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
     let currentTrackIndex = -1;
     const audio = document.getElementById('bgmAudio');
@@ -759,7 +767,6 @@
     }
 
     function toggleBgm() {
-      unlockAudioInteraction();
       if (audio.paused) {
         if (!audio.src || currentTrackIndex === -1) {
           playRandomBgm();
@@ -774,7 +781,6 @@
     }
 
     function nextBgm() {
-      unlockAudioInteraction();
       playRandomBgm();
     }
     audio.addEventListener('ended', () => playRandomBgm());

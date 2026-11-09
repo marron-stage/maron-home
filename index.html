@@ -17,7 +17,7 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: #0b0e17;
+      background-color: #080a10;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: #e2e8f0;
     }
@@ -43,30 +43,30 @@
     .tab-bar {
       display: flex;
       gap: 6px;
-      background: rgba(18, 22, 36, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(13, 16, 27, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: 5px;
       border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
     .tab-btn {
       background: none;
       border: none;
-      color: #cbd5e1;
+      color: #94a3b8;
       padding: 7px 15px;
       border-radius: 20px;
       font-size: 0.82rem;
       font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
     }
     .tab-btn.active {
-      background: rgba(246, 173, 85, 0.35);
+      background: rgba(246, 173, 85, 0.28);
       color: #fbd38d;
-      border: 1px solid rgba(246, 173, 85, 0.5);
+      border: 1px solid rgba(246, 173, 85, 0.45);
       font-weight: 600;
     }
 
@@ -96,7 +96,7 @@
       top: calc(env(safe-area-inset-top, 10px) + 60px);
       right: 14px;
       background: rgba(0, 0, 0, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #cbd5e1;
       padding: 6px 14px;
       border-radius: 20px;
@@ -122,9 +122,9 @@
       pointer-events: none;
     }
 
-    /* ================= 画面2：添い寝部屋（シアターナイト風） ================= */
+    /* ================= 画面2：添い寝部屋（ミニマル・ナイト） ================= */
     #sleepRoom {
-      background: radial-gradient(circle at center 40%, #171d33 0%, #07090f 100%);
+      background: radial-gradient(circle at center 45%, #151a2e 0%, #06080e 100%);
     }
     .sleep-container {
       display: flex;
@@ -132,7 +132,7 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: calc(env(safe-area-inset-top, 10px) + 60px) 16px calc(env(safe-area-inset-bottom, 10px) + 16px) 16px;
+      padding: calc(env(safe-area-inset-top, 10px) + 60px) 16px calc(env(safe-area-inset-bottom, 10px) + 20px) 16px;
       text-align: center;
     }
 
@@ -140,12 +140,12 @@
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 18px;
       border-radius: 30px;
-      backdrop-filter: blur(8px);
-      margin-bottom: 14px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
       z-index: 10;
     }
     .audio-btn {
@@ -156,25 +156,25 @@
       cursor: pointer;
     }
     .track-info {
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #94a3b8;
       min-width: 80px;
+      letter-spacing: 0.5px;
     }
 
-    /* 寝姿動画カード（縦動画 ＋ 呼吸グロー） */
+    /* 動画カード（息づくアンビエントフレーム） */
     .marron-sleep-card {
       position: relative;
-      width: 250px;
-      height: 380px;
-      max-width: 78vw;
-      max-height: 52vh;
-      border-radius: 26px;
+      width: 270px;
+      height: 420px;
+      max-width: 82vw;
+      max-height: 58vh;
+      border-radius: 28px;
       overflow: hidden;
-      border: 1.5px solid rgba(246, 173, 85, 0.35);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(246, 173, 85, 0.15);
+      border: 1px solid rgba(246, 173, 85, 0.3);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(246, 173, 85, 0.15);
       background: #000;
-      cursor: pointer;
-      animation: nightGlow 5s ease-in-out infinite alternate;
+      animation: sleepGlow 6s ease-in-out infinite alternate;
     }
     .marron-sleep-card video {
       width: 100%;
@@ -182,142 +182,101 @@
       object-fit: cover;
       display: block;
     }
-    @keyframes nightGlow {
-      0% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 15px rgba(246, 173, 85, 0.12); }
-      100% { box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 30px rgba(246, 173, 85, 0.32); }
+    @keyframes sleepGlow {
+      0% { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 15px rgba(246, 173, 85, 0.1); }
+      100% { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 35px rgba(246, 173, 85, 0.28); }
     }
 
-    .like-btn {
-      background: rgba(239, 68, 68, 0.25);
-      border: 1px solid rgba(239, 68, 68, 0.45);
-      color: #fca5a5;
-      padding: 7px 16px;
-      border-radius: 30px;
-      font-size: 0.82rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.1s ease;
+    /* ================= 画面3：日常部屋（ミニマルシアター） ================= */
+    #dailyRoom {
+      background: radial-gradient(circle at center, #141724 0%, #06070b 100%);
     }
-    .like-btn:active {
-      transform: scale(0.92);
-    }
-
-    .bubble {
-      background: rgba(25, 28, 40, 0.75);
-      border: 1px solid rgba(246, 173, 85, 0.35);
-      padding: 8px 14px;
-      border-radius: 18px;
-      font-size: 0.8rem;
-      color: #fef3c7;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-      line-height: 1.4;
-    }
-
-    /* ================= 画面3：日常部屋 ================= */
-    .centered-screen {
+    .daily-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: 70px 16px 20px 16px;
+      padding: calc(env(safe-area-inset-top, 10px) + 60px) 16px calc(env(safe-area-inset-bottom, 10px) + 20px) 16px;
       text-align: center;
-      background: radial-gradient(circle at center, #1b2238 0%, #0d101b 100%);
     }
 
-    .youtube-card {
-      width: 300px;
-      max-width: 90vw;
-      border-radius: 20px;
-      overflow: hidden;
-      background: #1e2538;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      cursor: pointer;
-    }
-    .video-thumbnail-box {
-      position: relative;
-      width: 100%;
-      height: 190px;
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .video-thumbnail-box video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .play-badge {
-      position: absolute;
-      width: 54px;
-      height: 54px;
-      background: rgba(0, 0, 0, 0.65);
-      border: 2px solid rgba(255, 255, 255, 0.85);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 1.5rem;
-      padding-left: 3px;
-      backdrop-filter: blur(4px);
-    }
-    .video-meta {
-      padding: 12px 14px;
-      text-align: left;
-    }
-    .video-meta-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #f1f5f9;
-    }
-    .video-meta-sub {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      margin-top: 2px;
-    }
-
-    .video-selector {
+    .theater-selector {
       display: flex;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
       overflow-x: auto;
       max-width: 90vw;
       padding: 4px;
     }
-    .video-chip {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #cbd5e1;
-      padding: 6px 14px;
-      border-radius: 16px;
+    .theater-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      padding: 6px 16px;
+      border-radius: 20px;
       font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s ease;
     }
-    .video-chip.active {
+    .theater-chip.active {
       background: rgba(246, 173, 85, 0.25);
-      border-color: #f6ad55;
+      border-color: rgba(246, 173, 85, 0.6);
       color: #fbd38d;
+      font-weight: 500;
     }
 
-    .floating-heart {
-      position: absolute;
-      pointer-events: none;
-      font-size: 1.6rem;
-      animation: flyUp 1.2s ease-out forwards;
-      z-index: 200;
+    /* シネマスクリーンカード */
+    .cinema-screen-card {
+      position: relative;
+      width: 320px;
+      height: 440px;
+      max-width: 86vw;
+      max-height: 58vh;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.05);
+      cursor: pointer;
     }
-    @keyframes flyUp {
-      0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
-      100% { opacity: 0; transform: translate(var(--dx), -100px) scale(1.4); }
+    .cinema-screen-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .play-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s ease;
+    }
+    .play-btn-circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(18, 22, 36, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.6rem;
+      padding-left: 4px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .cinema-caption {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      letter-spacing: 0.8px;
+      color: #cbd5e1;
+      font-weight: 400;
     }
   </style>
 </head>
@@ -350,63 +309,35 @@
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
-        <!-- おやすみBGMプレーヤー -->
         <div class="audio-player">
           <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
           <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
           <button class="audio-btn" onclick="nextBgm()">⏭</button>
         </div>
 
-        <!-- マロン添い寝縦動画カード -->
-        <div class="marron-sleep-card" onclick="tapSleepMarron(event)">
+        <div class="marron-sleep-card">
           <video id="marronSleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline webkit-playsinline></video>
-        </div>
-
-        <div style="margin-top: 14px;">
-          <button class="like-btn" onclick="addLike('sleep', event)">
-            <span>❤️ なでなで</span>
-            <span id="sleepLikeCount">0</span>
-          </button>
-        </div>
-
-        <div class="bubble" id="sleepBubble" style="margin-top: 12px; max-width: 280px; text-align: center;">
-          スピー… すやすや… 💤
         </div>
       </div>
 
-      <!-- 添い寝部屋用オーディオ（BGM ＆ 2種類の寝言） -->
       <audio id="bgmAudio" preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
       <audio id="sleepVoice02" src="sleep_voice02.MP3" preload="auto"></audio>
     </section>
 
-    <!-- ================= 画面3：日常部屋 ================= -->
+    <!-- ================= 画面3：日常部屋（ミニマルシアター） ================= -->
     <section id="dailyRoom" class="screen">
-      <div class="centered-screen">
-        <div class="video-selector" id="videoChips"></div>
+      <div class="daily-container">
+        <div class="theater-selector" id="videoChips"></div>
 
-        <div class="youtube-card" onclick="playFullScreenVideo(event)">
-          <div class="video-thumbnail-box">
-            <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
-            <div class="play-badge">▶</div>
-          </div>
-          <div class="video-meta">
-            <div class="video-meta-title" id="videoTitle">まったりマロン</div>
-            <div class="video-meta-sub" id="videoSubDesc">タップすると全画面で再生するワン！</div>
+        <div class="cinema-screen-card" onclick="playFullScreenVideo()">
+          <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
+          <div class="play-overlay">
+            <div class="play-btn-circle">▶</div>
           </div>
         </div>
 
-        <div style="margin-top: 14px; display: flex; align-items: center; gap: 16px;">
-          <span id="dailyViews" style="font-size: 0.8rem; color: #94a3b8;">👁️ 0 views</span>
-          <button class="like-btn" onclick="addLike('daily', event)">
-            <span>❤️ いいね</span>
-            <span id="dailyLikeCount">0</span>
-          </button>
-        </div>
-
-        <div class="bubble" id="dailyBubble" style="margin-top: 14px; max-width: 280px; text-align: center;">
-          画面をタップして全画面で見てね！🐾
-        </div>
+        <div class="cinema-caption" id="videoTitle">まったりマロン</div>
       </div>
     </section>
   </div>
@@ -435,7 +366,7 @@
       }
     }
 
-    // 2. お部屋自律歩行（等速・4秒サイクル・クロマキー透過）
+    // 2. お部屋自律歩行（正面歩き速度ダウン ＆ 等速歩行）
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -444,6 +375,9 @@
     const videoDiagBack = document.getElementById('videoDiagBack');
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
+
+    // 正面歩きの足の回転速度を0.85倍に落ち着かせる
+    videoFront.playbackRate = 0.85;
 
     const livingBgm = document.getElementById('livingBgmAudio');
     const footstepAudio = document.getElementById('footstepAudio');
@@ -471,7 +405,8 @@
     }
 
     const CYCLE_DURATION = 4000;
-    const STEP_DISTANCE = 110;
+    const DEFAULT_STEP_DISTANCE = 110;
+    const FRONT_STEP_DISTANCE = 75; // 手前歩きの移動距離を抑えて滑り足を解消
 
     let sessionStartTime = 0;
     let startX = 60;
@@ -499,8 +434,12 @@
       let validFound = false;
 
       for (let angle of directions) {
-        const testX = startX + Math.cos(angle) * STEP_DISTANCE;
-        const testY = startY + Math.sin(angle) * STEP_DISTANCE;
+        // 下方向（正面歩き）に近い角度の場合は歩行距離を短縮
+        const isHeadingDown = angle > Math.PI / 3 && angle < (2 * Math.PI) / 3;
+        const stepDist = isHeadingDown ? FRONT_STEP_DISTANCE : DEFAULT_STEP_DISTANCE;
+
+        const testX = startX + Math.cos(angle) * stepDist;
+        const testY = startY + Math.sin(angle) * stepDist;
 
         if (
           testX >= b.minX && testX <= b.maxX &&
@@ -518,8 +457,8 @@
       if (!validFound) {
         const angleToCenter = Math.atan2((h * 0.65) - startY, (w * 0.5) - startX);
         chosenAngle = angleToCenter;
-        targetX = startX + Math.cos(chosenAngle) * STEP_DISTANCE;
-        targetY = startY + Math.sin(chosenAngle) * STEP_DISTANCE;
+        targetX = startX + Math.cos(chosenAngle) * DEFAULT_STEP_DISTANCE;
+        targetY = startY + Math.sin(chosenAngle) * DEFAULT_STEP_DISTANCE;
       }
 
       sessionStartTime = performance.now();
@@ -667,7 +606,6 @@
 
     let sleepVoiceTimer = null;
 
-    // 2種類の寝言からランダムに1つ再生する関数
     function playRandomSleepVoice() {
       const isSleep = document.getElementById('sleepRoom').classList.contains('active');
       if (!isSleep) return;
@@ -676,14 +614,12 @@
       chosenVoice.currentTime = 0;
       chosenVoice.play().catch(() => {});
 
-      // 次の寝言までのランダム間隔（45秒〜80秒）
       const nextDelay = 45000 + Math.random() * 35000;
       sleepVoiceTimer = setTimeout(playRandomSleepVoice, nextDelay);
     }
 
     function startSleepRoomTimer() {
       clearTimeout(sleepVoiceTimer);
-      // 添い寝部屋に入ってから最初の寝言は少し早め（15〜30秒後）
       const initialDelay = 15000 + Math.random() * 15000;
       sleepVoiceTimer = setTimeout(playRandomSleepVoice, initialDelay);
     }
@@ -698,67 +634,9 @@
       if (playBtn) playBtn.innerText = '▶ 再生';
     }
 
-    let sleepLikes = parseInt(localStorage.getItem('marron_sleep_likes') || '0', 10);
-    document.getElementById('sleepLikeCount').innerText = sleepLikes;
-
-    function addLike(type, e) {
-      if (e) e.stopPropagation();
-
-      if (type === 'sleep') {
-        sleepLikes += 1;
-        localStorage.setItem('marron_sleep_likes', sleepLikes);
-        document.getElementById('sleepLikeCount').innerText = sleepLikes;
-      } else {
-        const vid = videoList[currentVideoIdx].id;
-        let lCount = parseInt(localStorage.getItem(`likes_${vid}`) || '0', 10) + 1;
-        localStorage.setItem(`likes_${vid}`, lCount);
-        document.getElementById('dailyLikeCount').innerText = lCount;
-      }
-      spawnHeart(e);
-      if (navigator.vibrate) navigator.vibrate(30);
-    }
-
-    function spawnHeart(e) {
-      const heart = document.createElement('div');
-      heart.className = 'floating-heart';
-      heart.innerText = ['❤️', '🐾', '✨', '💖'][Math.floor(Math.random() * 4)];
-      const dx = (Math.random() - 0.5) * 80 + 'px';
-      heart.style.setProperty('--dx', dx);
-
-      const target = document.querySelector('.screen.active');
-      const x = (e && e.clientX ? e.clientX : window.innerWidth / 2) - 15;
-      const y = (e && e.clientY ? e.clientY : window.innerHeight / 2) - 20;
-
-      heart.style.left = `${x}px`;
-      heart.style.top = `${y}px`;
-      target.appendChild(heart);
-      setTimeout(() => heart.remove(), 1200);
-    }
-
-    const sleepMessages = [
-      "スピー… すやすや… 💤",
-      "むにゃ… なでなで、あったかいワン… ✨",
-      "今日も生きててえらいワン… 🐾",
-      "マロンはずっと隣にいるからね… 🌙",
-      "ふがっ… 大丈夫、ぜんぶうまくいくワン…"
-    ];
-    let sleepMsgIdx = 0;
-    function tapSleepMarron(e) {
-      sleepMsgIdx = (sleepMsgIdx + 1) % sleepMessages.length;
-      document.getElementById('sleepBubble').innerText = sleepMessages[sleepMsgIdx];
-      
-      // なでなで時、35%の確率で寝言を小さく返す
-      if (Math.random() < 0.35) {
-        const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
-        chosenVoice.currentTime = 0;
-        chosenVoice.play().catch(() => {});
-      }
-      addLike('sleep', e);
-    }
-
-    // 4. 日常部屋
+    // 4. 日常部屋（ミニマルシアター制御）
     const videoList = [
-      { id: 'v1', title: 'まったりマロン', src: 'marron.mp4', desc: 'タップすると全画面で再生するワン！' }
+      { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' }
     ];
     let currentVideoIdx = 0;
     const dailyVideoPlayer = document.getElementById('dailyVideoPlayer');
@@ -768,29 +646,21 @@
       chipsContainer.innerHTML = '';
       videoList.forEach((v, idx) => {
         const chip = document.createElement('button');
-        chip.className = `video-chip ${idx === currentVideoIdx ? 'active' : ''}`;
+        chip.className = `theater-chip ${idx === currentVideoIdx ? 'active' : ''}`;
         chip.innerText = v.title;
         chip.onclick = (e) => { e.stopPropagation(); selectVideo(idx); };
         chipsContainer.appendChild(chip);
       });
-      loadVideoStats();
     }
 
     function selectVideo(idx) {
       currentVideoIdx = idx;
-      document.querySelectorAll('.video-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
+      document.querySelectorAll('.theater-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
       dailyVideoPlayer.src = videoList[idx].src;
       document.getElementById('videoTitle').innerText = videoList[idx].title;
-      document.getElementById('videoSubDesc').innerText = videoList[idx].desc;
-      loadVideoStats();
     }
 
-    function playFullScreenVideo(e) {
-      const vid = videoList[currentVideoIdx].id;
-      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10) + 1;
-      localStorage.setItem(`views_${vid}`, vCount);
-      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
-
+    function playFullScreenVideo() {
       dailyVideoPlayer.muted = false;
       dailyVideoPlayer.play();
 
@@ -799,15 +669,6 @@
       } else if (dailyVideoPlayer.requestFullscreen) {
         dailyVideoPlayer.requestFullscreen();
       }
-      spawnHeart(e);
-    }
-
-    function loadVideoStats() {
-      const vid = videoList[currentVideoIdx].id;
-      let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10);
-      document.getElementById('dailyViews').innerText = `👁️ ${vCount} views`;
-      let lCount = parseInt(localStorage.getItem(`likes_${vid}`) || '0', 10);
-      document.getElementById('dailyLikeCount').innerText = lCount;
     }
 
     // 5. 添い寝部屋用BGM

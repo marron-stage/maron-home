@@ -202,7 +202,6 @@
       position: relative;
     }
 
-    /* 相談部屋の全画面映像 */
     .counsel-fullscreen-video {
       position: absolute;
       inset: 0;
@@ -214,7 +213,6 @@
       filter: brightness(0.92) contrast(1.04);
     }
 
-    /* 相談部屋の薄いグラデーションオーバーレイ */
     .counsel-overlay {
       position: absolute;
       inset: 0;
@@ -223,13 +221,13 @@
       pointer-events: none;
     }
 
-    /* マロンの頭上にポワンと出る特大吹き出し */
+    /* マロンの頭上高め（タブバー下）に表示される吹き出し */
     .counsel-head-bubble {
       position: absolute;
-      top: 38%;
+      top: calc(env(safe-area-inset-top, 10px) + 62px);
       left: 50%;
-      transform: translate(-50%, -100%) scale(0.85);
-      background: rgba(13, 17, 30, 0.92);
+      transform: translateX(-50%) scale(0.85);
+      background: rgba(13, 17, 30, 0.94);
       border: 1.8px solid rgba(246, 173, 85, 0.85);
       color: #fef08a;
       padding: 12px 18px;
@@ -238,7 +236,7 @@
       font-weight: 500;
       line-height: 1.5;
       text-align: center;
-      max-width: 86vw;
+      max-width: 88vw;
       width: max-content;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
@@ -250,7 +248,7 @@
     }
     .counsel-head-bubble.show {
       opacity: 1;
-      transform: translate(-50%, -100%) scale(1);
+      transform: translateX(-50%) scale(1);
     }
     .counsel-head-bubble::after {
       content: '';
@@ -263,7 +261,6 @@
       border-color: rgba(246, 173, 85, 0.9) transparent transparent transparent;
     }
 
-    /* 下部の半透明操作トレイ */
     .counsel-bottom-bar {
       position: absolute;
       bottom: calc(env(safe-area-inset-bottom, 10px) + 12px);
@@ -350,7 +347,6 @@
       transform: scale(0.95);
     }
 
-    /* 空へ昇るシャボン玉エフェクト */
     .counsel-rising-bubble {
       position: absolute;
       z-index: 60;
@@ -678,16 +674,14 @@
 
     <!-- ================= 画面2：マロンの相談部屋（全画面） ================= -->
     <section id="counselRoom" class="screen">
-      <!-- 全画面背景動画（正面でおすわりして待つマロン） -->
       <video id="marronTalkVideo" class="counsel-fullscreen-video" src="marron_talk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
       <div class="counsel-overlay"></div>
 
-      <!-- マロンの頭上にポワンと現れる返答吹き出し -->
+      <!-- 上部に引き上げた吹き出し -->
       <div class="counsel-head-bubble" id="counselHeadBubble">
         今日もおつかれさま！何でもマロンに教えてね。
       </div>
 
-      <!-- 下部の操作トレイ -->
       <div class="counsel-bottom-bar">
         <div class="counsel-chips-row">
           <button class="counsel-pill" onclick="handleCounselPill('つかれた…')">つかれた…</button>
@@ -703,7 +697,6 @@
         </div>
       </div>
 
-      <!-- 反応音声（鳴き声など、ファイルがあれば再生・なければ無音で安全動作） -->
       <audio id="counselVoiceAudio" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
@@ -765,7 +758,6 @@
         stopSleepRoomAudio();
         const talkVid = document.getElementById('marronTalkVideo');
         if (talkVid) talkVid.play().catch(() => {});
-        // 部屋に入った時の初期メッセージ
         showCounselBubble('今日もおつかれさま！何でもマロンに教えてね。', 4500);
       } else if (tab === 'sleep') {
         document.getElementById('sleepRoom').classList.add('active');
@@ -925,9 +917,8 @@
       showBubble(text, 3500);
     }
 
-    // 4. 相談部屋システム（心理学的受容アプローチ ＆ 頭上吹き出し連動）
+    // 4. 相談部屋システム
     const counselReplies = {
-      // 疲れたとき：存在の肯定・休息の許可・減圧
       tired: [
         '今日を最後まで生き抜いただけでもう100点満点だよ。本当にお疲れさま。',
         'いっぱい頑張ったんだね。もう今日は何もしなくていいよ。マロンが全部よしよしするワン。',
@@ -936,7 +927,6 @@
         '全部投げ出してゴロゴロしちゃお？マロンと一緒に毛布にくるまろ！',
         'よく頑張ったね…。辛かったね。マロンの背中、なでなでして落ち着いてね。'
       ],
-      // 頑張ったとき：無条件の歓喜・共感・努力の肯定
       praise: [
         'すごいすごい！マロンもすっごく嬉しいワン！しっぽブンブン振っちゃう！',
         '見てたよ！本当にえらかったね！今日は大好きなもの食べて自分にご褒美あげよ？',
@@ -945,7 +935,6 @@
         'わふっ！あなたの笑顔が見られて、マロンも飛び跳ねるくらい幸せだよ！',
         '本当に誇らしいワン！あなたのがんばりは、マロンの自慢だよ！'
       ],
-      // モヤモヤするとき：感情の吐き出し肯定・減圧・味方であることの提示
       annoyed: [
         'もやもやするよね…。言葉にならなくても大丈夫。マロンが全部聞いてるよ。',
         '嫌な気持ちはシャボン玉に乗せて空へポイッ！マロンが土に埋めて消しといたワン。',
@@ -954,7 +943,6 @@
         'あなたが悪いんじゃないよ。今日は美味しい温かい飲み物飲んで、ゆっくりしよ？',
         '心に溜まったトゲトゲ、マロンがペロペロしてまるくしといたワン。'
       ],
-      // 寂しいとき：孤立感の解消・無条件の愛情と温もり
       lonely: [
         'マロンはずーっとここにいるよ。絶対にひとりじゃないワン🐾',
         'ぎゅーーーっ！あったかい？マロンのぬくもり、届いてるかな。',
@@ -963,7 +951,6 @@
         'マロンはずっとあなたを待ってたよ。会いに来てくれてすっごく嬉しい！',
         'どこにも行かないよ。今夜はずっとお隣でくっついてるね。'
       ],
-      // 眠れないとき：入眠プレッシャーの解除・安心感
       sleep: [
         '眠れなくても大丈夫だよ。目を閉じて横になってるだけで、身体はちゃんと休まってるワン。',
         '焦らなくていいよ。マロンが朝までずっとそばで見守ってるからね。',
@@ -972,7 +959,6 @@
         '眠れるまでずっとここにいるよ。マロンの毛並みをなでなでしてリラックスしよ？',
         '添い寝部屋でお布団入ろ？マロンの寝息を聴きながら、のんびり過ごそうね。'
       ],
-      // 自由入力・一般的な感情の受け止め
       default: [
         '話してくれてありがとう。どんな気持ちも、マロンはまるごと受け止めるよ。',
         'うんうん、ちゃんと届いたよ。あなたの味方でいられることがマロンの幸せだワン。',

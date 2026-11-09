@@ -424,7 +424,7 @@
       </div>
 
       <audio id="bgmAudio" loop preload="auto"></audio>
-      <audio id="sleepBreath" src="sleep_breath.MP3" loop preload="auto"></audio>
+      <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
@@ -695,7 +695,7 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（iOSアンロック完全対応版）
+    // 3. 添い寝部屋演出（呼吸15回カウント ＆ 寝言切り替えループ）
     const bgmAudio = document.getElementById('bgmAudio');
     const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
@@ -710,7 +710,7 @@
     const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
     let currentTrackIndex = 0;
 
-    // 音量バランス
+    // 音量設定
     const BGM_VOL = 0.28;
     const BREATH_VOL = 0.35;
     const VOICE_VOL = 0.32;
@@ -719,8 +719,10 @@
     breathAudio.volume = BREATH_VOL;
     voice01.volume = VOICE_VOL;
 
+    // 呼吸カウント制御
     let isSleepPlaying = false;
-    let voiceTimer = null;
+    let breathCount = 0;
+    const TARGET_BREATH_COUNT = 15; // 15回に1回寝言
     let sleepWakeLock = null;
 
     async function requestWakeLock() {
@@ -740,26 +742,46 @@
       }
     }
 
-    // 寝言のスケジューリング
-    function scheduleNextVoice() {
+    // 寝息の再生サイクル
+    function playBreathCycle() {
       if (!isSleepPlaying) return;
-      clearTimeout(voiceTimer);
-
-      // 12秒〜24秒の心地よいランダム間隔
-      const delay = Math.random() * (24000 - 12000) + 12000;
-
-      voiceTimer = setTimeout(() => {
-        if (!isSleepPlaying) return;
-        voice01.volume = VOICE_VOL;
-        voice01.currentTime = 0;
-        voice01.play().then(() => {
-          voice01.onended = () => scheduleNextVoice();
-        }).catch(err => {
-          console.log('寝言再生エラー:', err);
-          scheduleNextVoice();
-        });
-      }, delay);
+      breathAudio.currentTime = 0;
+      breathAudio.play().catch(err => {
+        console.log('寝息再生エラー:', err);
+      });
     }
+
+    // 寝息が終わったときの判定
+    breathAudio.onended = () => {
+      if (!isSleepPlaying) return;
+      breathCount++;
+
+      // 15回目に到達したら、呼吸の代わりに寝言を再生
+      if (breathCount >= TARGET_BREATH_COUNT) {
+        playVoiceCycle();
+      } else {
+        playBreathCycle();
+      }
+    };
+
+    // 寝言の再生サイクル
+    function playVoiceCycle() {
+      if (!isSleepPlaying) return;
+      voice01.currentTime = 0;
+      voice01.play().catch(err => {
+        console.log('寝言再生エラー:', err);
+        // エラー時は呼吸に戻す
+        breathCount = 0;
+        playBreathCycle();
+      });
+    }
+
+    // 寝言が終わったらカウントをリセットして呼吸を再開
+    voice01.onended = () => {
+      if (!isSleepPlaying) return;
+      breathCount = 0;
+      playBreathCycle();
+    };
 
     // メインタップ操作
     async function toggleSleepSuite() {
@@ -769,16 +791,14 @@
             bgmAudio.src = bgmList[currentTrackIndex];
           }
 
-          // ★重要：タップ時に寝言も含めて一度再生し、iOSの権限ロックを即時解除する
-          voice01.volume = 0.001; // 最初は耳に聞こえない音量
-          const voiceWarmup = voice01.play();
+          // iOSアンロック用：タップ時に全音声を一度キック
+          voice01.volume = 0.001;
+          const unlockVoice = voice01.play();
 
           await bgmAudio.play();
-          await breathAudio.play();
 
-          // アンロックが完了したら一時停止して本来の音量に戻す
-          if (voiceWarmup !== undefined) {
-            voiceWarmup.then(() => {
+          if (unlockVoice !== undefined) {
+            unlockVoice.then(() => {
               voice01.pause();
               voice01.currentTime = 0;
               voice01.volume = VOICE_VOL;
@@ -786,22 +806,13 @@
           }
 
           isSleepPlaying = true;
+          breathCount = 0;
           sleepMasterBtn.innerHTML = '⏸ おやすみ中（停止）';
           sleepPlayerCard.classList.add('active');
           trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
 
-          // 開始から6秒後に最初の寝言を鳴らす
-          clearTimeout(voiceTimer);
-          voiceTimer = setTimeout(() => {
-            if (isSleepPlaying) {
-              voice01.volume = VOICE_VOL;
-              voice01.currentTime = 0;
-              voice01.play().then(() => {
-                voice01.onended = () => scheduleNextVoice();
-              }).catch(() => scheduleNextVoice());
-            }
-          }, 6000);
-
+          // 最初の寝息サイクルを開始
+          playBreathCycle();
           requestWakeLock();
         } catch (err) {
           console.log('再生ブロックエラー:', err);
@@ -824,7 +835,7 @@
 
     function stopSleepRoomAudio() {
       isSleepPlaying = false;
-      clearTimeout(voiceTimer);
+      breathCount = 0;
 
       bgmAudio.pause();
       breathAudio.pause();
@@ -832,7 +843,6 @@
 
       voice01.pause();
       voice01.currentTime = 0;
-      voice01.onended = null;
 
       sleepMasterBtn.innerHTML = '▶ 添い寝サウンド再生';
       sleepPlayerCard.classList.remove('active');

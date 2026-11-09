@@ -94,6 +94,24 @@
       background-size: cover;
       background-position: center bottom;
       background-repeat: no-repeat;
+      transition: filter 1s ease;
+    }
+
+    /* 時間帯別の背景光・環境フィルター */
+    #livingRoom.time-morning {
+      filter: brightness(1.05) saturate(1.05);
+    }
+    #livingRoom.time-day {
+      filter: brightness(1.0) saturate(1.0);
+    }
+    #livingRoom.time-sunset {
+      filter: brightness(0.92) saturate(1.25) sepia(0.25) hue-rotate(-12deg);
+    }
+    #livingRoom.time-night {
+      filter: brightness(0.78) contrast(1.08) saturate(0.92);
+    }
+    #livingRoom.time-midnight {
+      filter: brightness(0.58) contrast(1.15) saturate(0.8) hue-rotate(15deg);
     }
 
     /* 時計バッジ（左上） */
@@ -180,7 +198,6 @@
       opacity: 1;
       transform: translate(-50%, -100%) scale(1);
     }
-    /* 吹き出しのしっぽ */
     .marron-speech-bubble::after {
       content: '';
       position: absolute;
@@ -457,7 +474,7 @@
     <main id="livingRoom" class="screen active">
       <!-- 秒まで表示するリアルタイム時計 -->
       <div class="clock-badge" id="livingClock">
-        <span>🕒</span>
+        <span id="clockIcon">🕒</span>
         <span id="clockTime">--:--</span>
         <span class="clock-sec" id="clockSec">:--</span>
       </div>
@@ -542,36 +559,98 @@
       }
     }
 
-    // 2. 時計機能（秒までリアルタイム更新）
-    function updateLivingClock() {
+    // 2. 時計機能 ＆ 時間帯ごとの雰囲気・フィルター制御
+    let currentTimeSlot = 'day';
+
+    function updateLivingClockAndAtmosphere() {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
+      const h = now.getHours();
       const m = String(now.getMinutes()).padStart(2, '0');
       const s = String(now.getSeconds()).padStart(2, '0');
 
       const clockTime = document.getElementById('clockTime');
       const clockSec = document.getElementById('clockSec');
+      const clockIcon = document.getElementById('clockIcon');
+      const livingRoom = document.getElementById('livingRoom');
+
       if (clockTime && clockSec) {
-        clockTime.textContent = `${h}:${m}`;
+        clockTime.textContent = `${String(h).padStart(2, '0')}:${m}`;
         clockSec.textContent = `:${s}`;
       }
-    }
-    setInterval(updateLivingClock, 1000);
-    updateLivingClock();
 
-    // 3. マロンの吹き出し制御
+      // 時間帯の判定とクラス切り替え
+      let newSlot = 'day';
+      let icon = '☀️';
+
+      if (h >= 5 && h < 11) {
+        newSlot = 'morning';
+        icon = '🌅';
+      } else if (h >= 11 && h < 17) {
+        newSlot = 'day';
+        icon = '☀️';
+      } else if (h >= 17 && h < 19) {
+        newSlot = 'sunset';
+        icon = '🌇';
+      } else if (h >= 19 && h < 24) {
+        newSlot = 'night';
+        icon = '🌙';
+      } else {
+        newSlot = 'midnight';
+        icon = '🌌';
+      }
+
+      if (clockIcon) clockIcon.textContent = icon;
+
+      if (currentTimeSlot !== newSlot && livingRoom) {
+        currentTimeSlot = newSlot;
+        livingRoom.className = 'screen active time-' + newSlot;
+      }
+    }
+
+    setInterval(updateLivingClockAndAtmosphere, 1000);
+    updateLivingClockAndAtmosphere();
+
+    // 3. マロンの吹き出し制御（時間帯連動）
     const bubbleEl = document.getElementById('marronBubble');
-    const speechList = [
-      '今日もおつかれさま！',
-      '深呼吸しよ？すー、はー',
-      'ずっとそばにいるよ🐾',
-      'なでなでしていいよ〜',
-      '生きてるだけでえらいワン！',
-      'ひと息つこうね☕',
-      'いつもがんばってるの見てるよ',
-      '今夜もゆっくり休もうね',
-      'お腹すいたワン🦴'
-    ];
+
+    const speechesByTime = {
+      morning: [
+        'おはよう！今日もいい日になるといいね🌅',
+        '朝ごはんしっかり食べた？',
+        '無理せずマイペースにいこうね🐾',
+        'すー、はー、朝の深呼吸だよ',
+        '今日もお留守番がんばるワン！'
+      ],
+      day: [
+        'お昼食べた？ひと息いれよう☕',
+        '午後も応援してるワン！',
+        '水分とってる？無理しちゃダメだよ',
+        'なでなでしていいよ〜',
+        'ずっとそばで見守ってるよ🐾'
+      ],
+      sunset: [
+        '今日もおつかれさま！🌇',
+        '夕焼けきれいだワン',
+        'がんばったね、えらいえらい！',
+        'お家であったまろうね',
+        '生きてるだけで100点満点だよ♡'
+      ],
+      night: [
+        '今夜もゆっくり休もうね🌙',
+        'あったかいお風呂入った？',
+        'マロンはずっとここにいるよ',
+        '今日あったこと、教えてね',
+        'お腹すいたワン🦴'
+      ],
+      midnight: [
+        'まだ起きてたの？無理しないでね🌌',
+        'いつでもお布団入っていいんだよ',
+        '眠れるまでマロンがついてるワン',
+        'しーっ、静かな夜だね…',
+        'ぎゅーってして寝よう？🐾'
+      ]
+    };
+
     let bubbleHideTimer = null;
 
     function showBubble(text, duration = 4000) {
@@ -583,13 +662,14 @@
       }, duration);
     }
 
-    // 定期的にマロンがつぶやく（12〜20秒おき）
+    // 定期的なつぶやき（現在の時間帯のリストからランダム選択）
     function scheduleRandomSpeech() {
       const delay = Math.random() * (20000 - 12000) + 12000;
       setTimeout(() => {
         const isLiving = document.getElementById('livingRoom').classList.contains('active');
         if (isLiving) {
-          const text = speechList[Math.floor(Math.random() * speechList.length)];
+          const list = speechesByTime[currentTimeSlot] || speechesByTime.day;
+          const text = list[Math.floor(Math.random() * list.length)];
           showBubble(text, 4500);
         }
         scheduleRandomSpeech();
@@ -610,7 +690,7 @@
       showBubble(text, 3500);
     }
 
-    // 4. お部屋自律歩行（吹き出しの追従付き）
+    // 4. お部屋自律歩行（吹き出し追従）
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -787,7 +867,6 @@
         canvas.style.left = `${currentX}px`;
         canvas.style.top = `${currentY}px`;
 
-        // 吹き出しの位置をマロンの頭上にピタッと追従
         if (bubbleEl) {
           bubbleEl.style.left = `${currentX + (marronWidth / 2)}px`;
           bubbleEl.style.top = `${currentY - 10}px`;

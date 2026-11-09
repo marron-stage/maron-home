@@ -122,7 +122,7 @@
       pointer-events: none;
     }
 
-    /* ================= 画面2：添い寝部屋（間接照明 ＆ ナイトフィルター） ================= */
+    /* ================= 画面2：添い寝部屋 ================= */
     #sleepRoom {
       background: radial-gradient(circle at center 40%, #111524 0%, #040508 100%);
       transition: background 0.5s ease;
@@ -142,21 +142,24 @@
       text-align: center;
     }
 
+    /* コントロールバー（BGM再生 ＋ 寝言再生 ＋ 間接照明） */
     .sleep-controls-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 18px;
       z-index: 10;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .audio-player {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 16px;
+      padding: 6px 14px;
       border-radius: 30px;
       backdrop-filter: blur(10px);
     }
@@ -164,20 +167,40 @@
       background: none;
       border: none;
       color: #cbd5e1;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       cursor: pointer;
     }
     .track-info {
       font-size: 0.78rem;
       color: #94a3b8;
-      min-width: 80px;
+      min-width: 75px;
     }
 
+    /* 寝言の再生 / 停止トグルボタン */
+    .sleep-voice-toggle {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
+    }
+    .sleep-voice-toggle.active {
+      background: rgba(246, 173, 85, 0.25);
+      border-color: rgba(246, 173, 85, 0.7);
+      color: #fbd38d;
+      font-weight: 600;
+    }
+
+    /* 間接照明ボタン */
     .lamp-toggle-btn {
       background: rgba(246, 173, 85, 0.2);
       border: 1px solid rgba(246, 173, 85, 0.5);
       color: #fbd38d;
-      padding: 6px 14px;
+      padding: 6px 12px;
       border-radius: 20px;
       font-size: 0.78rem;
       cursor: pointer;
@@ -190,7 +213,7 @@
       color: #64748b;
     }
 
-    /* 添い寝動画カード（間接照明グロー ＆ ナイトフィルター） */
+    /* 添い寝動画カード */
     .marron-sleep-card {
       position: relative;
       width: 270px;
@@ -201,23 +224,23 @@
       overflow: hidden;
       background: #000;
       border: 1.5px solid rgba(246, 173, 85, 0.35);
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 50px rgba(246, 173, 85, 0.35); /* 間接照明の光 */
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 50px rgba(246, 173, 85, 0.35);
       transition: box-shadow 0.6s ease, border-color 0.6s ease;
     }
     .marron-sleep-card.dark {
       border-color: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5); /* 消灯 */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5);
     }
     .marron-sleep-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-      filter: brightness(0.72) contrast(1.08) saturate(0.85) sepia(0.18); /* ナイトトーン */
+      filter: brightness(0.72) contrast(1.08) saturate(0.85) sepia(0.18);
       transition: filter 0.6s ease;
     }
     .marron-sleep-card.dark video {
-      filter: brightness(0.48) contrast(1.15) saturate(0.7) sepia(0.08); /* 深夜消灯トーン */
+      filter: brightness(0.48) contrast(1.15) saturate(0.7) sepia(0.08);
     }
 
     /* ================= 画面3：日常部屋（Netflix風カルーセル） ================= */
@@ -232,7 +255,6 @@
       justify-content: space-between;
     }
 
-    /* 上部：メインシネマスクリーン */
     .netflix-hero-wrapper {
       flex: 1;
       display: flex;
@@ -290,7 +312,6 @@
       color: #f1f5f9;
     }
 
-    /* 下部：横スクロールエピソードトレイ */
     .netflix-tray-section {
       margin-top: 14px;
       margin-bottom: 8px;
@@ -383,13 +404,16 @@
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
+        <!-- 上部コントロールバー（BGM再生 ＋ 寝言再生 ＋ 間接照明） -->
         <div class="sleep-controls-bar">
           <div class="audio-player">
             <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
             <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
             <button class="audio-btn" onclick="nextBgm()">⏭</button>
           </div>
-          <!-- ベッドサイド間接照明切り替えスイッチ -->
+          <!-- 寝言の再生 / 停止トグルボタン -->
+          <button class="sleep-voice-toggle" id="voiceToggleBtn" onclick="toggleSleepVoiceLoop()">💤 寝言再生</button>
+          <!-- 間接照明切り替えスイッチ -->
           <button class="lamp-toggle-btn" id="lampBtn" onclick="toggleBedLamp()">💡 明かりON</button>
         </div>
 
@@ -403,10 +427,9 @@
       <audio id="sleepVoice02" src="sleep_voice02.MP3" preload="auto"></audio>
     </section>
 
-    <!-- ================= 画面3：日常部屋（Netflix風シネマカルーセル） ================= -->
+    <!-- ================= 画面3：日常部屋（Netflix風カルーセル） ================= -->
     <section id="dailyRoom" class="screen">
       <div class="netflix-container">
-        <!-- 上部：メインシネマスクリーン -->
         <div class="netflix-hero-wrapper">
           <div class="netflix-hero-card" onclick="playFullScreenVideo()">
             <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
@@ -417,7 +440,6 @@
           <div class="hero-meta-title" id="videoHeroTitle">まったりマロン</div>
         </div>
 
-        <!-- 下部：横スクロールエピソードトレイ -->
         <div class="netflix-tray-section">
           <div class="tray-header-label">Episodes / マロンの記録</div>
           <div class="netflix-tray-scroll" id="netflixTray"></div>
@@ -441,7 +463,6 @@
         event.target.classList.add('active');
         document.getElementById('sleepRoom').classList.add('active');
         stopLivingAudio();
-        startSleepRoomTimer();
       } else {
         event.target.classList.add('active');
         document.getElementById('dailyRoom').classList.add('active');
@@ -680,15 +701,62 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（間接照明 ＆ 2種類の寝言）
+    // 3. 添い寝部屋演出（寝言再生ループ ＆ 間接照明 ＆ BGM）
     const voice01 = document.getElementById('sleepVoice01');
     const voice02 = document.getElementById('sleepVoice02');
     const sleepCard = document.getElementById('sleepCard');
     const lampBtn = document.getElementById('lampBtn');
     const sleepRoom = document.getElementById('sleepRoom');
+    const voiceToggleBtn = document.getElementById('voiceToggleBtn');
 
-    voice01.volume = 0.45;
-    voice02.volume = 0.45;
+    // 耳元で心地よく聴こえる音量に設定
+    voice01.volume = 0.25;
+    voice02.volume = 0.25;
+
+    let isVoiceLoopActive = false;
+    let voiceLoopTimer = null;
+
+    // 寝言の再生 / 停止切り替え
+    function toggleSleepVoiceLoop() {
+      isVoiceLoopActive = !isVoiceLoopActive;
+      if (isVoiceLoopActive) {
+        voiceToggleBtn.innerText = '💤 寝言停止';
+        voiceToggleBtn.classList.add('active');
+        playNextSleepVoice();
+      } else {
+        stopSleepVoiceLoop();
+      }
+    }
+
+    function playNextSleepVoice() {
+      if (!isVoiceLoopActive) return;
+      const isSleep = document.getElementById('sleepRoom').classList.contains('active');
+      if (!isSleep) return;
+
+      const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
+      chosenVoice.currentTime = 0;
+      chosenVoice.play().catch(() => {});
+
+      // 音声が鳴り終わったら、自然な呼吸間隔（4〜7秒）を置いて次の寝言を鳴らす
+      chosenVoice.onended = () => {
+        if (!isVoiceLoopActive) return;
+        const breathDelay = 4000 + Math.random() * 3000;
+        voiceLoopTimer = setTimeout(playNextSleepVoice, breathDelay);
+      };
+    }
+
+    function stopSleepVoiceLoop() {
+      isVoiceLoopActive = false;
+      clearTimeout(voiceLoopTimer);
+      voice01.pause();
+      voice02.pause();
+      voice01.currentTime = 0;
+      voice02.currentTime = 0;
+      voice01.onended = null;
+      voice02.onended = null;
+      voiceToggleBtn.innerText = '💤 寝言再生';
+      voiceToggleBtn.classList.remove('active');
+    }
 
     let isLampOn = true;
     function toggleBedLamp() {
@@ -706,29 +774,8 @@
       }
     }
 
-    let sleepVoiceTimer = null;
-    function playRandomSleepVoice() {
-      const isSleep = document.getElementById('sleepRoom').classList.contains('active');
-      if (!isSleep) return;
-
-      const chosenVoice = Math.random() > 0.5 ? voice01 : voice02;
-      chosenVoice.currentTime = 0;
-      chosenVoice.play().catch(() => {});
-
-      const nextDelay = 45000 + Math.random() * 35000;
-      sleepVoiceTimer = setTimeout(playRandomSleepVoice, nextDelay);
-    }
-
-    function startSleepRoomTimer() {
-      clearTimeout(sleepVoiceTimer);
-      const initialDelay = 15000 + Math.random() * 15000;
-      sleepVoiceTimer = setTimeout(playRandomSleepVoice, initialDelay);
-    }
-
     function stopSleepRoomAudio() {
-      clearTimeout(sleepVoiceTimer);
-      voice01.pause();
-      voice02.pause();
+      stopSleepVoiceLoop();
       const bgm = document.getElementById('bgmAudio');
       if (bgm) bgm.pause();
       const playBtn = document.getElementById('playBtn');

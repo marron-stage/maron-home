@@ -4,7 +4,476 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
-  <link rel="stylesheet" href="style.css">
+  <!-- favicon 404防止用 -->
+  <link rel="icon" href="data:,">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f7f3eb; /* 真っ黒防止ベースカラー */
+      color: #333;
+    }
+
+    #app-container {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* 最前面 固定タブバー */
+    #tab-bar {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 5px 8px;
+      border-radius: 24px;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      width: max-content;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #444;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: #2e7d32;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .room-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100dvh;
+      display: none;
+      overflow: hidden;
+    }
+
+    .room-panel.active {
+      display: block;
+    }
+
+    /* =======================================
+       1. お家部屋（リビング）
+       ======================================= */
+    #home-room {
+      position: relative;
+      background-color: #fdf6ee;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 1s ease-in-out;
+    }
+
+    .home-clock-widget {
+      position: absolute;
+      top: 72px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 10;
+    }
+
+    .home-clock {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #4e342e;
+      line-height: 1;
+    }
+
+    .home-date {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #6d4c41;
+      margin-top: 3px;
+    }
+
+    #homeBgmBtn {
+      position: absolute;
+      top: 72px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      color: #333;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 自律歩行マロン */
+    #marronWalker {
+      position: absolute;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      height: auto;
+      cursor: pointer;
+      z-index: 20;
+      transition: left 3.5s ease-in-out, bottom 3.5s ease-in-out;
+    }
+
+    #marronCanvas {
+      display: block;
+      width: 165px;
+      height: auto;
+      pointer-events: none;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
+      transition: width 3.5s ease-in-out;
+    }
+
+    #homeBubble {
+      position: absolute;
+      bottom: 105%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 2px solid #a5d6a7;
+      border-radius: 16px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2e4a2d;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      display: none;
+      z-index: 25;
+    }
+
+    #homeBubble::after {
+      content: "";
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 7px 0;
+      border-style: solid;
+      border-color: #a5d6a7 transparent transparent;
+      display: block;
+    }
+
+    /* =======================================
+       2. 相談部屋
+       ======================================= */
+    #counsel-room {
+      position: relative;
+      background: #111;
+    }
+
+    #counselingVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100dvh;
+      object-fit: cover;
+      object-position: center center;
+      z-index: 1;
+    }
+
+    #counselingBubble {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 86%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 2px solid #a5d6a7;
+      border-radius: 18px;
+      padding: 16px 20px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: #204022;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+      z-index: 30;
+      display: none;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #counselingBubble::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 10px 9px 0;
+      border-style: solid;
+      border-color: #a5d6a7 transparent transparent;
+      display: block;
+    }
+
+    #counselingActionArea {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      padding: 14px;
+      border-radius: 22px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    #counselingInput {
+      width: 100%;
+      height: 64px;
+      border: 1px solid #d4d4d4;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      resize: none;
+      outline: none;
+      background: #fafafa;
+      line-height: 1.4;
+    }
+
+    #sendLetterBtn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 16px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+      transition: transform 0.1s ease;
+    }
+
+    #sendLetterBtn:active { transform: scale(0.97); }
+
+    #counselResetBtn {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid #a5d6a7;
+      color: #2e7d32;
+      padding: 12px 26px;
+      border-radius: 22px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+      z-index: 35;
+      display: none;
+      cursor: pointer;
+    }
+
+    /* =======================================
+       3. 添い寝部屋（完全全画面表示）
+       ======================================= */
+    #sleep-room {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: #000;
+      z-index: 10;
+    }
+
+    #sleepVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100dvh;
+      object-fit: cover;
+      object-position: center center;
+      z-index: 1;
+    }
+
+    #sleepOverlay {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100dvh;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .sleep-controls-top {
+      position: absolute;
+      top: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 20;
+      width: max-content;
+    }
+
+    .sleep-btn {
+      background: rgba(255, 255, 255, 0.28);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .sleep-btn:active { transform: scale(0.95); }
+    .sleep-btn.active {
+      background: rgba(46, 125, 50, 0.85);
+      border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* =======================================
+       4. 日常部屋（6本グリッド）
+       ======================================= */
+    #daily-room {
+      position: relative;
+      background: #1a1a1a;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 75px 12px 30px;
+    }
+
+    .daily-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .daily-item {
+      position: relative;
+      width: 100%;
+      padding-top: 177.7%;
+      background: #2a2a2a;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .daily-item video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .daily-title {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 6px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #cinemaModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #cinemaModal video {
+      width: 100%;
+      max-height: 90dvh;
+      object-fit: contain;
+    }
+
+    #closeCinemaBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.85); }
+      100% { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+  </style>
 </head>
 <body>
 
@@ -26,13 +495,13 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 自律歩行マロン（Canvasクロマキー透過＆奥行き連動） -->
+      <!-- 自律歩行マロン -->
       <div id="marronWalker">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- 歩行動画読み込み用（非表示・JS制御） -->
+      <!-- 歩行動画読み込み用（非表示） -->
       <video id="marronWalkVideo" playsinline muted loop style="display: none;"></video>
 
       <!-- 音声：お部屋BGM & 足音 -->
@@ -63,9 +532,10 @@
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-        <audio id="sleepBreathAudio" src="sleep_breath.MP3"></audio>
-        <audio id="sleepVoiceAudio" src="sleep_voice01.MP3"></audio>
-        <audio id="sleepBgmAudio"></audio>
+      <!-- 添い寝用：寝息・寝言＆BGM -->
+      <audio id="sleepBreathAudio" src="sleep_breath.MP3"></audio>
+      <audio id="sleepVoiceAudio" src="sleep_voice01.MP3"></audio>
+      <audio id="sleepBgmAudio"></audio>
     </section>
 
     <!-- 4. 日常部屋（6本グリッド） -->
@@ -87,6 +557,413 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* ==============================================
+         1. タブ切り替え制御（絶対停止させない安全構造）
+         ============================================== */
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const roomPanels = document.querySelectorAll('.room-panel');
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetRoom = btn.getAttribute('data-room');
+          tabBtns.forEach(b => b.classList.remove('active'));
+          roomPanels.forEach(p => p.classList.remove('active'));
+
+          btn.classList.add('active');
+          const targetPanel = document.getElementById(targetRoom);
+          if (targetPanel) {
+            targetPanel.classList.add('active');
+          }
+        });
+      });
+
+      /* ==============================================
+         2. お家部屋（時計・時間帯背景・BGM・歩行＆つぶやき）
+         ============================================== */
+      const homeRoom = document.getElementById('home-room');
+      const clockDisplay = document.getElementById('clockDisplay');
+      const dateDisplay = document.getElementById('dateDisplay');
+      const homeBgmBtn = document.getElementById('homeBgmBtn');
+      const homeAudio = document.getElementById('homeAudio');
+      const footstepAudio = document.getElementById('footstepAudio');
+      const marronWalker = document.getElementById('marronWalker');
+      const marronCanvas = document.getElementById('marronCanvas');
+      const marronWalkVideo = document.getElementById('marronWalkVideo');
+      const homeBubble = document.getElementById('homeBubble');
+
+      let isHomeBgmOn = false;
+      if (footstepAudio) footstepAudio.volume = 0.35;
+
+      const timeBasedMessages = {
+        morning: ["おはよう！今日もいいお天気だワン🐾", "朝ごはん食べた？いっぱい食べてね！", "のび〜っ！今日も一緒に頑張ろ！"],
+        day: ["お昼ご飯はなにかな〜？クーン🐾", "ひと息つこ？無理は禁物だワン！", "日差しが気持ちいいワン…"],
+        sunset: ["今日もおつかれさまだワン！", "夕焼けきれいだワン…お腹すいた！", "1日よく頑張ったね、えらいワン！"],
+        night: ["今日も最後まで生き抜いてえらかったワン。", "夜はのんびり過ごそうね。", "マロンはずーっとそばにいるワン。"],
+        midnight: ["まだ起きてるの？夜更かしはほどほどにね。", "無理しないで眠くなったら寝てね…", "おやすみワン…zzz"]
+      };
+
+      function getCurrentCategory(hour) {
+        if (hour >= 5 && hour < 11) return 'morning';
+        if (hour >= 11 && hour < 17) return 'day';
+        if (hour >= 17 && hour < 19) return 'sunset';
+        if (hour >= 19 && hour <= 23) return 'night';
+        return 'midnight';
+      }
+
+      function updateTimeAndBackground() {
+        const now = new Date();
+        const hour = now.getHours();
+        const category = getCurrentCategory(hour);
+        const bgImage = `room_${category}.jpg`;
+
+        if (homeRoom) {
+          const img = new Image();
+          img.src = bgImage;
+          img.onload = () => { homeRoom.style.backgroundImage = `url('${bgImage}')`; };
+          img.onerror = () => { homeRoom.style.backgroundImage = `url('room.jpg')`; };
+        }
+
+        if (clockDisplay) {
+          const h = String(hour).padStart(2, '0');
+          const m = String(now.getMinutes()).padStart(2, '0');
+          clockDisplay.textContent = `${h}:${m}`;
+        }
+
+        if (dateDisplay) {
+          const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+          const y = now.getFullYear();
+          const mon = String(now.getMonth() + 1).padStart(2, '0');
+          const d = String(now.getDate()).padStart(2, '0');
+          dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
+        }
+      }
+      setInterval(updateTimeAndBackground, 1000);
+      updateTimeAndBackground();
+
+      if (homeBgmBtn && homeAudio) {
+        homeBgmBtn.addEventListener('click', () => {
+          isHomeBgmOn = !isHomeBgmOn;
+          if (isHomeBgmOn) {
+            homeAudio.play().then(() => {
+              homeBgmBtn.textContent = '🔇 BGM OFF';
+            }).catch(() => { isHomeBgmOn = false; });
+          } else {
+            homeAudio.pause();
+            if (footstepAudio) footstepAudio.pause();
+            homeBgmBtn.textContent = '🎵 BGM ON';
+          }
+        });
+      }
+
+      // Canvasクロマキー処理（青背景除去）
+      if (marronCanvas && marronWalkVideo) {
+        const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
+
+        function renderChromaKey() {
+          if (!marronWalkVideo.paused && !marronWalkVideo.ended) {
+            if (marronCanvas.width !== marronWalkVideo.videoWidth && marronWalkVideo.videoWidth > 0) {
+              marronCanvas.width = marronWalkVideo.videoWidth;
+              marronCanvas.height = marronWalkVideo.videoHeight;
+            }
+
+            if (marronCanvas.width > 0) {
+              ctx.drawImage(marronWalkVideo, 0, 0, marronCanvas.width, marronCanvas.height);
+              const frame = ctx.getImageData(0, 0, marronCanvas.width, marronCanvas.height);
+              const l = frame.data.length / 4;
+
+              for (let i = 0; i < l; i++) {
+                const r = frame.data[i * 4 + 0];
+                const g = frame.data[i * 4 + 1];
+                const b = frame.data[i * 4 + 2];
+                if (b > 110 && b > r * 1.25 && b > g * 1.15) {
+                  frame.data[i * 4 + 3] = 0;
+                }
+              }
+              ctx.putImageData(frame, 0, 0);
+            }
+          }
+          requestAnimationFrame(renderChromaKey);
+        }
+
+        let currentX = 50;
+        let currentY = 8;
+        let walkStopTimer = null;
+
+        function startNextWalkSession() {
+          clearTimeout(walkStopTimer);
+
+          let targetX, diffX;
+          let attempts = 0;
+          do {
+            targetX = Math.floor(Math.random() * 56) + 22;
+            diffX = targetX - currentX;
+            attempts++;
+          } while (Math.abs(diffX) < 16 && attempts < 10);
+
+          const targetY = Math.floor(Math.random() * 15) + 6;
+          const diffY = targetY - currentY;
+
+          let selectedVideo = 'marron_walk.mp4';
+          let flipX = 1;
+
+          if (diffY > 4 && Math.abs(diffX) < 14) {
+            selectedVideo = 'marron_back.mp4';
+            flipX = diffX >= 0 ? -1 : 1;
+          } else if (diffY < -4 && Math.abs(diffX) < 14) {
+            selectedVideo = 'marron_front.mp4';
+            flipX = diffX >= 0 ? -1 : 1;
+          } else if (diffY > 4) {
+            selectedVideo = 'marron_diagonal_back.mp4';
+            flipX = diffX >= 0 ? -1 : 1;
+          } else if (diffY < -4) {
+            selectedVideo = 'marron_diagonal.mp4';
+            flipX = diffX >= 0 ? -1 : 1;
+          } else {
+            selectedVideo = 'marron_walk.mp4';
+            flipX = diffX >= 0 ? -1 : 1;
+          }
+
+          const depthFactor = 1.15 - ((targetY - 6) / 15) * 0.35;
+          const targetWidth = Math.round(165 * depthFactor);
+          marronCanvas.style.width = `${targetWidth}px`;
+          marronCanvas.style.transform = `scaleX(${flipX})`;
+
+          if (!marronWalkVideo.src.endsWith(selectedVideo)) {
+            marronWalkVideo.src = selectedVideo;
+          }
+          marronWalkVideo.play().catch(() => {});
+
+          if (isHomeBgmOn && footstepAudio) {
+            footstepAudio.currentTime = 0;
+            footstepAudio.play().catch(() => {});
+          }
+
+          if (marronWalker) {
+            marronWalker.style.left = `${targetX}%`;
+            marronWalker.style.bottom = `${targetY}%`;
+          }
+
+          currentX = targetX;
+          currentY = targetY;
+
+          walkStopTimer = setTimeout(() => {
+            if (footstepAudio) footstepAudio.pause();
+            marronWalkVideo.pause();
+          }, 3500);
+        }
+
+        marronWalkVideo.src = 'marron_walk.mp4';
+        marronWalkVideo.play().then(() => {
+          renderChromaKey();
+        }).catch(() => {});
+        setInterval(startNextWalkSession, 5800);
+      }
+
+      // 吹き出し管理
+      let bubbleTimer = null;
+      function showBubble(text, duration = 3500) {
+        if (!homeBubble) return;
+        clearTimeout(bubbleTimer);
+        homeBubble.textContent = text;
+        homeBubble.style.display = 'block';
+        bubbleTimer = setTimeout(() => {
+          homeBubble.style.display = 'none';
+        }, duration);
+      }
+
+      setInterval(() => {
+        if (!homeBubble || homeBubble.style.display === 'block') return;
+        const category = getCurrentCategory(new Date().getHours());
+        const list = timeBasedMessages[category];
+        showBubble(list[Math.floor(Math.random() * list.length)], 3500);
+      }, 12000);
+
+      const marronVoices = [
+        "わふっ！なでてくれるの？",
+        "クーン…そばにいてくれて嬉しいワン🐾",
+        "今日も一日お疲れさまだよ！",
+        "マロンはずーっと君の味方だワン！",
+        "えへへ、お腹なでて〜！"
+      ];
+      if (marronWalker) {
+        marronWalker.addEventListener('click', () => {
+          showBubble(marronVoices[Math.floor(Math.random() * marronVoices.length)], 3000);
+        });
+      }
+
+      /* ==============================================
+         3. 添い寝部屋（BGMループ＆寝息4回＋寝言1回）
+         ============================================== */
+      const lightToggleBtn = document.getElementById('lightToggleBtn');
+      const sleepOverlay = document.getElementById('sleepOverlay');
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const sleepBreathAudio = document.getElementById('sleepBreathAudio');
+      const sleepVoiceAudio = document.getElementById('sleepVoiceAudio');
+      const sleepBgmAudio = document.getElementById('sleepBgmAudio');
+
+      let isLightOff = false;
+      let isSleepSoundOn = false;
+      const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
+      let currentBgmIndex = 0;
+      let sleepCycleCount = 0;
+
+      if (sleepBgmAudio) {
+        sleepBgmAudio.addEventListener('ended', () => {
+          currentBgmIndex = (currentBgmIndex + 1) % sleepPlaylist.length;
+          sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];
+          sleepBgmAudio.play().catch(() => {});
+        });
+      }
+
+      function playNextSleepSound() {
+        if (!isSleepSoundOn) return;
+        sleepCycleCount++;
+
+        if (sleepCycleCount % 5 === 0 && sleepVoiceAudio) {
+          sleepVoiceAudio.currentTime = 0;
+          sleepVoiceAudio.play().catch(() => {});
+        } else if (sleepBreathAudio) {
+          sleepBreathAudio.currentTime = 0;
+          sleepBreathAudio.play().catch(() => {});
+        }
+      }
+
+      if (sleepBreathAudio) {
+        sleepBreathAudio.addEventListener('ended', () => {
+          if (isSleepSoundOn) setTimeout(playNextSleepSound, 1000);
+        });
+      }
+
+      if (sleepVoiceAudio) {
+        sleepVoiceAudio.addEventListener('ended', () => {
+          if (isSleepSoundOn) setTimeout(playNextSleepSound, 1500);
+        });
+      }
+
+      if (lightToggleBtn && sleepOverlay) {
+        lightToggleBtn.addEventListener('click', () => {
+          isLightOff = !isLightOff;
+          sleepOverlay.style.opacity = isLightOff ? '1' : '0';
+          lightToggleBtn.textContent = isLightOff ? '☀️ 明かりオン' : '🌙 明かりオフ';
+          lightToggleBtn.classList.toggle('active', isLightOff);
+        });
+      }
+
+      if (soundToggleBtn) {
+        soundToggleBtn.addEventListener('click', () => {
+          isSleepSoundOn = !isSleepSoundOn;
+          if (isSleepSoundOn) {
+            if (sleepBgmAudio) {
+              if (!sleepBgmAudio.src || sleepBgmAudio.src === '') {
+                sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];
+              }
+              sleepBgmAudio.play().catch(() => {});
+            }
+            sleepCycleCount = 0;
+            playNextSleepSound();
+            soundToggleBtn.textContent = '🔇 サウンド停止';
+            soundToggleBtn.classList.add('active');
+          } else {
+            if (sleepBgmAudio) sleepBgmAudio.pause();
+            if (sleepBreathAudio) { sleepBreathAudio.pause(); sleepBreathAudio.currentTime = 0; }
+            if (sleepVoiceAudio) { sleepVoiceAudio.pause(); sleepVoiceAudio.currentTime = 0; }
+            sleepCycleCount = 0;
+            soundToggleBtn.textContent = '🎵 添い寝サウンド';
+            soundToggleBtn.classList.remove('active');
+          }
+        });
+      }
+
+      /* ==============================================
+         4. 相談部屋（2本立て動画連動＆音声ON）
+         ============================================== */
+      const talkVideo = document.getElementById('counselingVideo');
+      const talkBubble = document.getElementById('counselingBubble');
+      const actionArea = document.getElementById('counselingActionArea');
+      const sendBtn = document.getElementById('sendLetterBtn');
+      const resetBtn = document.getElementById('counselResetBtn');
+      const counselInput = document.getElementById('counselingInput');
+
+      const comfortMessages = [
+        "全部ふかふかの土に埋めて、きれいなお花が咲いたワン。もうここには何もないよ。大丈夫。",
+        "今日を最後まで生き抜いただけでもう100点満点だよ。本当にお疲れさま。もう何も考えなくていいワン。",
+        "嫌だったね、悔しかったね…。その気持ち、マロンが全部預かったよ。今日はお布団で丸まろ？",
+        "あなたが悪いんじゃないワン。頑張りすぎちゃう優しいあなたが、マロンは大好きなんだよ。",
+        "ぜーんぶ土に還してきれいなお花にしちゃった！胸のつかえ、少しは軽くなったかな？ずっとそばにいるワン。",
+        "無理に前を向かなくていいんだよ。立ち止まって、マロンをなでなでして、深呼吸しよ。",
+        "手紙を届けてくれてありがとう。心に溜まってたトゲトゲ、マロンがペロペロしてまるくしといたワン！",
+        "世の中のみんなが敵になっても、マロンはずーっとあなたの味方だからね。約束だワン。",
+        "嬉しいことも、悔しいことも、全部マロンに話してくれてありがとう。あなたの一番の理解者でいるワン！"
+      ];
+
+      if (sendBtn && talkVideo) {
+        sendBtn.addEventListener('click', () => {
+          if (actionArea) actionArea.style.display = 'none';
+          if (talkBubble) talkBubble.style.display = 'none';
+
+          talkVideo.muted = false;
+          talkVideo.src = 'bury_and_bloom.mp4';
+          talkVideo.loop = false;
+          talkVideo.play().catch(() => {});
+
+          talkVideo.onended = () => {
+            talkVideo.src = 'marron_happy_loop.mp4';
+            talkVideo.loop = true;
+            talkVideo.play().catch(() => {});
+
+            if (talkBubble) {
+              talkBubble.textContent = comfortMessages[Math.floor(Math.random() * comfortMessages.length)];
+              talkBubble.style.display = 'block';
+            }
+            if (resetBtn) resetBtn.style.display = 'block';
+          };
+        });
+      }
+
+      if (resetBtn && talkVideo) {
+        resetBtn.addEventListener('click', () => {
+          talkVideo.onended = null;
+          talkVideo.muted = true;
+          talkVideo.src = 'marron_talk.mp4';
+          talkVideo.loop = true;
+          talkVideo.play().catch(() => {});
+
+          if (talkBubble) talkBubble.style.display = 'none';
+          resetBtn.style.display = 'none';
+          if (actionArea) actionArea.style.display = 'flex';
+          if (counselInput) counselInput.value = '';
+        });
+      }
+
+      /* ==============================================
+         5. 日常部屋（モーダル再生）
+         ============================================== */
+      const cinemaModal = document.getElementById('cinemaModal');
+      const cinemaVideo = document.getElementById('cinemaVideo');
+      const closeCinemaBtn = document.getElementById('closeCinemaBtn');
+      const dailyItems = document.querySelectorAll('.daily-item');
+
+      dailyItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const videoSrc = item.getAttribute('data-video');
+          if (cinemaVideo && cinemaModal) {
+            cinemaVideo.src = videoSrc;
+            cinemaModal.style.display = 'flex';
+            cinemaVideo.play().catch(() => {});
+          }
+        });
+      });
+
+      if (closeCinemaBtn && cinemaModal && cinemaVideo) {
+        closeCinemaBtn.addEventListener('click', () => {
+          cinemaModal.style.display = 'none';
+          cinemaVideo.pause();
+          cinemaVideo.src = '';
+        });
+      }
+    });
+  </script>
 </body>
 </html>

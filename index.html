@@ -316,7 +316,7 @@
       <!-- マロンCanvas -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 4本の動画（消音で確実に自動再生開始） -->
+      <!-- 4本の動画（裏でループ再生） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
@@ -416,21 +416,22 @@
 
     let currentVideo = videoWalk;
     let isSoundOn = true;
-    let hasUserInteracted = false; // 画面タップ履歴フラグ
+    let hasUserInteracted = false;
 
+    // 床の行動エリア（窓枠の真下・壁際まで大幅に拡大）
     function getBounds() {
       const w = window.innerWidth;
       const h = window.innerHeight;
       return {
         minX: 10,
-        maxX: w - 160,
-        minY: h * 0.52,
-        maxY: h * 0.78
+        maxX: w - 150,
+        minY: h * 0.38, // 窓のすぐ下（奥の壁際）まで到達可能
+        maxY: h * 0.80  // 手前（画面下端近く）
       };
     }
 
-    let posX = 30;
-    let posY = window.innerHeight * 0.70;
+    let posX = 40;
+    let posY = window.innerHeight * 0.65;
     let targetX = posX;
     let targetY = posY;
 
@@ -447,15 +448,18 @@
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
-      if (absDy > absDx * 0.8) {
+      if (absDy > absDx * 0.75) {
         if (dy < -5) {
+          // 奥（窓方向）へ向かう
           currentVideo = videoBack;
           canvas.style.transform = 'scaleX(1)';
         } else if (dy > 5) {
+          // 手前へ向かう
           currentVideo = videoFront;
           canvas.style.transform = 'scaleX(1)';
         }
       } else {
+        // 左右へ歩く
         currentVideo = Math.random() > 0.4 ? videoWalk : videoDiag;
         canvas.style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
       }
@@ -464,7 +468,7 @@
     }
 
     function syncAudio() {
-      if (!hasUserInteracted) return; // 画面操作前はアンミュートしない（ブラウザ制限回避）
+      if (!hasUserInteracted) return;
 
       const isLivingActive = document.getElementById('livingRoom').classList.contains('active');
       const allVideos = [videoWalk, videoDiag, videoFront, videoBack];
@@ -484,21 +488,20 @@
       });
     }
 
-    // 床をタップした場所へ移動
+    // 床をタップした場所へトコトコ移動
     function onRoomClick(e) {
       if (e.target.closest('.sound-badge')) return;
       unlockAudioInteraction();
 
       const b = getBounds();
-      const clickX = e.clientX - 70;
-      const clickY = e.clientY - 120;
+      const clickX = e.clientX - 60;
+      const clickY = e.clientY - 90;
 
       targetX = Math.max(b.minX, Math.min(b.maxX, clickX));
       targetY = Math.max(b.minY, Math.min(b.maxY, clickY));
       updateMotionState();
     }
 
-    // 画面タップで音声制限を解除する処理
     function unlockAudioInteraction() {
       if (!hasUserInteracted) {
         hasUserInteracted = true;
@@ -513,7 +516,6 @@
         const vid = currentVideo;
 
         if (vid.readyState >= 2) {
-          // vid を参照（video is not defined の修正箇所）
           if (vid.videoWidth > 0 && (canvas.width !== vid.videoWidth || canvas.height !== vid.videoHeight)) {
             canvas.width = vid.videoWidth;
             canvas.height = vid.videoHeight;
@@ -551,9 +553,10 @@
           }
         }
 
+        // 遠近法の計算（一番奥の窓際は約110px、手前は約235px）
         const b = getBounds();
         const depthRatio = Math.max(0, Math.min(1, (posY - b.minY) / (b.maxY - b.minY)));
-        const marronHeight = 150 + depthRatio * 85;
+        const marronHeight = 110 + depthRatio * 125;
 
         canvas.style.height = `${marronHeight}px`;
         canvas.style.left = `${posX}px`;
@@ -569,7 +572,6 @@
       });
     }
 
-    // 初回読み込み時は消音のまま再生開始
     startAllVideos();
     document.addEventListener('touchstart', unlockAudioInteraction, { once: true });
     document.addEventListener('click', unlockAudioInteraction, { once: true });

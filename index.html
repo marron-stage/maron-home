@@ -135,9 +135,9 @@
     /* 床を歩く大きなマロンCanvas */
     #marronCanvas {
       position: absolute;
-      bottom: calc(env(safe-area-inset-bottom, 10px) + 20px); /* スマホ下端の床位置 */
+      bottom: calc(env(safe-area-inset-bottom, 10px) + 20px);
       left: 10px;
-      height: 225px; /* 全画面に映える存在感あるサイズ */
+      height: 225px;
       width: auto;
       cursor: pointer;
       will-change: left, transform;
@@ -343,9 +343,12 @@
         </div>
       </div>
 
-      <!-- トコトコ歩くマロン（青背景透過） -->
+      <!-- トコトコ歩くマロン（青背景透過Canvas） -->
       <canvas id="marronCanvas" width="300" height="300" onclick="tapLivingMarron(event)"></canvas>
-      <video id="sourceVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
+
+      <!-- 裏で再生させる歩行動画2本（非表示） -->
+      <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
+      <video id="videoDiagonal" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
 
       <!-- なでるボタン -->
       <div class="living-bottom-bar">
@@ -433,25 +436,45 @@
       }
     }
 
-    // 2. 青背景（#007BFF）透過 ＆ 全画面床の往復歩行
+    // 2. 青背景（#007BFF）透過 ＆ 2種類の歩行モーション切り替え往復歩行
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const video = document.getElementById('sourceVideo');
+    const videoWalk = document.getElementById('videoWalk');
+    const videoDiag = document.getElementById('videoDiagonal');
     const soundBtn = document.getElementById('stepSoundBtn');
+
+    // 現在描画するアクティブな動画
+    let currentVideo = videoWalk;
+    let isSoundOn = false;
 
     let posX = 10;
     let speed = 0.9;
     let direction = 1;
 
+    // 端に着いたときや一定歩行ごとにモーションを切り替える
+    function pickNextMotion() {
+      // 50%の確率で横歩きと斜め歩きを自然にチェンジ
+      const useDiag = Math.random() > 0.5;
+      currentVideo = useDiag ? videoDiag : videoWalk;
+
+      // 音声がONの場合は、アクティブな動画の音を鳴らし、もう片方を消音
+      if (isSoundOn) {
+        currentVideo.muted = false;
+        (useDiag ? videoWalk : videoDiag).muted = true;
+      }
+    }
+
     function renderChromaLoop() {
       if (document.getElementById('livingRoom').classList.contains('active')) {
-        if (video.readyState >= 2) {
-          if (video.videoWidth > 0 && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+        const vid = currentVideo;
+
+        if (vid.readyState >= 2) {
+          if (vid.videoWidth > 0 && (canvas.width !== vid.videoWidth || canvas.height !== vid.videoHeight)) {
+            canvas.width = vid.videoWidth;
+            canvas.height = vid.videoHeight;
           }
 
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
           const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = frame.data;
 
@@ -482,9 +505,11 @@
         if (posX >= maxRight) {
           direction = -1;
           canvas.style.transform = 'scaleX(-1)';
+          pickNextMotion(); // 折り返し時に歩き方を気まぐれチェンジ
         } else if (posX <= minLeft) {
           direction = 1;
           canvas.style.transform = 'scaleX(1)';
+          pickNextMotion(); // 折り返し時に歩き方を気まぐれチェンジ
         }
 
         canvas.style.left = posX + 'px';
@@ -493,32 +518,41 @@
       requestAnimationFrame(renderChromaLoop);
     }
 
-    video.play().catch(() => {
-      document.addEventListener('touchstart', () => video.play(), { once: true });
-    });
+    // 2本の動画を自動再生スタンバイ
+    const startVideos = () => {
+      videoWalk.play().catch(() => {});
+      videoDiag.play().catch(() => {});
+    };
+    startVideos();
+    document.addEventListener('touchstart', startVideos, { once: true });
     requestAnimationFrame(renderChromaLoop);
 
     function toggleWalkSound(e) {
       e.stopPropagation();
-      if (video.muted) {
-        video.muted = false;
+      isSoundOn = !isSoundOn;
+      if (isSoundOn) {
+        currentVideo.muted = false;
         soundBtn.innerText = '🔊 足音ON';
       } else {
-        video.muted = true;
+        videoWalk.muted = true;
+        videoDiag.muted = true;
         soundBtn.innerText = '🔇 足音OFF';
       }
     }
 
     const livingMessages = [
-      "ぽてぽて… なにか落ちてないかパトロール中ワン！🐾",
+      "ぽてぽて… 斜めにもてくてく歩けるワン！🐾",
       "なでなでしてくれた！えへへ… ✨",
       "このお部屋、ひろびろしてて大好きだワン〜 🛋️",
-      "ワンッ！今日も一緒にいてくれて嬉しいな！🐶"
+      "ワンッ！今日も一緒にいてくれて嬉しいな！🐶",
+      "くんくん… お部屋のパトロール中だワン！"
     ];
     let livingMsgIdx = 0;
     function tapLivingMarron(e) {
       livingMsgIdx = (livingMsgIdx + 1) % livingMessages.length;
       document.getElementById('livingBubble').innerText = livingMessages[livingMsgIdx];
+      // タップ時にも歩き方を切り替えて反応を出す
+      pickNextMotion();
       addLike('living', e);
     }
 

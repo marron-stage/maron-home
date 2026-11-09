@@ -48,13 +48,13 @@
     .tab-bar {
       display: flex;
       gap: 4px;
-      background: rgba(13, 16, 27, 0.80);
+      background: rgba(13, 16, 27, 0.82);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       padding: 4px;
       border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
       max-width: 96vw;
       overflow-x: auto;
       scrollbar-width: none;
@@ -95,7 +95,7 @@
       display: block;
     }
 
-    /* ================= 画面1：全画面お部屋 ================= */
+    /* ================= 画面1：全画面お部屋（リビング） ================= */
     #livingRoom {
       background-image: url('room.jpg');
       background-size: cover;
@@ -104,10 +104,9 @@
       transition: background-image 0.8s ease-in-out;
     }
 
-    /* 時計バッジ（左上） */
     .clock-badge {
       position: absolute;
-      top: calc(env(safe-area-inset-top, 10px) + 56px);
+      top: calc(env(safe-area-inset-top, 10px) + 54px);
       left: 14px;
       background: rgba(0, 0, 0, 0.65);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -130,10 +129,9 @@
       color: #fbd38d;
     }
 
-    /* サウンド切り替えバッジ（右上） */
     .sound-badge {
       position: absolute;
-      top: calc(env(safe-area-inset-top, 10px) + 56px);
+      top: calc(env(safe-area-inset-top, 10px) + 54px);
       right: 14px;
       background: rgba(0, 0, 0, 0.65);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -155,7 +153,6 @@
       font-weight: 600;
     }
 
-    /* マロンのキャンバス */
     #marronCanvas {
       position: absolute;
       will-change: left, top, transform, height;
@@ -164,7 +161,6 @@
       touch-action: manipulation;
     }
 
-    /* マロンの頭上吹き出し（リビング用） */
     .marron-speech-bubble {
       position: absolute;
       z-index: 45;
@@ -199,7 +195,203 @@
       border-color: rgba(246, 173, 85, 0.85) transparent transparent transparent;
     }
 
-    /* ================= 画面2：添い寝部屋 ================= */
+    /* ================= 画面2：マロンの相談部屋（全画面没入レイアウト） ================= */
+    #counselRoom {
+      background-color: #06080e;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 相談部屋の全画面映像 */
+    .counsel-fullscreen-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center bottom;
+      z-index: 10;
+      filter: brightness(0.92) contrast(1.04);
+    }
+
+    /* 相談部屋の薄いグラデーションオーバーレイ */
+    .counsel-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(6, 8, 14, 0.4) 0%, transparent 25%, transparent 60%, rgba(6, 8, 14, 0.85) 100%);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* マロンの頭上にポワンと出る特大吹き出し */
+    .counsel-head-bubble {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -100%) scale(0.85);
+      background: rgba(13, 17, 30, 0.92);
+      border: 1.8px solid rgba(246, 173, 85, 0.85);
+      color: #fef08a;
+      padding: 12px 18px;
+      border-radius: 20px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      line-height: 1.5;
+      text-align: center;
+      max-width: 86vw;
+      width: max-content;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 20px rgba(246, 173, 85, 0.25);
+      z-index: 55;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .counsel-head-bubble.show {
+      opacity: 1;
+      transform: translate(-50%, -100%) scale(1);
+    }
+    .counsel-head-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 8px 0;
+      border-style: solid;
+      border-color: rgba(246, 173, 85, 0.9) transparent transparent transparent;
+    }
+
+    /* 下部の半透明操作トレイ */
+    .counsel-bottom-bar {
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 10px) + 12px);
+      left: 12px;
+      right: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .counsel-chips-row {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      justify-content: flex-start;
+      padding: 2px 4px;
+    }
+    .counsel-chips-row::-webkit-scrollbar {
+      display: none;
+    }
+    .counsel-pill {
+      background: rgba(13, 16, 27, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      padding: 6px 13px;
+      border-radius: 18px;
+      font-size: 0.74rem;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .counsel-pill:active {
+      background: rgba(246, 173, 85, 0.35);
+      color: #fbd38d;
+      border-color: rgba(246, 173, 85, 0.7);
+      transform: scale(0.95);
+    }
+
+    .counsel-input-box {
+      display: flex;
+      gap: 6px;
+      background: rgba(13, 16, 27, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 6px 8px 6px 14px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .counsel-text-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .counsel-text-input::placeholder {
+      color: #94a3b8;
+    }
+    .counsel-fly-btn {
+      background: rgba(246, 173, 85, 0.28);
+      border: 1px solid rgba(246, 173, 85, 0.55);
+      color: #fbd38d;
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .counsel-fly-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 空へ昇るシャボン玉エフェクト */
+    .counsel-rising-bubble {
+      position: absolute;
+      z-index: 60;
+      pointer-events: none;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), rgba(147, 197, 253, 0.35) 50%, rgba(216, 180, 254, 0.4) 90%);
+      border: 1.2px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.45), inset -2px -2px 6px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+      animation: bubbleRiseUp 3.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      white-space: nowrap;
+      left: 50%;
+      bottom: 75px;
+    }
+    @keyframes bubbleRiseUp {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.4);
+      }
+      18% {
+        opacity: 0.95;
+        transform: translate(-50%, -45px) scale(1);
+      }
+      65% {
+        opacity: 0.85;
+        transform: translate(-55%, -220px) scale(0.96);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-45%, -400px) scale(1.15);
+      }
+    }
+
+    /* ================= 画面3：添い寝部屋 ================= */
     #sleepRoom {
       background: radial-gradient(circle at center 40%, #111524 0%, #040508 100%);
       transition: background 0.5s ease;
@@ -215,7 +407,7 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: calc(env(safe-area-inset-top, 10px) + 56px) 16px calc(env(safe-area-inset-bottom, 10px) + 20px) 16px;
+      padding: calc(env(safe-area-inset-top, 10px) + 54px) 16px calc(env(safe-area-inset-bottom, 10px) + 20px) 16px;
       text-align: center;
     }
 
@@ -324,7 +516,7 @@
       filter: brightness(0.48) contrast(1.15) saturate(0.7) sepia(0.08);
     }
 
-    /* ================= 画面3：日常部屋（YouTubeショート風 3列グリッド） ================= */
+    /* ================= 画面4：日常部屋（YouTubeショート風 3列グリッド） ================= */
     #dailyRoom {
       background: #080a11;
       overflow-y: auto;
@@ -405,7 +597,6 @@
       padding-left: 1.5px;
     }
 
-    /* 全画面シネマモーダルプレイヤー */
     #shortsModal {
       position: fixed;
       inset: 0;
@@ -447,181 +638,6 @@
     .modal-close-btn:active {
       transform: scale(0.9);
     }
-
-    /* ================= 画面4：マロンの相談部屋 ================= */
-    #counselRoom {
-      background: radial-gradient(circle at center 35%, #151a2d 0%, #070912 100%);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .counsel-container {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      height: 100%;
-      padding: calc(env(safe-area-inset-top, 10px) + 54px) 16px calc(env(safe-area-inset-bottom, 10px) + 14px) 16px;
-    }
-
-    /* 相談動画カード */
-    .counsel-video-card {
-      position: relative;
-      width: 250px;
-      height: 380px;
-      max-width: 78vw;
-      max-height: 48vh;
-      border-radius: 26px;
-      overflow: hidden;
-      background: #111524;
-      border: 1.5px solid rgba(246, 173, 85, 0.45);
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7), 0 0 35px rgba(246, 173, 85, 0.25);
-      margin-top: 6px;
-    }
-    .counsel-video-card video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    /* 相談部屋のマロンの返事カード */
-    .counsel-reply-box {
-      width: 100%;
-      max-width: 360px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(246, 173, 85, 0.55);
-      border-radius: 18px;
-      padding: 10px 14px;
-      color: #fef08a;
-      font-size: 0.82rem;
-      line-height: 1.45;
-      text-align: center;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 8px 0;
-      transition: all 0.3s ease;
-    }
-
-    /* 相談部屋の操作トレイ */
-    .counsel-tray {
-      width: 100%;
-      max-width: 380px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 20;
-    }
-
-    .counsel-chips {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
-      scrollbar-width: none;
-      justify-content: center;
-      padding: 2px 0;
-    }
-    .counsel-chips::-webkit-scrollbar {
-      display: none;
-    }
-    .counsel-chip {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      color: #e2e8f0;
-      padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 0.74rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-    .counsel-chip:active {
-      background: rgba(246, 173, 85, 0.3);
-      color: #fbd38d;
-      border-color: rgba(246, 173, 85, 0.6);
-      transform: scale(0.96);
-    }
-
-    .counsel-input-row {
-      display: flex;
-      gap: 6px;
-      user-select: text;
-      -webkit-user-select: text;
-    }
-    .counsel-input {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 16px;
-      padding: 8px 14px;
-      color: #f8fafc;
-      font-size: 0.8rem;
-      outline: none;
-    }
-    .counsel-input:focus {
-      border-color: rgba(246, 173, 85, 0.7);
-    }
-    .counsel-send-btn {
-      background: rgba(246, 173, 85, 0.25);
-      border: 1px solid rgba(246, 173, 85, 0.55);
-      color: #fbd38d;
-      padding: 0 14px;
-      border-radius: 16px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .counsel-send-btn:active {
-      transform: scale(0.95);
-    }
-
-    /* 相談部屋のシャボン玉エフェクト */
-    .counsel-bubble {
-      position: absolute;
-      z-index: 50;
-      pointer-events: none;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.7), rgba(147, 197, 253, 0.3) 50%, rgba(216, 180, 254, 0.4) 90%);
-      border: 1.2px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 0 18px rgba(255, 255, 255, 0.4), inset -2px -2px 6px rgba(0, 0, 0, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 18px;
-      color: #ffffff;
-      font-size: 0.82rem;
-      font-weight: 600;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-      animation: counselFloatUp 4.0s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-      white-space: nowrap;
-      left: 50%;
-      bottom: 90px;
-    }
-    @keyframes counselFloatUp {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, 0) scale(0.4);
-      }
-      18% {
-        opacity: 0.95;
-        transform: translate(-50%, -45px) scale(1);
-      }
-      65% {
-        opacity: 0.85;
-        transform: translate(-55%, -230px) scale(0.96);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-45%, -430px) scale(1.15);
-      }
-    }
   </style>
 </head>
 <body>
@@ -636,7 +652,7 @@
       </nav>
     </header>
 
-    <!-- ================= 画面1：全画面お部屋 ================= -->
+    <!-- ================= 画面1：全画面お部屋（リビング） ================= -->
     <main id="livingRoom" class="screen active">
       <div class="clock-badge" id="livingClock">
         <span id="clockIcon">☀️</span>
@@ -660,35 +676,35 @@
       <audio id="footstepAudio" src="footstep.MP3" preload="auto"></audio>
     </main>
 
-    <!-- ================= 画面2：マロンの相談部屋 ================= -->
+    <!-- ================= 画面2：マロンの相談部屋（全画面） ================= -->
     <section id="counselRoom" class="screen">
-      <div class="counsel-container">
-        <!-- ちょこんと座って話を聞いてくれるマロン動画 -->
-        <div class="counsel-video-card">
-          <video id="marronTalkVideo" src="marron_talk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
+      <!-- 全画面背景動画（正面でおすわりして待つマロン） -->
+      <video id="marronTalkVideo" class="counsel-fullscreen-video" src="marron_talk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
+      <div class="counsel-overlay"></div>
+
+      <!-- マロンの頭上にポワンと現れる返答吹き出し -->
+      <div class="counsel-head-bubble" id="counselHeadBubble">
+        今日もおつかれさま！何でもマロンに教えてね。
+      </div>
+
+      <!-- 下部の操作トレイ -->
+      <div class="counsel-bottom-bar">
+        <div class="counsel-chips-row">
+          <button class="counsel-pill" onclick="handleCounselPill('つかれた…')">つかれた…</button>
+          <button class="counsel-pill" onclick="handleCounselPill('がんばった！')">がんばった！</button>
+          <button class="counsel-pill" onclick="handleCounselPill('もやもやする')">もやもやする</button>
+          <button class="counsel-pill" onclick="handleCounselPill('さみしいな')">さみしいな</button>
+          <button class="counsel-pill" onclick="handleCounselPill('眠れないよ')">眠れないよ</button>
         </div>
 
-        <!-- マロンからの返事枠 -->
-        <div class="counsel-reply-box" id="counselReplyText">
-          今日もおつかれさま！何でもマロンに教えてね。
-        </div>
-
-        <!-- 相談操作トレイ -->
-        <div class="counsel-tray">
-          <div class="counsel-chips">
-            <button class="counsel-chip" onclick="handleCounselMessage('つかれた…')">つかれた…</button>
-            <button class="counsel-chip" onclick="handleCounselMessage('がんばった！')">がんばった！</button>
-            <button class="counsel-chip" onclick="handleCounselMessage('もやもやする')">もやもやする</button>
-            <button class="counsel-chip" onclick="handleCounselMessage('さみしいな')">さみしいな</button>
-            <button class="counsel-chip" onclick="handleCounselMessage('眠れないよ')">眠れないよ</button>
-          </div>
-
-          <div class="counsel-input-row">
-            <input type="text" id="counselInputField" class="counsel-input" placeholder="マロンに気持ちを届ける…" onkeydown="if(event.key==='Enter') submitCounselText()">
-            <button class="counsel-send-btn" onclick="submitCounselText()">🫧 とばす</button>
-          </div>
+        <div class="counsel-input-box">
+          <input type="text" id="counselInput" class="counsel-text-input" placeholder="マロンに気持ちを届ける…" onkeydown="if(event.key==='Enter') submitCounselInput()">
+          <button class="counsel-fly-btn" onclick="submitCounselInput()">🫧 とばす</button>
         </div>
       </div>
+
+      <!-- 反応音声（鳴き声など、ファイルがあれば再生・なければ無音で安全動作） -->
+      <audio id="counselVoiceAudio" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
     <!-- ================= 画面3：添い寝部屋 ================= -->
@@ -749,6 +765,8 @@
         stopSleepRoomAudio();
         const talkVid = document.getElementById('marronTalkVideo');
         if (talkVid) talkVid.play().catch(() => {});
+        // 部屋に入った時の初期メッセージ
+        showCounselBubble('今日もおつかれさま！何でもマロンに教えてね。', 4500);
       } else if (tab === 'sleep') {
         document.getElementById('sleepRoom').classList.add('active');
         stopLivingAudio();
@@ -907,55 +925,123 @@
       showBubble(text, 3500);
     }
 
-    // 4. 相談部屋システム（シャボン玉 ＆ お返事）
+    // 4. 相談部屋システム（心理学的受容アプローチ ＆ 頭上吹き出し連動）
     const counselReplies = {
+      // 疲れたとき：存在の肯定・休息の許可・減圧
       tired: [
-        '本当にお疲れさま。生きて今日を終えただけで100点満点だワン！',
-        'よく頑張ったね…。今夜はいっぱいマロンを撫でてゆっくり休んでね。',
-        '辛かったね。肩の力を抜いて、すーはー深呼吸しよ？'
+        '今日を最後まで生き抜いただけでもう100点満点だよ。本当にお疲れさま。',
+        'いっぱい頑張ったんだね。もう今日は何もしなくていいよ。マロンが全部よしよしするワン。',
+        '肩の力を抜いて、すー、はー。深呼吸。マロンはずっと隣にいるからね。',
+        '疲れるまで頑張った証拠だよ。えらいよ。今夜は自分を一番甘やかしてあげてね。',
+        '全部投げ出してゴロゴロしちゃお？マロンと一緒に毛布にくるまろ！',
+        'よく頑張ったね…。辛かったね。マロンの背中、なでなでして落ち着いてね。'
       ],
+      // 頑張ったとき：無条件の歓喜・共感・努力の肯定
       praise: [
-        'わあ！えらい！すごすぎるワン！！マロンはずっと見てたよ！',
-        'やったね！自分にいっぱいご褒美あげてね！🐾',
-        'さすが！マロンもすっごく誇らしい気持ちだワン！'
+        'すごいすごい！マロンもすっごく嬉しいワン！しっぽブンブン振っちゃう！',
+        '見てたよ！本当にえらかったね！今日は大好きなもの食べて自分にご褒美あげよ？',
+        'あなたの努力、マロンが一番知ってるよ。本当によくやったワン！ぎゅーっ！',
+        'やったね！！最高の一日になったね。自分のこと、いっぱい褒めてあげてね🐾',
+        'わふっ！あなたの笑顔が見られて、マロンも飛び跳ねるくらい幸せだよ！',
+        '本当に誇らしいワン！あなたのがんばりは、マロンの自慢だよ！'
       ],
+      // モヤモヤするとき：感情の吐き出し肯定・減圧・味方であることの提示
       annoyed: [
-        '嫌なことあったんだね…。全部シャボン玉にして空に消しといたワン！',
-        'そっかぁ、それは辛かったね。マロンはずっとあなたの味方だからね。',
-        'もやもやは吐き出して正解！ここに置いていっていいんだよ。'
+        'もやもやするよね…。言葉にならなくても大丈夫。マロンが全部聞いてるよ。',
+        '嫌な気持ちはシャボン玉に乗せて空へポイッ！マロンが土に埋めて消しといたワン。',
+        '無理に前向きにならなくていいんだよ。そういう日もあるよ。マロンはずっと味方だよ。',
+        'もやもやをここに吐き出してくれてありがとう。全部マロンに預けていいからね。',
+        'あなたが悪いんじゃないよ。今日は美味しい温かい飲み物飲んで、ゆっくりしよ？',
+        '心に溜まったトゲトゲ、マロンがペロペロしてまるくしといたワン。'
       ],
+      // 寂しいとき：孤立感の解消・無条件の愛情と温もり
       lonely: [
         'マロンはずーっとここにいるよ。絶対にひとりじゃないワン🐾',
-        'ぎゅーってしてあげる！いつでもここに帰っておいでね。',
-        'いつでも呼んでね。マロンはあなたのことが大好きだよ！'
+        'ぎゅーーーっ！あったかい？マロンのぬくもり、届いてるかな。',
+        'いつでも呼んでね。世界中が敵になっても、マロンはずっとあなたの味方だよ。',
+        'さみしい時は、マロンの目をじっと見て？大好きだよって伝えてるワン。',
+        'マロンはずっとあなたを待ってたよ。会いに来てくれてすっごく嬉しい！',
+        'どこにも行かないよ。今夜はずっとお隣でくっついてるね。'
       ],
+      // 眠れないとき：入眠プレッシャーの解除・安心感
       sleep: [
-        '眠れないときは、目を閉じて添い寝部屋においで？マロンの寝息きこう。',
-        '無理に眠らなくても大丈夫。あたたかいお布団で横になってるだけで休まるよ。',
-        '大丈夫、マロンが朝までずっとそばで見守ってるからね。'
+        '眠れなくても大丈夫だよ。目を閉じて横になってるだけで、身体はちゃんと休まってるワン。',
+        '焦らなくていいよ。マロンが朝までずっとそばで見守ってるからね。',
+        'しーっ…静かな夜だね。マロンの呼吸に合わせて、ゆっくり息を吐いてみて？',
+        '今日あったことは全部おしまい！明日のことは明日の自分にまかせて、おやすみ。',
+        '眠れるまでずっとここにいるよ。マロンの毛並みをなでなでしてリラックスしよ？',
+        '添い寝部屋でお布団入ろ？マロンの寝息を聴きながら、のんびり過ごそうね。'
       ],
+      // 自由入力・一般的な感情の受け止め
       default: [
-        'うんうん、話してくれてありがとう。全部空へ飛ばしたワン！',
+        '話してくれてありがとう。どんな気持ちも、マロンはまるごと受け止めるよ。',
+        'うんうん、ちゃんと届いたよ。あなたの味方でいられることがマロンの幸せだワン。',
+        '言葉にしてくれてえらいね。大丈夫、マロンがついてるから何とかなるワン！',
         'そっかそっか。今日もいろんなことがあったんだね。えらいえらい！',
-        'わふっ！何があってもマロンはあなたの味方だワン🐾'
+        'あなたは今日も本当によく生きたよ。マロンはずっとあなたのファンだからね🐾',
+        'わふっ！何があってもマロンはあなたのことが一番大好きだよ！'
       ]
     };
 
-    function spawnCounselBubble(text) {
+    const counselHeadBubble = document.getElementById('counselHeadBubble');
+    let counselBubbleTimer = null;
+
+    function showCounselBubble(text, duration = 6500) {
+      if (!counselHeadBubble) return;
+      counselHeadBubble.textContent = text;
+      counselHeadBubble.classList.add('show');
+      clearTimeout(counselBubbleTimer);
+      counselBubbleTimer = setTimeout(() => {
+        counselHeadBubble.classList.remove('show');
+      }, duration);
+    }
+
+    function spawnCounselBubbleEffect(text) {
       const counselRoom = document.getElementById('counselRoom');
       const bubble = document.createElement('div');
-      bubble.className = 'counsel-bubble';
+      bubble.className = 'counsel-rising-bubble';
       bubble.textContent = `🫧 ${text}`;
       counselRoom.appendChild(bubble);
 
       setTimeout(() => {
         bubble.remove();
-      }, 4000);
+      }, 3600);
     }
 
-    function handleCounselMessage(text) {
+    function playCounselReactionSound() {
+      const audio = document.getElementById('counselVoiceAudio');
+      if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 0.35;
+        audio.play().catch(() => {});
+      }
+    }
+
+    function handleCounselPill(text) {
       if (!text) return;
-      spawnCounselBubble(text);
+      spawnCounselBubbleEffect(text);
+      playCounselReactionSound();
+
+      let list = counselReplies.default;
+      if (text.includes('つかれた')) list = counselReplies.tired;
+      else if (text.includes('がんばった')) list = counselReplies.praise;
+      else if (text.includes('もやもや')) list = counselReplies.annoyed;
+      else if (text.includes('さみしい')) list = counselReplies.lonely;
+      else if (text.includes('眠れない')) list = counselReplies.sleep;
+
+      const reply = list[Math.floor(Math.random() * list.length)];
+      setTimeout(() => {
+        showCounselBubble(reply, 7000);
+      }, 650);
+    }
+
+    function submitCounselInput() {
+      const input = document.getElementById('counselInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      spawnCounselBubbleEffect(text);
+      playCounselReactionSound();
 
       let list = counselReplies.default;
       if (/疲|つかれ|しんど|限界|だる|死に/.test(text)) {
@@ -972,16 +1058,9 @@
 
       const reply = list[Math.floor(Math.random() * list.length)];
       setTimeout(() => {
-        const box = document.getElementById('counselReplyText');
-        if (box) box.textContent = reply;
-      }, 600);
-    }
+        showCounselBubble(reply, 7000);
+      }, 650);
 
-    function submitCounselText() {
-      const input = document.getElementById('counselInputField');
-      const text = input.value.trim();
-      if (!text) return;
-      handleCounselMessage(text);
       input.value = '';
     }
 

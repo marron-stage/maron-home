@@ -157,7 +157,6 @@
       justify-content: center;
     }
 
-    /* 統合された添い寝マスターオーディオプレイヤー */
     .sleep-master-player {
       display: inline-flex;
       align-items: center;
@@ -408,7 +407,6 @@
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
         <div class="sleep-controls-bar">
-          <!-- 1本化された添い寝マスターコントローラー -->
           <div class="sleep-master-player" id="sleepPlayerCard">
             <button class="sleep-play-btn" id="sleepMasterBtn" onclick="toggleSleepSuite()">
               ▶ 添い寝サウンド再生
@@ -467,7 +465,7 @@
       }
     }
 
-    // 2. お部屋自律歩行（正面歩き速度ダウン ＆ 等速歩行）
+    // 2. お部屋自律歩行
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -697,7 +695,7 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（BGM・寝息・寝言の1本化 ＆ iOSサスペンド防止）
+    // 3. 添い寝部屋演出（iOSアンロック完全対応版）
     const bgmAudio = document.getElementById('bgmAudio');
     const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
@@ -712,16 +710,19 @@
     const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
     let currentTrackIndex = 0;
 
-    // 音量バランス調整（添い寝・安眠用）
-    bgmAudio.volume = 0.28;
-    breathAudio.volume = 0.35;
-    voice01.volume = 0.30;
+    // 音量バランス
+    const BGM_VOL = 0.28;
+    const BREATH_VOL = 0.35;
+    const VOICE_VOL = 0.32;
+
+    bgmAudio.volume = BGM_VOL;
+    breathAudio.volume = BREATH_VOL;
+    voice01.volume = VOICE_VOL;
 
     let isSleepPlaying = false;
     let voiceTimer = null;
     let sleepWakeLock = null;
 
-    // iOS画面スリープ防止
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -739,24 +740,28 @@
       }
     }
 
-    // 寝言のランダム再生スケジュール（15秒〜30秒間隔で落ち着いた頻度）
+    // 寝言のスケジューリング
     function scheduleNextVoice() {
       if (!isSleepPlaying) return;
-      const delay = Math.random() * (30000 - 15000) + 15000;
+      clearTimeout(voiceTimer);
+
+      // 12秒〜24秒の心地よいランダム間隔
+      const delay = Math.random() * (24000 - 12000) + 12000;
 
       voiceTimer = setTimeout(() => {
         if (!isSleepPlaying) return;
+        voice01.volume = VOICE_VOL;
         voice01.currentTime = 0;
         voice01.play().then(() => {
           voice01.onended = () => scheduleNextVoice();
         }).catch(err => {
-          console.log('寝言再生待機:', err);
+          console.log('寝言再生エラー:', err);
           scheduleNextVoice();
         });
       }, delay);
     }
 
-    // ボタン1つでBGM・寝息・寝言をまとめて再生/停止
+    // メインタップ操作
     async function toggleSleepSuite() {
       if (!isSleepPlaying) {
         try {
@@ -764,28 +769,42 @@
             bgmAudio.src = bgmList[currentTrackIndex];
           }
 
-          // 1回のタップで全オーディオの再生許可を獲得
+          // ★重要：タップ時に寝言も含めて一度再生し、iOSの権限ロックを即時解除する
+          voice01.volume = 0.001; // 最初は耳に聞こえない音量
+          const voiceWarmup = voice01.play();
+
           await bgmAudio.play();
           await breathAudio.play();
+
+          // アンロックが完了したら一時停止して本来の音量に戻す
+          if (voiceWarmup !== undefined) {
+            voiceWarmup.then(() => {
+              voice01.pause();
+              voice01.currentTime = 0;
+              voice01.volume = VOICE_VOL;
+            }).catch(() => {});
+          }
 
           isSleepPlaying = true;
           sleepMasterBtn.innerHTML = '⏸ おやすみ中（停止）';
           sleepPlayerCard.classList.add('active');
           trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
 
-          // 初回の寝言は再生開始から8秒後に鳴らす
+          // 開始から6秒後に最初の寝言を鳴らす
           clearTimeout(voiceTimer);
           voiceTimer = setTimeout(() => {
             if (isSleepPlaying) {
+              voice01.volume = VOICE_VOL;
               voice01.currentTime = 0;
-              voice01.play().catch(() => {});
-              voice01.onended = () => scheduleNextVoice();
+              voice01.play().then(() => {
+                voice01.onended = () => scheduleNextVoice();
+              }).catch(() => scheduleNextVoice());
             }
-          }, 8000);
+          }, 6000);
 
           requestWakeLock();
         } catch (err) {
-          console.log('再生ブロック:', err);
+          console.log('再生ブロックエラー:', err);
         }
       } else {
         stopSleepRoomAudio();
@@ -836,7 +855,7 @@
       }
     }
 
-    // 4. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダルプレイヤー）
+    // 4. 日常部屋
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' },
       { id: 'v2', title: 'ココアであったまるワン', src: 'marron_cocoa.mp4' },

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
   <style>
     * {
@@ -12,113 +12,186 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
       background-color: #121624;
-      color: #e2e8f0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      text-align: center;
-      overflow-x: hidden;
-      overflow-y: auto;
+      color: #e2e8f0;
     }
 
-    /* タブバー */
+    /* アプリ全体のコンテナ */
+    .app-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 最前面のヘッダー（タブバー） */
+    .top-header {
+      position: absolute;
+      top: env(safe-area-inset-top, 10px);
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 10px 12px;
+      z-index: 100;
+    }
     .tab-bar {
       display: flex;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 4px;
+      background: rgba(18, 22, 36, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 5px;
       border-radius: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 10px;
-      max-width: 95vw;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .tab-btn {
       background: none;
       border: none;
-      color: #94a3b8;
-      padding: 7px 14px;
+      color: #cbd5e1;
+      padding: 7px 15px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s ease;
     }
     .tab-btn.active {
-      background: rgba(246, 173, 85, 0.25);
+      background: rgba(246, 173, 85, 0.35);
       color: #fbd38d;
-      border: 1px solid rgba(246, 173, 85, 0.4);
+      border: 1px solid rgba(246, 173, 85, 0.5);
+      font-weight: 600;
     }
 
-    .room-content {
+    /* 各画面共通 */
+    .screen {
       display: none;
       width: 100%;
-      flex-direction: column;
-      align-items: center;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
-    .room-content.active {
-      display: flex;
+    .screen.active {
+      display: block;
     }
 
-    /* ================= 部屋1：お部屋 ================= */
-    .room-stage-wrapper {
-      position: relative;
-      width: 320px;
-      max-width: 92vw;
-      height: 520px;
-      max-height: 68vh;
-      border-radius: 24px;
-      overflow: hidden;
-      border: 2px solid rgba(246, 173, 85, 0.35);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    /* ================= 画面1：全画面お部屋 ================= */
+    #livingRoom {
+      background-image: url('room.jpg');
       background-size: cover;
       background-position: center bottom;
-      background-image: url('room.jpg');
+      background-repeat: no-repeat;
     }
 
-    /* マロン描画Canvas（大きめサイズ・縦横比維持） */
-    #marronCanvas {
-      position: absolute;
-      bottom: 18px;
-      left: 15px;
-      height: 175px;
-      width: auto;
-      cursor: pointer;
-      will-change: left, transform;
-    }
-
+    /* 右上の足音ボタン */
     .sound-badge {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(0, 0, 0, 0.55);
+      top: calc(env(safe-area-inset-top, 10px) + 60px);
+      right: 14px;
+      background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: #fff;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.75rem;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    /* ================= 部屋2：添い寝部屋 ================= */
+    /* 上部に浮かぶ吹き出し */
+    .living-bubble-box {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 10px) + 60px);
+      left: 14px;
+      right: 100px;
+      z-index: 50;
+    }
+    .bubble {
+      background: rgba(25, 28, 40, 0.75);
+      border: 1px solid rgba(246, 173, 85, 0.4);
+      padding: 8px 14px;
+      border-radius: 18px;
+      font-size: 0.82rem;
+      color: #fef3c7;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    /* 床を歩く大きなマロンCanvas */
+    #marronCanvas {
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 10px) + 20px); /* スマホ下端の床位置 */
+      left: 10px;
+      height: 225px; /* 全画面に映える存在感あるサイズ */
+      width: auto;
+      cursor: pointer;
+      will-change: left, transform;
+      z-index: 40;
+    }
+
+    /* 画面下部のいいねバー */
+    .living-bottom-bar {
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 10px) + 12px);
+      right: 14px;
+      z-index: 50;
+    }
+    .like-btn {
+      background: rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .like-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* ================= 画面2＆3：添い寝・日常部屋 ================= */
+    .centered-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 70px 16px 20px 16px;
+      text-align: center;
+      background: radial-gradient(circle at center, #1b2238 0%, #0d101b 100%);
+    }
+
     .audio-player {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 6px 16px;
       border-radius: 30px;
       backdrop-filter: blur(8px);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     .audio-btn {
       background: none;
@@ -126,7 +199,6 @@
       color: #cbd5e1;
       font-size: 0.95rem;
       cursor: pointer;
-      padding: 4px;
     }
     .track-info {
       font-size: 0.75rem;
@@ -135,10 +207,9 @@
     }
 
     .marron-sleep-card {
-      width: 260px;
-      max-width: 82vw;
-      max-height: 42vh;
-      border-radius: 22px;
+      width: 270px;
+      max-width: 84vw;
+      border-radius: 24px;
       overflow: hidden;
       border: 2px solid rgba(246, 173, 85, 0.45);
       box-shadow: 0 0 25px rgba(246, 173, 85, 0.25);
@@ -149,37 +220,27 @@
     .marron-sleep-card img {
       width: 100%;
       height: 100%;
-      max-height: 42vh;
-      object-fit: cover;
       display: block;
     }
-
     @keyframes breathe {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 15px rgba(246, 173, 85, 0.2);
-      }
-      50% {
-        transform: scale(1.03);
-        box-shadow: 0 0 35px rgba(246, 173, 85, 0.4);
-      }
+      0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(246, 173, 85, 0.2); }
+      50% { transform: scale(1.03); box-shadow: 0 0 35px rgba(246, 173, 85, 0.4); }
     }
 
-    /* ================= 部屋3：日常部屋 ================= */
     .youtube-card {
-      width: 290px;
-      max-width: 88vw;
-      border-radius: 18px;
+      width: 300px;
+      max-width: 90vw;
+      border-radius: 20px;
       overflow: hidden;
       background: #1e2538;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
       cursor: pointer;
     }
     .video-thumbnail-box {
       position: relative;
       width: 100%;
-      height: 180px;
+      height: 190px;
       background: #000;
       display: flex;
       align-items: center;
@@ -192,8 +253,8 @@
     }
     .play-badge {
       position: absolute;
-      width: 52px;
-      height: 52px;
+      width: 54px;
+      height: 54px;
       background: rgba(0, 0, 0, 0.65);
       border: 2px solid rgba(255, 255, 255, 0.85);
       border-radius: 50%;
@@ -201,21 +262,21 @@
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       padding-left: 3px;
       backdrop-filter: blur(4px);
     }
     .video-meta {
-      padding: 10px 14px;
+      padding: 12px 14px;
       text-align: left;
     }
     .video-meta-title {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: #f1f5f9;
     }
     .video-meta-sub {
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: #94a3b8;
       margin-top: 2px;
     }
@@ -223,7 +284,7 @@
     .video-selector {
       display: flex;
       gap: 8px;
-      margin: 8px 0 12px 0;
+      margin-bottom: 14px;
       overflow-x: auto;
       max-width: 90vw;
       padding: 4px;
@@ -244,160 +305,112 @@
       color: #fbd38d;
     }
 
-    /* 共通UI */
-    .stats-bar {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 0.8rem;
-      color: #94a3b8;
-    }
-    .like-btn {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #fca5a5;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .like-btn:active {
-      transform: scale(0.92);
-    }
-
+    /* 飛び出すハート */
     .floating-heart {
       position: absolute;
       pointer-events: none;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       animation: flyUp 1.2s ease-out forwards;
-      z-index: 100;
+      z-index: 200;
     }
     @keyframes flyUp {
       0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
-      100% { opacity: 0; transform: translate(var(--dx), -90px) scale(1.4); }
-    }
-
-    .bubble {
-      margin-top: 10px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-size: 0.88rem;
-      color: #fbd38d;
-      backdrop-filter: blur(5px);
-    }
-    .hint {
-      font-size: 0.72rem;
-      color: #64748b;
-      margin-top: 4px;
-    }
-
-    .footer {
-      margin-top: 10px;
-      margin-bottom: 4px;
-    }
-    .message {
-      font-size: 0.82rem;
-      color: #cbd5e1;
-      margin-bottom: 2px;
-    }
-    .sub {
-      font-size: 0.7rem;
-      color: #64748b;
+      100% { opacity: 0; transform: translate(var(--dx), -100px) scale(1.4); }
     }
   </style>
 </head>
 <body>
 
-  <!-- タブバー -->
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('living')">🏡 マロンのお部屋</button>
-    <button class="tab-btn" onclick="switchTab('sleep')">🌙 添い寝部屋</button>
-    <button class="tab-btn" onclick="switchTab('daily')">🐾 マロンの日常</button>
-  </div>
+  <div class="app-viewport">
+    <!-- 最前面タブバー -->
+    <header class="top-header">
+      <nav class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('living')">🏡 マロンのお部屋</button>
+        <button class="tab-btn" onclick="switchTab('sleep')">🌙 添い寝部屋</button>
+        <button class="tab-btn" onclick="switchTab('daily')">🐾 マロンの日常</button>
+      </nav>
+    </header>
 
-  <!-- ================= タブ1：お部屋 ================= -->
-  <div id="livingRoom" class="room-content active">
-    <div class="room-stage-wrapper" id="stageWrapper">
+    <!-- ================= 画面1：全画面お部屋 ================= -->
+    <main id="livingRoom" class="screen active">
+      <!-- 足音スイッチ -->
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleWalkSound(event)">🔇 足音OFF</button>
+
+      <!-- 吹き出し -->
+      <div class="living-bubble-box">
+        <div class="bubble" id="livingBubble">
+          ぽてぽて… お部屋をお散歩中だワン！🐾
+        </div>
+      </div>
+
+      <!-- トコトコ歩くマロン（青背景透過） -->
       <canvas id="marronCanvas" width="300" height="300" onclick="tapLivingMarron(event)"></canvas>
       <video id="sourceVideo" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
-    </div>
 
-    <div class="stats-bar">
-      <button class="like-btn" onclick="addLike('living', event)">
-        <span>❤️ なでる</span>
-        <span id="livingLikeCount">0</span>
-      </button>
-    </div>
-
-    <div class="bubble" id="livingBubble">
-      ぽてぽて… お部屋をお散歩中だワン！🐾
-    </div>
-    <div class="hint">（マロンをタップするとなでなでできるワン）</div>
-  </div>
-
-  <!-- ================= タブ2：添い寝部屋 ================= -->
-  <div id="sleepRoom" class="room-content">
-    <div class="audio-player">
-      <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
-      <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
-      <button class="audio-btn" onclick="nextBgm()">⏭</button>
-    </div>
-
-    <div class="marron-sleep-card" onclick="tapSleepMarron(event)">
-      <img src="marron.gif" alt="マロン">
-    </div>
-
-    <div class="stats-bar">
-      <button class="like-btn" onclick="addLike('sleep', event)">
-        <span>❤️ なでなで</span>
-        <span id="sleepLikeCount">0</span>
-      </button>
-    </div>
-
-    <div class="bubble" id="sleepBubble">
-      スピー… すやすや… 💤
-    </div>
-    <div class="hint">（タップするとなでなでできるワン）</div>
-  </div>
-
-  <!-- ================= タブ3：日常部屋 ================= -->
-  <div id="dailyRoom" class="room-content">
-    <div class="video-selector" id="videoChips"></div>
-
-    <div class="youtube-card" onclick="playFullScreenVideo(event)">
-      <div class="video-thumbnail-box">
-        <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
-        <div class="play-badge">▶</div>
+      <!-- なでるボタン -->
+      <div class="living-bottom-bar">
+        <button class="like-btn" onclick="addLike('living', event)">
+          <span>❤️ なでる</span>
+          <span id="livingLikeCount">0</span>
+        </button>
       </div>
-      <div class="video-meta">
-        <div class="video-meta-title" id="videoTitle">まったりマロン</div>
-        <div class="video-meta-sub" id="videoSubDesc">タップすると全画面で再生するワン！</div>
+    </main>
+
+    <!-- ================= 画面2：添い寝部屋 ================= -->
+    <section id="sleepRoom" class="screen">
+      <div class="centered-screen">
+        <div class="audio-player">
+          <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
+          <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
+          <button class="audio-btn" onclick="nextBgm()">⏭</button>
+        </div>
+
+        <div class="marron-sleep-card" onclick="tapSleepMarron(event)">
+          <img src="marron.gif" alt="マロン">
+        </div>
+
+        <div style="margin-top: 14px;">
+          <button class="like-btn" onclick="addLike('sleep', event)">
+            <span>❤️ なでなで</span>
+            <span id="sleepLikeCount">0</span>
+          </button>
+        </div>
+
+        <div class="bubble" id="sleepBubble" style="margin-top: 14px; max-width: 280px; text-align: center;">
+          スピー… すやすや… 💤
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="stats-bar">
-      <span id="dailyViews">👁️ 0 views</span>
-      <button class="like-btn" onclick="addLike('daily', event)">
-        <span>❤️ いいね</span>
-        <span id="dailyLikeCount">0</span>
-      </button>
-    </div>
+    <!-- ================= 画面3：日常部屋 ================= -->
+    <section id="dailyRoom" class="screen">
+      <div class="centered-screen">
+        <div class="video-selector" id="videoChips"></div>
 
-    <div class="bubble" id="dailyBubble">
-      画面をタップして全画面で見てね！🐾
-    </div>
-  </div>
+        <div class="youtube-card" onclick="playFullScreenVideo(event)">
+          <div class="video-thumbnail-box">
+            <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
+            <div class="play-badge">▶</div>
+          </div>
+          <div class="video-meta">
+            <div class="video-meta-title" id="videoTitle">まったりマロン</div>
+            <div class="video-meta-sub" id="videoSubDesc">タップすると全画面で再生するワン！</div>
+          </div>
+        </div>
 
-  <div class="footer">
-    <div class="message" id="footerMessage">マロンはお部屋でのんびり過ごしてるワン。</div>
-    <div class="sub">画面を開いたまま、いつでも会いに来てね</div>
+        <div style="margin-top: 14px; display: flex; align-items: center; gap: 16px;">
+          <span id="dailyViews" style="font-size: 0.8rem; color: #94a3b8;">👁️ 0 views</span>
+          <button class="like-btn" onclick="addLike('daily', event)">
+            <span>❤️ いいね</span>
+            <span id="dailyLikeCount">0</span>
+          </button>
+        </div>
+
+        <div class="bubble" id="dailyBubble" style="margin-top: 14px; max-width: 280px; text-align: center;">
+          画面をタップして全画面で見てね！🐾
+        </div>
+      </div>
+    </section>
   </div>
 
   <audio id="bgmAudio" preload="auto"></audio>
@@ -406,38 +419,33 @@
     // 1. タブ切り替え
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.room-content').forEach(room => room.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
 
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
-        document.getElementById('footerMessage').innerText = "マロンはお部屋でのんびり過ごしてるワン。";
       } else if (tab === 'sleep') {
         event.target.classList.add('active');
         document.getElementById('sleepRoom').classList.add('active');
-        document.getElementById('footerMessage').innerText = "今日も一日、本当によく頑張ったワン。";
       } else {
         event.target.classList.add('active');
         document.getElementById('dailyRoom').classList.add('active');
-        document.getElementById('footerMessage').innerText = "いつでもマロンを見て元気出してね🐾";
       }
     }
 
-    // 2. 青背景（#007BFF）クロマキー透過 ＆ 往復歩行
+    // 2. 青背景（#007BFF）透過 ＆ 全画面床の往復歩行
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const video = document.getElementById('sourceVideo');
-    const stage = document.getElementById('stageWrapper');
     const soundBtn = document.getElementById('stepSoundBtn');
 
-    let posX = 15;
-    let speed = 0.8;
+    let posX = 10;
+    let speed = 0.9;
     let direction = 1;
 
     function renderChromaLoop() {
       if (document.getElementById('livingRoom').classList.contains('active')) {
         if (video.readyState >= 2) {
-          // 動画の縦横比に合わせてCanvasサイズを自動同期
           if (video.videoWidth > 0 && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -447,29 +455,27 @@
           const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = frame.data;
 
-          // #007BFF (RGB: 0, 123, 255) ブルーバッククロマキー処理
+          // #007BFF ブルーバッククロマキー
           for (let i = 0; i < data.length; i += 4) {
             const r = data[i];
             const g = data[i + 1];
             const b = data[i + 2];
 
-            // 青色成分が強く、赤色成分が低い青背景ピクセルを判定して透明化
-            // （口元の白や黒・茶色の毛はBが突出しないため消えずに残ります）
-            const isBlueBackground = (b > 150 && b > r + 60 && b > g + 15) || 
-                                     (r < 60 && g > 70 && g < 170 && b > 190);
+            const isBlue = (b > 150 && b > r + 60 && b > g + 15) || 
+                           (r < 60 && g > 70 && g < 170 && b > 190);
 
-            if (isBlueBackground) {
-              data[i + 3] = 0; // 不透明度を0にして完全透過
+            if (isBlue) {
+              data[i + 3] = 0;
             }
           }
           ctx.putImageData(frame, 0, 0);
         }
 
-        // 床の往復歩行計算
-        const stageWidth = stage.clientWidth;
-        const marronWidth = canvas.clientWidth || 150;
-        const maxRight = stageWidth - marronWidth - 10;
-        const minLeft = 10;
+        // スマホ画面全体の横幅に合わせた折り返し判定
+        const screenWidth = window.innerWidth;
+        const marronWidth = canvas.clientWidth || 180;
+        const maxRight = screenWidth - marronWidth - 8;
+        const minLeft = 8;
 
         posX += speed * direction;
 
@@ -506,7 +512,7 @@
     const livingMessages = [
       "ぽてぽて… なにか落ちてないかパトロール中ワン！🐾",
       "なでなでしてくれた！えへへ… ✨",
-      "このラグの上が一番落ち着くんだワン〜 🛋️",
+      "このお部屋、ひろびろしてて大好きだワン〜 🛋️",
       "ワンッ！今日も一緒にいてくれて嬉しいな！🐶"
     ];
     let livingMsgIdx = 0;
@@ -549,10 +555,9 @@
       const dx = (Math.random() - 0.5) * 80 + 'px';
       heart.style.setProperty('--dx', dx);
 
-      const target = document.querySelector('.room-content.active');
-      const rect = target.getBoundingClientRect();
-      const x = (e && e.clientX ? e.clientX - rect.left : rect.width / 2) - 12;
-      const y = (e && e.clientY ? e.clientY - rect.top : rect.height / 2) - 20;
+      const target = document.querySelector('.screen.active');
+      const x = (e && e.clientX ? e.clientX : window.innerWidth / 2) - 15;
+      const y = (e && e.clientY ? e.clientY : window.innerHeight / 2) - 20;
 
       heart.style.left = `${x}px`;
       heart.style.top = `${y}px`;

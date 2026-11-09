@@ -17,7 +17,7 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: #080a10;
+      background-color: #06080e;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: #e2e8f0;
     }
@@ -122,11 +122,17 @@
       pointer-events: none;
     }
 
-    /* ================= 画面2：添い寝部屋（ミニマル・ナイト） ================= */
+    /* ================= 画面2：添い寝部屋（間接照明 ＆ ナイトフィルター） ================= */
     #sleepRoom {
-      background: radial-gradient(circle at center 45%, #151a2e 0%, #06080e 100%);
+      background: radial-gradient(circle at center 40%, #111524 0%, #040508 100%);
+      transition: background 0.5s ease;
     }
+    #sleepRoom.night-mode {
+      background: radial-gradient(circle at center 40%, #090b14 0%, #020204 100%);
+    }
+
     .sleep-container {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -136,17 +142,23 @@
       text-align: center;
     }
 
+    .sleep-controls-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      z-index: 10;
+    }
+
     .audio-player {
       display: inline-flex;
       align-items: center;
       gap: 12px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 18px;
+      padding: 6px 16px;
       border-radius: 30px;
       backdrop-filter: blur(10px);
-      margin-bottom: 20px;
-      z-index: 10;
     }
     .audio-btn {
       background: none;
@@ -159,124 +171,186 @@
       font-size: 0.78rem;
       color: #94a3b8;
       min-width: 80px;
-      letter-spacing: 0.5px;
     }
 
-    /* 動画カード（息づくアンビエントフレーム） */
+    .lamp-toggle-btn {
+      background: rgba(246, 173, 85, 0.2);
+      border: 1px solid rgba(246, 173, 85, 0.5);
+      color: #fbd38d;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+    .lamp-toggle-btn.off {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #64748b;
+    }
+
+    /* 添い寝動画カード（間接照明グロー ＆ ナイトフィルター） */
     .marron-sleep-card {
       position: relative;
       width: 270px;
       height: 420px;
       max-width: 82vw;
-      max-height: 58vh;
+      max-height: 56vh;
       border-radius: 28px;
       overflow: hidden;
-      border: 1px solid rgba(246, 173, 85, 0.3);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(246, 173, 85, 0.15);
       background: #000;
-      animation: sleepGlow 6s ease-in-out infinite alternate;
+      border: 1.5px solid rgba(246, 173, 85, 0.35);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 50px rgba(246, 173, 85, 0.35); /* 間接照明の光 */
+      transition: box-shadow 0.6s ease, border-color 0.6s ease;
+    }
+    .marron-sleep-card.dark {
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.5); /* 消灯 */
     }
     .marron-sleep-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      filter: brightness(0.72) contrast(1.08) saturate(0.85) sepia(0.18); /* ナイトトーン */
+      transition: filter 0.6s ease;
     }
-    @keyframes sleepGlow {
-      0% { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 15px rgba(246, 173, 85, 0.1); }
-      100% { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8), 0 0 35px rgba(246, 173, 85, 0.28); }
+    .marron-sleep-card.dark video {
+      filter: brightness(0.48) contrast(1.15) saturate(0.7) sepia(0.08); /* 深夜消灯トーン */
     }
 
-    /* ================= 画面3：日常部屋（ミニマルシアター） ================= */
+    /* ================= 画面3：日常部屋（Netflix風カルーセル） ================= */
     #dailyRoom {
-      background: radial-gradient(circle at center, #141724 0%, #06070b 100%);
+      background: #07090e;
     }
-    .daily-container {
+    .netflix-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: calc(env(safe-area-inset-top, 10px) + 56px) 16px calc(env(safe-area-inset-bottom, 10px) + 16px) 16px;
+      justify-content: space-between;
+    }
+
+    /* 上部：メインシネマスクリーン */
+    .netflix-hero-wrapper {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100%;
-      padding: calc(env(safe-area-inset-top, 10px) + 60px) 16px calc(env(safe-area-inset-bottom, 10px) + 20px) 16px;
-      text-align: center;
+      min-height: 0;
     }
-
-    .theater-selector {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 18px;
-      overflow-x: auto;
-      max-width: 90vw;
-      padding: 4px;
-    }
-    .theater-chip {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #94a3b8;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    .theater-chip.active {
-      background: rgba(246, 173, 85, 0.25);
-      border-color: rgba(246, 173, 85, 0.6);
-      color: #fbd38d;
-      font-weight: 500;
-    }
-
-    /* シネマスクリーンカード */
-    .cinema-screen-card {
+    .netflix-hero-card {
       position: relative;
-      width: 320px;
-      height: 440px;
-      max-width: 86vw;
-      max-height: 58vh;
-      border-radius: 24px;
+      width: 100%;
+      max-width: 330px;
+      height: 100%;
+      max-height: 44vh;
+      border-radius: 20px;
       overflow: hidden;
       background: #000;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(255, 255, 255, 0.05);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
       cursor: pointer;
     }
-    .cinema-screen-card video {
+    .netflix-hero-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
-    .play-overlay {
+    .hero-play-badge {
       position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.3s ease;
     }
-    .play-btn-circle {
-      width: 60px;
-      height: 60px;
+    .play-circle {
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
-      background: rgba(18, 22, 36, 0.65);
-      border: 1.5px solid rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(8px);
+      background: rgba(15, 18, 30, 0.75);
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 1.6rem;
-      padding-left: 4px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      font-size: 1.5rem;
+      padding-left: 3px;
+      backdrop-filter: blur(8px);
     }
-    .cinema-caption {
+    .hero-meta-title {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #f1f5f9;
+    }
+
+    /* 下部：横スクロールエピソードトレイ */
+    .netflix-tray-section {
       margin-top: 14px;
-      font-size: 0.9rem;
-      letter-spacing: 0.8px;
-      color: #cbd5e1;
-      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .tray-header-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      text-align: left;
+    }
+    .netflix-tray-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .netflix-tray-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tray-thumb-card {
+      flex: 0 0 110px;
+      height: 130px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      background: #151926;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tray-thumb-card.active {
+      border-color: #f6ad55;
+      box-shadow: 0 0 12px rgba(246, 173, 85, 0.4);
+      transform: scale(1.03);
+    }
+    .tray-thumb-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .tray-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 60%);
+      display: flex;
+      align-items: flex-end;
+      padding: 6px 8px;
+    }
+    .tray-thumb-title {
+      font-size: 0.72rem;
+      color: #f1f5f9;
+      font-weight: 500;
+      line-height: 1.2;
+      text-align: left;
     }
   </style>
 </head>
@@ -309,13 +383,17 @@
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
-        <div class="audio-player">
-          <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
-          <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
-          <button class="audio-btn" onclick="nextBgm()">⏭</button>
+        <div class="sleep-controls-bar">
+          <div class="audio-player">
+            <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
+            <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
+            <button class="audio-btn" onclick="nextBgm()">⏭</button>
+          </div>
+          <!-- ベッドサイド間接照明切り替えスイッチ -->
+          <button class="lamp-toggle-btn" id="lampBtn" onclick="toggleBedLamp()">💡 明かりON</button>
         </div>
 
-        <div class="marron-sleep-card">
+        <div class="marron-sleep-card" id="sleepCard">
           <video id="marronSleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline webkit-playsinline></video>
         </div>
       </div>
@@ -325,19 +403,25 @@
       <audio id="sleepVoice02" src="sleep_voice02.MP3" preload="auto"></audio>
     </section>
 
-    <!-- ================= 画面3：日常部屋（ミニマルシアター） ================= -->
+    <!-- ================= 画面3：日常部屋（Netflix風シネマカルーセル） ================= -->
     <section id="dailyRoom" class="screen">
-      <div class="daily-container">
-        <div class="theater-selector" id="videoChips"></div>
-
-        <div class="cinema-screen-card" onclick="playFullScreenVideo()">
-          <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
-          <div class="play-overlay">
-            <div class="play-btn-circle">▶</div>
+      <div class="netflix-container">
+        <!-- 上部：メインシネマスクリーン -->
+        <div class="netflix-hero-wrapper">
+          <div class="netflix-hero-card" onclick="playFullScreenVideo()">
+            <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
+            <div class="hero-play-badge">
+              <div class="play-circle">▶</div>
+            </div>
           </div>
+          <div class="hero-meta-title" id="videoHeroTitle">まったりマロン</div>
         </div>
 
-        <div class="cinema-caption" id="videoTitle">まったりマロン</div>
+        <!-- 下部：横スクロールエピソードトレイ -->
+        <div class="netflix-tray-section">
+          <div class="tray-header-label">Episodes / マロンの記録</div>
+          <div class="netflix-tray-scroll" id="netflixTray"></div>
+        </div>
       </div>
     </section>
   </div>
@@ -376,7 +460,6 @@
     const videoFront = document.getElementById('videoFront');
     const videoBack = document.getElementById('videoBack');
 
-    // 正面歩きの足の回転速度を0.85倍に落ち着かせる
     videoFront.playbackRate = 0.85;
 
     const livingBgm = document.getElementById('livingBgmAudio');
@@ -406,7 +489,7 @@
 
     const CYCLE_DURATION = 4000;
     const DEFAULT_STEP_DISTANCE = 110;
-    const FRONT_STEP_DISTANCE = 75; // 手前歩きの移動距離を抑えて滑り足を解消
+    const FRONT_STEP_DISTANCE = 75;
 
     let sessionStartTime = 0;
     let startX = 60;
@@ -434,7 +517,6 @@
       let validFound = false;
 
       for (let angle of directions) {
-        // 下方向（正面歩き）に近い角度の場合は歩行距離を短縮
         const isHeadingDown = angle > Math.PI / 3 && angle < (2 * Math.PI) / 3;
         const stepDist = isHeadingDown ? FRONT_STEP_DISTANCE : DEFAULT_STEP_DISTANCE;
 
@@ -598,14 +680,33 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（2種類のランダム寝言 ＆ BGM）
+    // 3. 添い寝部屋演出（間接照明 ＆ 2種類の寝言）
     const voice01 = document.getElementById('sleepVoice01');
     const voice02 = document.getElementById('sleepVoice02');
+    const sleepCard = document.getElementById('sleepCard');
+    const lampBtn = document.getElementById('lampBtn');
+    const sleepRoom = document.getElementById('sleepRoom');
+
     voice01.volume = 0.45;
     voice02.volume = 0.45;
 
-    let sleepVoiceTimer = null;
+    let isLampOn = true;
+    function toggleBedLamp() {
+      isLampOn = !isLampOn;
+      if (isLampOn) {
+        lampBtn.innerText = '💡 明かりON';
+        lampBtn.classList.remove('off');
+        sleepCard.classList.remove('dark');
+        sleepRoom.classList.remove('night-mode');
+      } else {
+        lampBtn.innerText = '🌑 消灯中';
+        lampBtn.classList.add('off');
+        sleepCard.classList.add('dark');
+        sleepRoom.classList.add('night-mode');
+      }
+    }
 
+    let sleepVoiceTimer = null;
     function playRandomSleepVoice() {
       const isSleep = document.getElementById('sleepRoom').classList.contains('active');
       if (!isSleep) return;
@@ -634,30 +735,36 @@
       if (playBtn) playBtn.innerText = '▶ 再生';
     }
 
-    // 4. 日常部屋（ミニマルシアター制御）
+    // 4. 日常部屋（Netflix風カルーセル制御）
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' }
     ];
     let currentVideoIdx = 0;
     const dailyVideoPlayer = document.getElementById('dailyVideoPlayer');
-    const chipsContainer = document.getElementById('videoChips');
+    const trayContainer = document.getElementById('netflixTray');
 
-    function initVideoSelector() {
-      chipsContainer.innerHTML = '';
+    function initNetflixTray() {
+      trayContainer.innerHTML = '';
       videoList.forEach((v, idx) => {
-        const chip = document.createElement('button');
-        chip.className = `theater-chip ${idx === currentVideoIdx ? 'active' : ''}`;
-        chip.innerText = v.title;
-        chip.onclick = (e) => { e.stopPropagation(); selectVideo(idx); };
-        chipsContainer.appendChild(chip);
+        const card = document.createElement('div');
+        card.className = `tray-thumb-card ${idx === currentVideoIdx ? 'active' : ''}`;
+        card.onclick = () => selectTrayVideo(idx);
+
+        card.innerHTML = `
+          <video src="${v.src}" preload="metadata" muted playsinline></video>
+          <div class="tray-thumb-overlay">
+            <span class="tray-thumb-title">${v.title}</span>
+          </div>
+        `;
+        trayContainer.appendChild(card);
       });
     }
 
-    function selectVideo(idx) {
+    function selectTrayVideo(idx) {
       currentVideoIdx = idx;
-      document.querySelectorAll('.theater-chip').forEach((c, i) => c.classList.toggle('active', i === idx));
+      document.querySelectorAll('.tray-thumb-card').forEach((c, i) => c.classList.toggle('active', i === idx));
       dailyVideoPlayer.src = videoList[idx].src;
-      document.getElementById('videoTitle').innerText = videoList[idx].title;
+      document.getElementById('videoHeroTitle').innerText = videoList[idx].title;
     }
 
     function playFullScreenVideo() {
@@ -712,7 +819,7 @@
     }
     audio.addEventListener('ended', () => playRandomBgm());
 
-    initVideoSelector();
+    initNetflixTray();
   </script>
 </body>
 </html>

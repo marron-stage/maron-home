@@ -9,7 +9,7 @@
 <body>
 
   <div id="app-container">
-    <!-- 上部固定 タブナビゲーション -->
+    <!-- 固定タブナビゲーション -->
     <nav id="tab-bar">
       <button class="tab-btn active" data-room="home-room">🏡 お家</button>
       <button class="tab-btn" data-room="counsel-room">🐾 相談部屋</button>
@@ -26,22 +26,22 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 自律歩行マロン（Canvasで青背景をクロマキー透過描画） -->
+      <!-- 自律歩行マロン（Canvasクロマキー透過＆奥行き連動） -->
       <div id="marronWalker">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- 歩行動画の読み込み用（非表示・JSで制御） -->
+      <!-- 歩行動画読み込み用（非表示・JS制御） -->
       <video id="marronWalkVideo" playsinline muted loop style="display: none;"></video>
 
-      <!-- お部屋BGM -->
+      <!-- 音声：お部屋BGM & 足音 -->
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
+      <audio id="footstepAudio" src="footstep.MP3" loop></audio>
     </section>
 
     <!-- 2. 相談部屋 -->
     <section id="counsel-room" class="room-panel">
-      <!-- 待機動画（最初は消音、アクション後に音声ON） -->
       <video id="counselingVideo" src="marron_talk.mp4" autoplay loop muted playsinline></video>
       <div id="counselingBubble"></div>
 
@@ -63,7 +63,6 @@
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-      <!-- 添い寝用：寝息＆BGMプレイヤー -->
       <audio id="sleepBreathAudio" src="sleep_breath.MP3" loop></audio>
       <audio id="sleepBgmAudio"></audio>
     </section>

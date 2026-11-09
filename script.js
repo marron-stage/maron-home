@@ -16,19 +16,22 @@ tabBtns.forEach(btn => {
 });
 
 /* ==============================================
-   2. お家部屋（時間帯背景・時計・BGM・クロマキー歩行）
+   2. お家部屋（時間帯背景・時計・BGM・歩行＆足音）
    ============================================== */
 const homeRoom = document.getElementById('home-room');
 const clockDisplay = document.getElementById('clockDisplay');
 const dateDisplay = document.getElementById('dateDisplay');
 const homeBgmBtn = document.getElementById('homeBgmBtn');
 const homeAudio = document.getElementById('homeAudio');
+const footstepAudio = document.getElementById('footstepAudio');
 const marronWalker = document.getElementById('marronWalker');
 const marronCanvas = document.getElementById('marronCanvas');
 const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 const marronWalkVideo = document.getElementById('marronWalkVideo');
 const homeBubble = document.getElementById('homeBubble');
+
 let isHomeBgmOn = false;
+footstepAudio.volume = 0.35; // 足音の音量を心地よい大きさに調整
 
 // 時間帯背景の自動更新
 function updateTimeAndBackground() {
@@ -37,24 +40,22 @@ function updateTimeAndBackground() {
   let bgImage = 'room.jpg';
 
   if (hour >= 5 && hour < 11) {
-    bgImage = 'room_morning.jpg';
+    bgImage = 'room_morning.jpg'; // 朝5:00〜10:59
   } else if (hour >= 11 && hour < 17) {
-    bgImage = 'room_day.jpg';
+    bgImage = 'room_day.jpg';     // 昼11:00〜16:59
   } else if (hour >= 17 && hour < 19) {
-    bgImage = 'room_sunset.jpg';
+    bgImage = 'room_sunset.jpg';  // 夕方17:00〜18:59
   } else if (hour >= 19 && hour <= 23) {
-    bgImage = 'room_night.jpg';
+    bgImage = 'room_night.jpg';   // 夜19:00〜23:59
   } else {
-    bgImage = 'room_midnight.jpg';
+    bgImage = 'room_midnight.jpg';// 深夜0:00〜4:59
   }
 
-  // 背景画像の設定
   const img = new Image();
   img.src = bgImage;
   img.onload = () => { homeRoom.style.backgroundImage = `url('${bgImage}')`; };
   img.onerror = () => { homeRoom.style.backgroundImage = `url('room.jpg')`; };
 
-  // 時計・日付更新
   const h = String(hour).padStart(2, '0');
   const m = String(now.getMinutes()).padStart(2, '0');
   clockDisplay.textContent = `${h}:${m}`;
@@ -101,7 +102,7 @@ function renderChromaKey() {
 
         // 青背景（Blue Screen）の判定と透過
         if (b > 110 && b > r * 1.25 && b > g * 1.15) {
-          frame.data[i * 4 + 3] = 0; // 完全透明化
+          frame.data[i * 4 + 3] = 0;
         }
       }
       ctx.putImageData(frame, 0, 0);
@@ -110,59 +111,87 @@ function renderChromaKey() {
   requestAnimationFrame(renderChromaKey);
 }
 
-// マロンの自律歩行（座標・方向に応じた動画切り替え）
+// マロンの自律歩行（進行方向・前後・足音・奥行きスケール連動）
 let currentX = 50; // %
-let currentY = 10; // %
+let currentY = 8;  // % (bottom)
+let walkStopTimer = null;
 
 function startNextWalkSession() {
-  const targetX = Math.floor(Math.random() * 60) + 20; // 20%〜80%
-  const targetY = Math.floor(Math.random() * 15) + 6;  // 6%〜21% (奥行き)
+  clearTimeout(walkStopTimer);
+
+  const targetX = Math.floor(Math.random() * 54) + 23; // 23%〜77%
+  const targetY = Math.floor(Math.random() * 15) + 6;  // 6%〜21% (bottom)
 
   const diffX = targetX - currentX;
-  const diffY = targetY - currentY;
+  const diffY = targetY - currentY; // bottomの差分（+なら奥へ、-なら手前へ）
 
   let selectedVideo = 'marron_walk.mp4';
   let flipX = 1;
 
-  // 移動方向判定
-  if (Math.abs(diffY) > 8 && Math.abs(diffX) < 15) {
-    // 縦方向の移動がメイン
-    selectedVideo = diffY > 0 ? 'marron_front.mp4' : 'marron_back.mp4';
-  } else if (diffY > 5) {
-    // 斜め手前
-    selectedVideo = 'marron_diagonal.mp4';
-    flipX = diffX > 0 ? -1 : 1;
-  } else if (diffY < -5) {
-    // 斜め奥
+  // 1. 進行方向による動画の正確な振り分け（ムーンウォーク解消）
+  if (diffY > 4 && Math.abs(diffX) < 14) {
+    // 画面上（部屋の奥）へ歩く ＝ 後ろ姿
+    selectedVideo = 'marron_back.mp4';
+    flipX = diffX >= 0 ? 1 : -1;
+  } else if (diffY < -4 && Math.abs(diffX) < 14) {
+    // 画面下（手前）へ歩いてくる ＝ 正面
+    selectedVideo = 'marron_front.mp4';
+    flipX = diffX >= 0 ? 1 : -1;
+  } else if (diffY > 4) {
+    // 斜め奥へ進む
     selectedVideo = 'marron_diagonal_back.mp4';
-    flipX = diffX > 0 ? -1 : 1;
+    flipX = diffX >= 0 ? 1 : -1;
+  } else if (diffY < -4) {
+    // 斜め手前へ進む
+    selectedVideo = 'marron_diagonal.mp4';
+    flipX = diffX >= 0 ? 1 : -1;
   } else {
-    // 横歩き
+    // 横歩き（進む方向をしっかり向く）
     selectedVideo = 'marron_walk.mp4';
-    flipX = diffX > 0 ? -1 : 1;
+    flipX = diffX >= 0 ? 1 : -1;
   }
 
-  // 動画切り替え＆再生
-  if (!marronWalkVideo.src.endsWith(selectedVideo)) {
-    marronWalkVideo.src = selectedVideo;
-    marronWalkVideo.play().catch(() => {});
-  }
+  // 2. 奥行きスケール計算（手前で大きく、奥で小さく）
+  // targetYが6%（一番手前）のとき約185px、21%（一番奥）のとき約130px
+  const depthFactor = 1.15 - ((targetY - 6) / 15) * 0.35;
+  const targetWidth = Math.round(165 * depthFactor);
+  marronCanvas.style.width = `${targetWidth}px`;
+
+  // 向きの適用
   marronCanvas.style.transform = `scaleX(${flipX})`;
 
-  // 位置の更新（CSS transitionで滑らかに移動）
+  // 動画の切り替えと再生
+  if (!marronWalkVideo.src.endsWith(selectedVideo)) {
+    marronWalkVideo.src = selectedVideo;
+  }
+  marronWalkVideo.play().catch(() => {});
+
+  // 足音再生（歩行開始）
+  footstepAudio.currentTime = 0;
+  footstepAudio.play().catch(() => {});
+
+  // 座標移動（CSS transition 4秒）
   marronWalker.style.left = `${targetX}%`;
   marronWalker.style.bottom = `${targetY}%`;
 
   currentX = targetX;
   currentY = targetY;
+
+  // 3. 移動完了時（4秒後）に歩行動画と足音を停止（止まってるのに歩く問題を解消）
+  walkStopTimer = setTimeout(() => {
+    footstepAudio.pause();
+    marronWalkVideo.pause(); // 到着したら足を止めて佇む
+  }, 4000);
 }
 
-// 歩行開始
+// 初回歩行開始
 marronWalkVideo.src = 'marron_walk.mp4';
 marronWalkVideo.play().then(() => {
   renderChromaKey();
 }).catch(() => {});
-setInterval(startNextWalkSession, 5500);
+
+// 6.5秒ごとに次の歩行へ（4秒歩行 ＋ 2.5秒その場でお休み）
+setInterval(startNextWalkSession, 6500);
 
 // マロンをタップした時のセリフ
 const marronVoices = [
@@ -192,11 +221,10 @@ const sleepBgmAudio = document.getElementById('sleepBgmAudio');
 let isLightOff = false;
 let isSleepSoundOn = false;
 
-// 添い寝BGMプレイリスト（1〜4）
+// 添い寝BGMプレイリスト（1〜4を自動連続再生）
 const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
 let currentBgmIndex = 0;
 
-// 曲が終わったら自動で次の曲へ
 sleepBgmAudio.addEventListener('ended', () => {
   currentBgmIndex = (currentBgmIndex + 1) % sleepPlaylist.length;
   sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];
@@ -219,7 +247,6 @@ lightToggleBtn.addEventListener('click', () => {
 soundToggleBtn.addEventListener('click', () => {
   isSleepSoundOn = !isSleepSoundOn;
   if (isSleepSoundOn) {
-    // プレイリストの再生
     if (!sleepBgmAudio.src || sleepBgmAudio.src === '') {
       sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];
     }

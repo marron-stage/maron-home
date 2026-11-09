@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
 
-  <!-- 404エラーを出さずに即座に🐕アイコンを表示するインラインSVG -->
   <!-- 正式なファビコン画像指定 -->
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -151,59 +150,68 @@
     .sleep-controls-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 18px;
       z-index: 10;
       flex-wrap: wrap;
       justify-content: center;
     }
 
-    .audio-player {
+    /* 統合された添い寝マスターオーディオプレイヤー */
+    .sleep-master-player {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 6px 14px;
-      border-radius: 30px;
-      backdrop-filter: blur(10px);
-    }
-    .audio-btn {
-      background: none;
-      border: none;
-      color: #cbd5e1;
-      font-size: 0.92rem;
-      cursor: pointer;
-    }
-    .track-info {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      min-width: 75px;
-    }
-
-    .sleep-voice-toggle {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #cbd5e1;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      transition: all 0.25s ease;
+      padding: 7px 16px;
+      border-radius: 30px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      transition: all 0.3s ease;
     }
-    .sleep-voice-toggle.active {
-      background: rgba(246, 173, 85, 0.25);
-      border-color: rgba(246, 173, 85, 0.7);
+    .sleep-master-player.active {
+      background: rgba(246, 173, 85, 0.22);
+      border-color: rgba(246, 173, 85, 0.65);
+    }
+
+    .sleep-play-btn {
+      background: none;
+      border: none;
       color: #fbd38d;
+      font-size: 0.88rem;
       font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sleep-track-info {
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      padding-left: 10px;
+      min-width: 68px;
+      text-align: center;
+    }
+    .sleep-next-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+    .sleep-next-btn:active {
+      color: #fff;
     }
 
     .lamp-toggle-btn {
       background: rgba(246, 173, 85, 0.2);
       border: 1px solid rgba(246, 173, 85, 0.5);
       color: #fbd38d;
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 20px;
       font-size: 0.78rem;
       cursor: pointer;
@@ -375,9 +383,9 @@
   <div class="app-viewport">
     <header class="top-header">
       <nav class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('living')">🏡 マロンのお部屋</button>
-        <button class="tab-btn" onclick="switchTab('sleep')">🌙 添い寝部屋</button>
-        <button class="tab-btn" onclick="switchTab('daily')">🐾 マロンの日常</button>
+        <button class="tab-btn active" onclick="switchTab('living', event)">🏡 マロンのお部屋</button>
+        <button class="tab-btn" onclick="switchTab('sleep', event)">🌙 添い寝部屋</button>
+        <button class="tab-btn" onclick="switchTab('daily', event)">🐾 マロンの日常</button>
       </nav>
     </header>
 
@@ -400,12 +408,15 @@
     <section id="sleepRoom" class="screen">
       <div class="sleep-container">
         <div class="sleep-controls-bar">
-          <div class="audio-player">
-            <button class="audio-btn" id="playBtn" onclick="toggleBgm()">▶ 再生</button>
-            <span class="track-info" id="trackInfo">♪ おやすみBGM</span>
-            <button class="audio-btn" onclick="nextBgm()">⏭</button>
+          <!-- 1本化された添い寝マスターコントローラー -->
+          <div class="sleep-master-player" id="sleepPlayerCard">
+            <button class="sleep-play-btn" id="sleepMasterBtn" onclick="toggleSleepSuite()">
+              ▶ 添い寝サウンド再生
+            </button>
+            <span class="sleep-track-info" id="trackInfo">♪ BGM 1</span>
+            <button class="sleep-next-btn" onclick="nextBgm()" title="次の曲">⏭</button>
           </div>
-          <button class="sleep-voice-toggle" id="voiceToggleBtn" onclick="toggleSleepVoiceLoop()">💤 寝息・寝言再生</button>
+
           <button class="lamp-toggle-btn" id="lampBtn" onclick="toggleBedLamp()">💡 明かりON</button>
         </div>
 
@@ -414,8 +425,8 @@
         </div>
       </div>
 
-      <audio id="bgmAudio" preload="auto"></audio>
-      <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
+      <audio id="bgmAudio" loop preload="auto"></audio>
+      <audio id="sleepBreath" src="sleep_breath.MP3" loop preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
@@ -435,21 +446,21 @@
 
   <script>
     // 1. タブ切り替え
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    function switchTab(tab, e) {
+      if (e) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+      }
       document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
 
       if (tab === 'living') {
-        event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
         stopSleepRoomAudio();
         if (isSoundOn) startLivingAudio();
       } else if (tab === 'sleep') {
-        event.target.classList.add('active');
         document.getElementById('sleepRoom').classList.add('active');
         stopLivingAudio();
       } else {
-        event.target.classList.add('active');
         document.getElementById('dailyRoom').classList.add('active');
         stopLivingAudio();
         stopSleepRoomAudio();
@@ -686,58 +697,127 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 3. 添い寝部屋演出（寝息 ＆ 寝言01 の2本ループ）
+    // 3. 添い寝部屋演出（BGM・寝息・寝言の1本化 ＆ iOSサスペンド防止）
+    const bgmAudio = document.getElementById('bgmAudio');
     const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
+
     const sleepCard = document.getElementById('sleepCard');
     const lampBtn = document.getElementById('lampBtn');
     const sleepRoom = document.getElementById('sleepRoom');
-    const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+    const sleepMasterBtn = document.getElementById('sleepMasterBtn');
+    const sleepPlayerCard = document.getElementById('sleepPlayerCard');
+    const trackInfo = document.getElementById('trackInfo');
 
-    breathAudio.volume = 0.20;
-    voice01.volume = 0.22;
+    const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
+    let currentTrackIndex = 0;
 
-    let isVoiceLoopActive = false;
-    let voiceLoopTimer = null;
+    // 音量バランス調整（添い寝・安眠用）
+    bgmAudio.volume = 0.28;
+    breathAudio.volume = 0.35;
+    voice01.volume = 0.30;
 
-    function toggleSleepVoiceLoop() {
-      isVoiceLoopActive = !isVoiceLoopActive;
-      if (isVoiceLoopActive) {
-        voiceToggleBtn.innerText = '💤 寝息・寝言停止';
-        voiceToggleBtn.classList.add('active');
-        playNextSleepSound();
-      } else {
-        stopSleepVoiceLoop();
+    let isSleepPlaying = false;
+    let voiceTimer = null;
+    let sleepWakeLock = null;
+
+    // iOS画面スリープ防止
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          sleepWakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.log('WakeLock error:', err);
       }
     }
 
-    function playNextSleepSound() {
-      if (!isVoiceLoopActive) return;
-      const isSleep = document.getElementById('sleepRoom').classList.contains('active');
-      if (!isSleep) return;
-
-      const chosenAudio = Math.random() < 0.70 ? breathAudio : voice01;
-
-      chosenAudio.currentTime = 0;
-      chosenAudio.play().catch(() => {});
-
-      chosenAudio.onended = () => {
-        if (!isVoiceLoopActive) return;
-        const breathDelay = 3000 + Math.random() * 3000;
-        voiceLoopTimer = setTimeout(playNextSleepSound, breathDelay);
-      };
+    function releaseWakeLock() {
+      if (sleepWakeLock) {
+        sleepWakeLock.release().catch(() => {});
+        sleepWakeLock = null;
+      }
     }
 
-    function stopSleepVoiceLoop() {
-      isVoiceLoopActive = false;
-      clearTimeout(voiceLoopTimer);
-      [breathAudio, voice01].forEach(a => {
-        a.pause();
-        a.currentTime = 0;
-        a.onended = null;
-      });
-      voiceToggleBtn.innerText = '💤 寝息・寝言再生';
-      voiceToggleBtn.classList.remove('active');
+    // 寝言のランダム再生スケジュール（15秒〜30秒間隔で落ち着いた頻度）
+    function scheduleNextVoice() {
+      if (!isSleepPlaying) return;
+      const delay = Math.random() * (30000 - 15000) + 15000;
+
+      voiceTimer = setTimeout(() => {
+        if (!isSleepPlaying) return;
+        voice01.currentTime = 0;
+        voice01.play().then(() => {
+          voice01.onended = () => scheduleNextVoice();
+        }).catch(err => {
+          console.log('寝言再生待機:', err);
+          scheduleNextVoice();
+        });
+      }, delay);
+    }
+
+    // ボタン1つでBGM・寝息・寝言をまとめて再生/停止
+    async function toggleSleepSuite() {
+      if (!isSleepPlaying) {
+        try {
+          if (!bgmAudio.src) {
+            bgmAudio.src = bgmList[currentTrackIndex];
+          }
+
+          // 1回のタップで全オーディオの再生許可を獲得
+          await bgmAudio.play();
+          await breathAudio.play();
+
+          isSleepPlaying = true;
+          sleepMasterBtn.innerHTML = '⏸ おやすみ中（停止）';
+          sleepPlayerCard.classList.add('active');
+          trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
+
+          // 初回の寝言は再生開始から8秒後に鳴らす
+          clearTimeout(voiceTimer);
+          voiceTimer = setTimeout(() => {
+            if (isSleepPlaying) {
+              voice01.currentTime = 0;
+              voice01.play().catch(() => {});
+              voice01.onended = () => scheduleNextVoice();
+            }
+          }, 8000);
+
+          requestWakeLock();
+        } catch (err) {
+          console.log('再生ブロック:', err);
+        }
+      } else {
+        stopSleepRoomAudio();
+      }
+    }
+
+    function nextBgm() {
+      currentTrackIndex = (currentTrackIndex + 1) % bgmList.length;
+      bgmAudio.src = bgmList[currentTrackIndex];
+      trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
+      if (isSleepPlaying) {
+        bgmAudio.play().catch(() => {});
+      }
+    }
+
+    bgmAudio.addEventListener('ended', () => nextBgm());
+
+    function stopSleepRoomAudio() {
+      isSleepPlaying = false;
+      clearTimeout(voiceTimer);
+
+      bgmAudio.pause();
+      breathAudio.pause();
+      breathAudio.currentTime = 0;
+
+      voice01.pause();
+      voice01.currentTime = 0;
+      voice01.onended = null;
+
+      sleepMasterBtn.innerHTML = '▶ 添い寝サウンド再生';
+      sleepPlayerCard.classList.remove('active');
+      releaseWakeLock();
     }
 
     let isLampOn = true;
@@ -754,14 +834,6 @@
         sleepCard.classList.add('dark');
         sleepRoom.classList.add('night-mode');
       }
-    }
-
-    function stopSleepRoomAudio() {
-      stopSleepVoiceLoop();
-      const bgm = document.getElementById('bgmAudio');
-      if (bgm) bgm.pause();
-      const playBtn = document.getElementById('playBtn');
-      if (playBtn) playBtn.innerText = '▶ 再生';
     }
 
     // 4. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダルプレイヤー）
@@ -811,47 +883,6 @@
       modalVideo.src = '';
       shortsModal.classList.remove('active');
     }
-
-    // 5. 添い寝部屋用BGM
-    const bgmList = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
-    let currentTrackIndex = -1;
-    const audio = document.getElementById('bgmAudio');
-    const playBtn = document.getElementById('playBtn');
-    const trackInfo = document.getElementById('trackInfo');
-    audio.volume = 0.3;
-
-    function playRandomBgm() {
-      let nextIndex;
-      do {
-        nextIndex = Math.floor(Math.random() * bgmList.length);
-      } while (bgmList.length > 1 && nextIndex === currentTrackIndex);
-
-      currentTrackIndex = nextIndex;
-      audio.src = bgmList[currentTrackIndex];
-      audio.play().then(() => {
-        playBtn.innerText = '⏸ 停止';
-        trackInfo.innerText = `♪ BGM ${currentTrackIndex + 1}`;
-      }).catch(err => console.log('再生待機中:', err));
-    }
-
-    function toggleBgm() {
-      if (audio.paused) {
-        if (!audio.src || currentTrackIndex === -1) {
-          playRandomBgm();
-        } else {
-          audio.play();
-          playBtn.innerText = '⏸ 停止';
-        }
-      } else {
-        audio.pause();
-        playBtn.innerText = '▶ 再生';
-      }
-    }
-
-    function nextBgm() {
-      playRandomBgm();
-    }
-    audio.addEventListener('ended', () => playRandomBgm());
 
     initShortsGrid();
   </script>

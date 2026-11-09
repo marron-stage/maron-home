@@ -89,7 +89,6 @@
     }
 
     /* ================= 画面1：全画面お部屋 ================= */
-    /* 安全策：画像が見つからなくても元の room.jpg を必ず背景としてキープ */
     #livingRoom {
       background-image: url('room.jpg');
       background-size: cover;
@@ -149,6 +148,33 @@
       font-weight: 600;
     }
 
+    /* マロンとお話しボタン（右下） */
+    .talk-trigger-btn {
+      position: absolute;
+      bottom: calc(env(safe-area-inset-bottom, 10px) + 18px);
+      right: 16px;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1.5px solid rgba(246, 173, 85, 0.7);
+      color: #fbd38d;
+      padding: 9px 18px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 50;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+    .talk-trigger-btn:active {
+      transform: scale(0.95);
+      background: rgba(246, 173, 85, 0.3);
+    }
+
     /* マロンのキャンバス */
     #marronCanvas {
       position: absolute;
@@ -191,6 +217,123 @@
       border-width: 6px 6px 0;
       border-style: solid;
       border-color: rgba(246, 173, 85, 0.85) transparent transparent transparent;
+    }
+
+    /* ================= 相談・お話しモーダル ================= */
+    #talkModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #talkModal.active {
+      display: flex;
+    }
+
+    .talk-card {
+      background: #111524;
+      border: 1.5px solid rgba(246, 173, 85, 0.5);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 360px;
+      padding: 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .talk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .talk-header h3 {
+      font-size: 0.95rem;
+      color: #fbd38d;
+      font-weight: 600;
+    }
+    .talk-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .talk-marron-reply {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #fef08a;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+    }
+
+    .talk-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      user-select: none;
+    }
+    .preset-chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .preset-chip:active {
+      background: rgba(246, 173, 85, 0.3);
+      color: #fbd38d;
+      border-color: rgba(246, 173, 85, 0.6);
+    }
+
+    .talk-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .talk-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      padding: 8px 12px;
+      color: #f8fafc;
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .talk-input:focus {
+      border-color: rgba(246, 173, 85, 0.7);
+    }
+    .talk-send-btn {
+      background: rgba(246, 173, 85, 0.25);
+      border: 1px solid rgba(246, 173, 85, 0.5);
+      color: #fbd38d;
+      padding: 0 14px;
+      border-radius: 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .talk-send-btn:active {
+      transform: scale(0.95);
     }
 
     /* ================= 画面2：添い寝部屋 ================= */
@@ -456,7 +599,6 @@
 
     <!-- ================= 画面1：全画面お部屋 ================= -->
     <main id="livingRoom" class="screen active">
-      <!-- 秒まで表示するリアルタイム時計 -->
       <div class="clock-badge" id="livingClock">
         <span id="clockIcon">☀️</span>
         <span id="clockTime">--:--</span>
@@ -465,10 +607,14 @@
 
       <button class="sound-badge" id="stepSoundBtn" onclick="toggleLivingAudio(event)">🔇 サウンドOFF</button>
 
-      <!-- マロンの頭上吹き出し -->
+      <!-- 右下の「💬 マロンに話す」ボタン -->
+      <button class="talk-trigger-btn" onclick="openTalkModal(event)">
+        <span>💬</span>
+        <span>マロンに話す</span>
+      </button>
+
       <div class="marron-speech-bubble" id="marronBubble">今日もおつかれさま！</div>
 
-      <!-- マロンのキャンバス（タップ可能） -->
       <canvas id="marronCanvas" width="300" height="300" onclick="onMarronTapped()"></canvas>
 
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
@@ -480,6 +626,35 @@
       <audio id="livingBgmAudio" src="bgm1.mp3" loop preload="auto"></audio>
       <audio id="footstepAudio" src="footstep.MP3" preload="auto"></audio>
     </main>
+
+    <!-- ================= 相談・お話しモーダル ================= -->
+    <div id="talkModal" onclick="closeTalkModal(event)">
+      <div class="talk-card" onclick="event.stopPropagation()">
+        <div class="talk-header">
+          <h3>🐾 マロンのきいてきいて箱</h3>
+          <button class="talk-close-btn" onclick="closeTalkModal()">✕</button>
+        </div>
+
+        <div class="talk-marron-reply" id="talkReplyText">
+          今日もおつかれさま！何でもマロンに話してみてね。
+        </div>
+
+        <!-- 疲れた夜でもワンタップで送れるプリセットボタン -->
+        <div class="talk-presets">
+          <button class="preset-chip" onclick="handlePresetTalk('つかれた')">つかれた…</button>
+          <button class="preset-chip" onclick="handlePresetTalk('がんばった')">がんばった！</button>
+          <button class="preset-chip" onclick="handlePresetTalk('もやもや')">もやもやする</button>
+          <button class="preset-chip" onclick="handlePresetTalk('さみしい')">さみしいな</button>
+          <button class="preset-chip" onclick="handlePresetTalk('ねむれない')">眠れないワン</button>
+        </div>
+
+        <!-- 自由入力フォーム -->
+        <div class="talk-input-row">
+          <input type="text" id="talkInput" class="talk-input" placeholder="ここに入力してみてね…" onkeydown="if(event.key==='Enter') submitTalk()">
+          <button class="talk-send-btn" onclick="submitTalk()">届ける</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ================= 画面2：添い寝部屋 ================= -->
     <section id="sleepRoom" class="screen">
@@ -502,7 +677,7 @@
       </div>
 
       <audio id="bgmAudio" loop preload="auto"></audio>
-      <audio id="sleepBreath" src="sleep_breath.MP3" loop preload="auto"></audio>
+      <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
@@ -543,8 +718,8 @@
       }
     }
 
-    // 2. 時計機能 ＆ 背景画像の安全切り替え（画像が存在しない時はroom.jpgをキープ）
-    const roomBackgrounds = {
+    // 2. 時計機能 ＆ 背景画像の自動切り替え
+    const timeSlots = {
       morning: 'room_morning.jpg',
       day: 'room_day.jpg',
       sunset: 'room_sunset.jpg',
@@ -592,23 +767,20 @@
 
       if (clockIcon) clockIcon.textContent = icon;
 
-      // 時間帯が変わった時、画像を安全にテスト読み込みしてから切り替え
       if (currentTimeSlot !== newSlot) {
         currentTimeSlot = newSlot;
-        const targetImg = roomBackgrounds[newSlot];
+        const targetSrc = timeSlots[newSlot];
 
-        if (targetImg && livingRoom) {
-          const testImg = new Image();
-          testImg.onload = () => {
-            // 画像がちゃんと存在する場合のみ差し替え
-            livingRoom.style.backgroundImage = `url('${targetImg}')`;
+        if (targetSrc && livingRoom) {
+          const img = new Image();
+          img.onload = () => {
+            livingRoom.style.backgroundImage = `url('${targetSrc}')`;
           };
-          testImg.onerror = () => {
-            // 見つからない場合は元の room.jpg のまま（真っ暗にしない）
-            console.log(`[マロンのお家] ${targetImg} が見つからないため、room.jpg を維持します`);
+          img.onerror = () => {
+            console.log(`[マロンのお家] ${targetSrc} が見つからないため room.jpg を維持します`);
             livingRoom.style.backgroundImage = "url('room.jpg')";
           };
-          testImg.src = targetImg;
+          img.src = targetSrc;
         }
       }
     }
@@ -616,7 +788,7 @@
     setInterval(updateLivingClockAndAtmosphere, 1000);
     updateLivingClockAndAtmosphere();
 
-    // 3. マロンの吹き出し制御（時間帯連動）
+    // 3. マロンの吹き出し制御
     const bubbleEl = document.getElementById('marronBubble');
 
     const speechesByTime = {
@@ -694,7 +866,90 @@
       showBubble(text, 3500);
     }
 
-    // 4. お部屋自律歩行（吹き出し追従）
+    // 4. マロンのお話し・相談システム（定型文 ＆ キーワード判定）
+    const talkResponses = {
+      tired: [
+        '本当にお疲れさま。生きて今日を終えただけで100点満点だワン！',
+        'よく頑張ったね…。今夜はいっぱいマロンを撫でてゆっくり休んでね。',
+        '辛かったね。肩の力を抜いて、すーはー深呼吸しよ？'
+      ],
+      praise: [
+        'わあ！えらい！すごすぎるワン！！マロンはずっと見てたよ！',
+        'やったね！自分にいっぱいご褒美あげてね！🐾',
+        'さすが！マロンもすっごく誇らしい気持ちだワン！'
+      ],
+      annoyed: [
+        '嫌なことあったんだね…。全部マロンが土に埋めて消しといたワン！',
+        'そっかぁ、それは辛かったね。マロンはずっとあなたの味方だからね。',
+        'もやもやは吐き出して正解！ここに置いていっていいんだよ。'
+      ],
+      lonely: [
+        'マロンはずーっとここにいるよ。絶対にひとりじゃないワン🐾',
+        'ぎゅーってしてあげる！いつでもここに帰っておいでね。',
+        'いつでも呼んでね。マロンはあなたのことが大好きだよ！'
+      ],
+      sleep: [
+        '眠れないときは、目を閉じて添い寝部屋においで？マロンの寝息きこう。',
+        '無理に眠らなくても大丈夫。あたたかいお布団で横になってるだけで休まるよ。',
+        '大丈夫、マロンが朝までずっとそばで見守ってるからね。'
+      ],
+      default: [
+        'うんうん、話してくれてありがとう。マロンはいつでも全部聞いてるよ！',
+        'そっかそっか。今日もいろんなことがあったんだね。えらいえらい！',
+        'わふっ！何があってもマロンはあなたの味方だワン🐾'
+      ]
+    };
+
+    function openTalkModal(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('talkModal').classList.add('active');
+    }
+
+    function closeTalkModal(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('talkModal').classList.remove('active');
+    }
+
+    function handlePresetTalk(type) {
+      let list = talkResponses.default;
+      if (type === 'つかれた') list = talkResponses.tired;
+      if (type === 'がんばった') list = talkResponses.praise;
+      if (type === 'もやもや') list = talkResponses.annoyed;
+      if (type === 'さみしい') list = talkResponses.lonely;
+      if (type === 'ねむれない') list = talkResponses.sleep;
+
+      const reply = list[Math.floor(Math.random() * list.length)];
+      document.getElementById('talkReplyText').textContent = reply;
+      showBubble(reply, 6000);
+    }
+
+    function submitTalk() {
+      const input = document.getElementById('talkInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      let list = talkResponses.default;
+
+      // キーワード判定
+      if (/疲|つかれ|しんど|限界|だる|死に/.test(text)) {
+        list = talkResponses.tired;
+      } else if (/頑張|がんば|できた|達成|勝|成功/.test(text)) {
+        list = talkResponses.praise;
+      } else if (/イライラ|嫌|むかつ|怒|悲|辛|泣|もやもや/.test(text)) {
+        list = talkResponses.annoyed;
+      } else if (/寂|さみし|孤独|ひと|独/.test(text)) {
+        list = talkResponses.lonely;
+      } else if (/眠れ|寝れ|起き|夜更かし|不眠/.test(text)) {
+        list = talkResponses.sleep;
+      }
+
+      const reply = list[Math.floor(Math.random() * list.length)];
+      document.getElementById('talkReplyText').textContent = reply;
+      showBubble(reply, 6000);
+      input.value = '';
+    }
+
+    // 5. お部屋自律歩行（吹き出し追従）
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -930,7 +1185,7 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 5. 添い寝部屋演出（呼吸15回カウント ＆ 寝言バトンタッチループ）
+    // 6. 添い寝部屋演出（呼吸15回カウント ＆ 寝言バトンタッチループ）
     const bgmAudio = document.getElementById('bgmAudio');
     const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
@@ -1088,7 +1343,7 @@
       }
     }
 
-    // 6. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダル）
+    // 7. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダル）
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' },
       { id: 'v2', title: 'ココアであったまるワン', src: 'marron_cocoa.mp4' },

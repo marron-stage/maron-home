@@ -89,7 +89,9 @@
     }
 
     /* ================= 画面1：全画面お部屋 ================= */
+    /* 安全策：画像が見つからなくても元の room.jpg を必ず背景としてキープ */
     #livingRoom {
+      background-image: url('room.jpg');
       background-size: cover;
       background-position: center bottom;
       background-repeat: no-repeat;
@@ -541,7 +543,7 @@
       }
     }
 
-    // 2. 時計機能 ＆ 5枚の背景画像自動出し分け
+    // 2. 時計機能 ＆ 背景画像の安全切り替え（画像が存在しない時はroom.jpgをキープ）
     const roomBackgrounds = {
       morning: 'room_morning.jpg',
       day: 'room_day.jpg',
@@ -568,7 +570,6 @@
         clockSec.textContent = `:${s}`;
       }
 
-      // 時間帯の判定（朝・昼・夕方・夜・深夜）
       let newSlot = 'day';
       let icon = '☀️';
 
@@ -591,12 +592,23 @@
 
       if (clockIcon) clockIcon.textContent = icon;
 
-      // 時間帯が変わった時に背景画像を切り替え
+      // 時間帯が変わった時、画像を安全にテスト読み込みしてから切り替え
       if (currentTimeSlot !== newSlot) {
         currentTimeSlot = newSlot;
-        if (livingRoom) {
-          const bgImg = roomBackgrounds[newSlot] || 'room.jpg';
-          livingRoom.style.backgroundImage = `url('${bgImg}')`;
+        const targetImg = roomBackgrounds[newSlot];
+
+        if (targetImg && livingRoom) {
+          const testImg = new Image();
+          testImg.onload = () => {
+            // 画像がちゃんと存在する場合のみ差し替え
+            livingRoom.style.backgroundImage = `url('${targetImg}')`;
+          };
+          testImg.onerror = () => {
+            // 見つからない場合は元の room.jpg のまま（真っ暗にしない）
+            console.log(`[マロンのお家] ${targetImg} が見つからないため、room.jpg を維持します`);
+            livingRoom.style.backgroundImage = "url('room.jpg')";
+          };
+          testImg.src = targetImg;
         }
       }
     }

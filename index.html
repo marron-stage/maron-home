@@ -316,7 +316,7 @@
       <!-- マロンCanvas -->
       <canvas id="marronCanvas" width="300" height="300"></canvas>
 
-      <!-- 4本の動画（裏でループ再生） -->
+      <!-- 4本の動画（消音で確実に自動再生開始） -->
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoFront" src="marron_front.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
@@ -391,7 +391,6 @@
       if (tab === 'living') {
         event.target.classList.add('active');
         document.getElementById('livingRoom').classList.add('active');
-        // お部屋に戻ってきたら、足音設定に応じて音を再開
         syncAudio();
       } else {
         if (tab === 'sleep') {
@@ -401,7 +400,6 @@
           event.target.classList.add('active');
           document.getElementById('dailyRoom').classList.add('active');
         }
-        // 他のタブに移動した時は足音を自動ミュート
         muteAllWalkVideos();
       }
     }
@@ -417,7 +415,8 @@
     const soundBtn = document.getElementById('stepSoundBtn');
 
     let currentVideo = videoWalk;
-    let isSoundOn = true; // デフォルトで足音ON設定
+    let isSoundOn = true;
+    let hasUserInteracted = false; // 画面タップ履歴フラグ
 
     function getBounds() {
       const w = window.innerWidth;
@@ -465,6 +464,8 @@
     }
 
     function syncAudio() {
+      if (!hasUserInteracted) return; // 画面操作前はアンミュートしない（ブラウザ制限回避）
+
       const isLivingActive = document.getElementById('livingRoom').classList.contains('active');
       const allVideos = [videoWalk, videoDiag, videoFront, videoBack];
 
@@ -483,9 +484,11 @@
       });
     }
 
-    // 床をタップした場所へトコトコ移動
+    // 床をタップした場所へ移動
     function onRoomClick(e) {
       if (e.target.closest('.sound-badge')) return;
+      unlockAudioInteraction();
+
       const b = getBounds();
       const clickX = e.clientX - 70;
       const clickY = e.clientY - 120;
@@ -493,9 +496,15 @@
       targetX = Math.max(b.minX, Math.min(b.maxX, clickX));
       targetY = Math.max(b.minY, Math.min(b.maxY, clickY));
       updateMotionState();
+    }
 
-      // 初回タップ時にブラウザの音声制限を解除
-      syncAudio();
+    // 画面タップで音声制限を解除する処理
+    function unlockAudioInteraction() {
+      if (!hasUserInteracted) {
+        hasUserInteracted = true;
+        startAllVideos();
+        syncAudio();
+      }
     }
 
     // 描画ループ
@@ -504,7 +513,8 @@
         const vid = currentVideo;
 
         if (vid.readyState >= 2) {
-          if (vid.videoWidth > 0 && (canvas.width !== video.videoWidth || canvas.height !== vid.videoHeight)) {
+          // vid を参照（video is not defined の修正箇所）
+          if (vid.videoWidth > 0 && (canvas.width !== vid.videoWidth || canvas.height !== vid.videoHeight)) {
             canvas.width = vid.videoWidth;
             canvas.height = vid.videoHeight;
           }
@@ -553,15 +563,21 @@
       requestAnimationFrame(renderChromaLoop);
     }
 
-    const startAllVideos = () => {
-      [videoWalk, videoDiag, videoFront, videoBack].forEach(v => v.play().catch(() => {}));
-    };
+    function startAllVideos() {
+      [videoWalk, videoDiag, videoFront, videoBack].forEach(v => {
+        v.play().catch(() => {});
+      });
+    }
+
+    // 初回読み込み時は消音のまま再生開始
     startAllVideos();
-    document.addEventListener('touchstart', startAllVideos, { once: true });
+    document.addEventListener('touchstart', unlockAudioInteraction, { once: true });
+    document.addEventListener('click', unlockAudioInteraction, { once: true });
     requestAnimationFrame(renderChromaLoop);
 
     function toggleWalkSound(e) {
       e.stopPropagation();
+      unlockAudioInteraction();
       isSoundOn = !isSoundOn;
       soundBtn.innerText = isSoundOn ? '🔊 足音ON' : '🔇 足音OFF';
       syncAudio();
@@ -573,6 +589,8 @@
 
     function addLike(type, e) {
       if (e) e.stopPropagation();
+      unlockAudioInteraction();
+
       if (type === 'sleep') {
         sleepLikes += 1;
         localStorage.setItem('marron_sleep_likes', sleepLikes);
@@ -648,6 +666,7 @@
     }
 
     function playFullScreenVideo(e) {
+      unlockAudioInteraction();
       const vid = videoList[currentVideoIdx].id;
       let vCount = parseInt(localStorage.getItem(`views_${vid}`) || '0', 10) + 1;
       localStorage.setItem(`views_${vid}`, vCount);
@@ -695,6 +714,7 @@
     }
 
     function toggleBgm() {
+      unlockAudioInteraction();
       if (audio.paused) {
         if (!audio.src || currentTrackIndex === -1) {
           playRandomBgm();
@@ -709,6 +729,7 @@
     }
 
     function nextBgm() {
+      unlockAudioInteraction();
       playRandomBgm();
     }
     audio.addEventListener('ended', () => playRandomBgm());

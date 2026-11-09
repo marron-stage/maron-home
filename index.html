@@ -243,135 +243,92 @@
       filter: brightness(0.48) contrast(1.15) saturate(0.7) sepia(0.08);
     }
 
-    /* ================= 画面3：日常部屋（Netflix風カルーセル） ================= */
+    /* ================= 画面3：日常部屋（YouTubeショート風 3列グリッド） ================= */
     #dailyRoom {
-      background: #07090e;
+      background: #080a11;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .netflix-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      padding: calc(env(safe-area-inset-top, 10px) + 56px) 16px calc(env(safe-area-inset-bottom, 10px) + 16px) 16px;
-      justify-content: space-between;
+    .shorts-container {
+      padding: calc(env(safe-area-inset-top, 10px) + 64px) 10px calc(env(safe-area-inset-bottom, 10px) + 24px) 10px;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
-    .netflix-hero-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-    }
-    .netflix-hero-card {
-      position: relative;
+    /* 横3列グリッド（アスペクト比 9:16 の縦長サムネイル） */
+    .shorts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
       width: 100%;
-      max-width: 330px;
-      height: 100%;
-      max-height: 44vh;
-      border-radius: 20px;
-      overflow: hidden;
-      background: #000;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
-      cursor: pointer;
     }
-    .netflix-hero-card video {
+
+    .short-item-card {
+      position: relative;
+      aspect-ratio: 9 / 16;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #151926;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .short-item-card:active {
+      transform: scale(0.96);
+      border-color: rgba(246, 173, 85, 0.8);
+    }
+
+    .short-item-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-    .hero-play-badge {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .play-circle {
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      background: rgba(15, 18, 30, 0.75);
-      border: 1.5px solid rgba(255, 255, 255, 0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 1.5rem;
-      padding-left: 3px;
-      backdrop-filter: blur(8px);
-    }
-    .hero-meta-title {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      color: #f1f5f9;
+      pointer-events: none;
     }
 
-    .netflix-tray-section {
-      margin-top: 14px;
-      margin-bottom: 8px;
-    }
-    .tray-header-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #94a3b8;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      text-align: left;
-    }
-    .netflix-tray-scroll {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .netflix-tray-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    .tray-thumb-card {
-      flex: 0 0 110px;
-      height: 130px;
-      border-radius: 12px;
-      overflow: hidden;
-      position: relative;
-      background: #151926;
-      border: 1.5px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .tray-thumb-card.active {
-      border-color: #f6ad55;
-      box-shadow: 0 0 12px rgba(246, 173, 85, 0.4);
-      transform: scale(1.03);
-    }
-    .tray-thumb-card video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .tray-thumb-overlay {
+    /* サムネイル下部のグラデーションとタイトル */
+    .short-item-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 60%);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.1) 45%, transparent 100%);
       display: flex;
-      align-items: flex-end;
-      padding: 6px 8px;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 8px 6px;
+      pointer-events: none;
     }
-    .tray-thumb-title {
+    .short-item-title {
       font-size: 0.72rem;
-      color: #f1f5f9;
       font-weight: 500;
-      line-height: 1.2;
-      text-align: left;
+      color: #f8fafc;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .short-play-icon {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #fff;
+      padding-left: 1.5px;
+    }
+
+    /* 非表示のフルスクリーン再生用プレイヤー */
+    #hiddenFullPlayer {
+      display: none;
     }
   </style>
 </head>
@@ -420,31 +377,20 @@
       </div>
 
       <audio id="bgmAudio" preload="auto"></audio>
-      <!-- 音声ファイル：寝息と寝言（01）の2本構成 -->
       <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
-    <!-- ================= 画面3：日常部屋（Netflix風カルーセル） ================= -->
+    <!-- ================= 画面3：日常部屋（YouTubeショート風 3列グリッド） ================= -->
     <section id="dailyRoom" class="screen">
-      <div class="netflix-container">
-        <div class="netflix-hero-wrapper">
-          <div class="netflix-hero-card" onclick="playFullScreenVideo()">
-            <video id="dailyVideoPlayer" src="marron.mp4" preload="metadata" muted playsinline></video>
-            <div class="hero-play-badge">
-              <div class="play-circle">▶</div>
-            </div>
-          </div>
-          <div class="hero-meta-title" id="videoHeroTitle">まったりマロン</div>
-        </div>
-
-        <div class="netflix-tray-section">
-          <div class="tray-header-label">Episodes / マロンの記録</div>
-          <div class="netflix-tray-scroll" id="netflixTray"></div>
-        </div>
+      <div class="shorts-container">
+        <div class="shorts-grid" id="shortsGrid"></div>
       </div>
     </section>
   </div>
+
+  <!-- フルスクリーン再生用の共通プレイヤー -->
+  <video id="hiddenFullPlayer" playsinline></video>
 
   <script>
     // 1. タブ切り替え
@@ -729,7 +675,6 @@
       const isSleep = document.getElementById('sleepRoom').classList.contains('active');
       if (!isSleep) return;
 
-      // 70%の確率で寝息、30%の確率で寝言（voice01）
       const chosenAudio = Math.random() < 0.70 ? breathAudio : voice01;
 
       chosenAudio.currentTime = 0;
@@ -778,46 +723,43 @@
       if (playBtn) playBtn.innerText = '▶ 再生';
     }
 
-    // 4. 日常部屋（Netflix風カルーセル制御）
+    // 4. 日常部屋（YouTubeショート風 3列グリッド制御）
+    // ※今後動画が増えたらここに { title: '...', src: '...' } を追加するだけ
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' }
     ];
-    let currentVideoIdx = 0;
-    const dailyVideoPlayer = document.getElementById('dailyVideoPlayer');
-    const trayContainer = document.getElementById('netflixTray');
 
-    function initNetflixTray() {
-      trayContainer.innerHTML = '';
-      videoList.forEach((v, idx) => {
-        const card = document.createElement('div');
-        card.className = `tray-thumb-card ${idx === currentVideoIdx ? 'active' : ''}`;
-        card.onclick = () => selectTrayVideo(idx);
+    const shortsGrid = document.getElementById('shortsGrid');
+    const fullPlayer = document.getElementById('hiddenFullPlayer');
 
-        card.innerHTML = `
+    function initShortsGrid() {
+      shortsGrid.innerHTML = '';
+      videoList.forEach((v) => {
+        const item = document.createElement('div');
+        item.className = 'short-item-card';
+        item.onclick = () => playShortVideo(v.src);
+
+        item.innerHTML = `
           <video src="${v.src}" preload="metadata" muted playsinline></video>
-          <div class="tray-thumb-overlay">
-            <span class="tray-thumb-title">${v.title}</span>
+          <div class="short-play-icon">▶</div>
+          <div class="short-item-overlay">
+            <div class="short-item-title">${v.title}</div>
           </div>
         `;
-        trayContainer.appendChild(card);
+        shortsGrid.appendChild(item);
       });
     }
 
-    function selectTrayVideo(idx) {
-      currentVideoIdx = idx;
-      document.querySelectorAll('.tray-thumb-card').forEach((c, i) => c.classList.toggle('active', i === idx));
-      dailyVideoPlayer.src = videoList[idx].src;
-      document.getElementById('videoHeroTitle').innerText = videoList[idx].title;
-    }
+    // タップされた動画を全画面で即座に再生
+    function playShortVideo(src) {
+      fullPlayer.src = src;
+      fullPlayer.muted = false;
+      fullPlayer.play();
 
-    function playFullScreenVideo() {
-      dailyVideoPlayer.muted = false;
-      dailyVideoPlayer.play();
-
-      if (dailyVideoPlayer.webkitEnterFullscreen) {
-        dailyVideoPlayer.webkitEnterFullscreen();
-      } else if (dailyVideoPlayer.requestFullscreen) {
-        dailyVideoPlayer.requestFullscreen();
+      if (fullPlayer.webkitEnterFullscreen) {
+        fullPlayer.webkitEnterFullscreen();
+      } else if (fullPlayer.requestFullscreen) {
+        fullPlayer.requestFullscreen();
       }
     }
 
@@ -862,7 +804,7 @@
     }
     audio.addEventListener('ended', () => playRandomBgm());
 
-    initNetflixTray();
+    initShortsGrid();
   </script>
 </body>
 </html>

@@ -16,7 +16,7 @@ tabBtns.forEach(btn => {
 });
 
 /* ==============================================
-   2. お家部屋（時間帯背景・時計・BGM・歩行＆足音）
+   2. お家部屋（時間帯背景・時計・BGM・歩行＆自動セリフ）
    ============================================== */
 const homeRoom = document.getElementById('home-room');
 const clockDisplay = document.getElementById('clockDisplay');
@@ -31,25 +31,57 @@ const marronWalkVideo = document.getElementById('marronWalkVideo');
 const homeBubble = document.getElementById('homeBubble');
 
 let isHomeBgmOn = false;
-footstepAudio.volume = 0.35; // 足音の音量を心地よい大きさに調整
+footstepAudio.volume = 0.35; // 足音の音量
+
+// 時間帯別・自動つぶやきセリフ集
+const timeBasedMessages = {
+  morning: [
+    "おはよう！今日もいいお天気だワン🐾",
+    "朝ごはん食べた？いっぱい食べてね！",
+    "のび〜っ！今日もマロンと一緒に頑張ろ！",
+    "おはようワン！深呼吸してスタートだよ。"
+  ],
+  day: [
+    "お昼ご飯はなにかな〜？クーン🐾",
+    "ちょっとひと息つこ？無理は禁物だワン！",
+    "日差しがポカポカして気持ちいいワン…",
+    "お仕事や作業、えらいワン！見てるよ！"
+  ],
+  sunset: [
+    "今日もおつかれさまだワン！夕暮れだね。",
+    "今日も1日よく頑張ったね、えらいワン！",
+    "早く一緒にお家でゴロゴロしよ〜！",
+    "夕焼けきれいだワン…お腹すいてきた！"
+  ],
+  night: [
+    "今日も最後まで生き抜いてえらかったワン。",
+    "夜はのんびり、好きなことして過ごそうね。",
+    "お風呂でしっかりあったまってね🐾",
+    "マロンはずーっとそばにいるから安心するワン。"
+  ],
+  midnight: [
+    "まだ起きてるの？夜更かしはほどほどにね。",
+    "無理しないで、眠くなったら寝るんだよ…",
+    "今日もお疲れさま。いい夢見ようね…zzz",
+    "マロンがついてるから大丈夫。おやすみワン。"
+  ]
+};
+
+// 現在の時間帯を取得
+function getCurrentTimeCategory(hour) {
+  if (hour >= 5 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 17) return 'day';
+  if (hour >= 17 && hour < 19) return 'sunset';
+  if (hour >= 19 && hour <= 23) return 'night';
+  return 'midnight';
+}
 
 // 時間帯背景の自動更新
 function updateTimeAndBackground() {
   const now = new Date();
   const hour = now.getHours();
-  let bgImage = 'room.jpg';
-
-  if (hour >= 5 && hour < 11) {
-    bgImage = 'room_morning.jpg'; // 朝5:00〜10:59
-  } else if (hour >= 11 && hour < 17) {
-    bgImage = 'room_day.jpg';     // 昼11:00〜16:59
-  } else if (hour >= 17 && hour < 19) {
-    bgImage = 'room_sunset.jpg';  // 夕方17:00〜18:59
-  } else if (hour >= 19 && hour <= 23) {
-    bgImage = 'room_night.jpg';   // 夜19:00〜23:59
-  } else {
-    bgImage = 'room_midnight.jpg';// 深夜0:00〜4:59
-  }
+  const category = getCurrentTimeCategory(hour);
+  let bgImage = `room_${category}.jpg`;
 
   const img = new Image();
   img.src = bgImage;
@@ -69,7 +101,7 @@ function updateTimeAndBackground() {
 setInterval(updateTimeAndBackground, 1000);
 updateTimeAndBackground();
 
-// お部屋BGMボタン
+// お部屋BGMボタン（足音とも連動）
 homeBgmBtn.addEventListener('click', () => {
   isHomeBgmOn = !isHomeBgmOn;
   if (isHomeBgmOn) {
@@ -78,11 +110,12 @@ homeBgmBtn.addEventListener('click', () => {
     }).catch(() => { isHomeBgmOn = false; });
   } else {
     homeAudio.pause();
+    footstepAudio.pause(); // BGMオフ時は足音も即座に停止
     homeBgmBtn.textContent = '🎵 BGM ON';
   }
 });
 
-// Canvasクロマキー透過描画ループ（青背景を除去）
+// Canvasクロマキー透過描画ループ（青背景除去）
 function renderChromaKey() {
   if (!marronWalkVideo.paused && !marronWalkVideo.ended) {
     if (marronCanvas.width !== marronWalkVideo.videoWidth && marronWalkVideo.videoWidth > 0) {
@@ -111,7 +144,7 @@ function renderChromaKey() {
   requestAnimationFrame(renderChromaKey);
 }
 
-// マロンの自律歩行（進行方向・前後・足音・奥行きスケール連動）
+// マロンの自律歩行（ムーンウォーク解消・足踏み防止・奥行き連動）
 let currentX = 50; // %
 let currentY = 8;  // % (bottom)
 let walkStopTimer = null;
@@ -119,81 +152,108 @@ let walkStopTimer = null;
 function startNextWalkSession() {
   clearTimeout(walkStopTimer);
 
-  const targetX = Math.floor(Math.random() * 54) + 23; // 23%〜77%
-  const targetY = Math.floor(Math.random() * 15) + 6;  // 6%〜21% (bottom)
+  // 足踏み防止：必ず現在地から一定距離（横に18%以上離れた場所）を目的地に選ぶ
+  let targetX, diffX;
+  let attempts = 0;
+  do {
+    targetX = Math.floor(Math.random() * 56) + 22; // 22%〜78%
+    diffX = targetX - currentX;
+    attempts++;
+  } while (Math.abs(diffX) < 16 && attempts < 10);
 
-  const diffX = targetX - currentX;
-  const diffY = targetY - currentY; // bottomの差分（+なら奥へ、-なら手前へ）
+  const targetY = Math.floor(Math.random() * 15) + 6; // 6%〜21%
+  const diffY = targetY - currentY;
 
   let selectedVideo = 'marron_walk.mp4';
   let flipX = 1;
 
-  // 1. 進行方向による動画の正確な振り分け（ムーンウォーク解消）
+  // 進行方向の動画選択
   if (diffY > 4 && Math.abs(diffX) < 14) {
-    // 画面上（部屋の奥）へ歩く ＝ 後ろ姿
+    // 奥（画面上）へ歩く ＝ 後ろ姿
     selectedVideo = 'marron_back.mp4';
-    flipX = diffX >= 0 ? 1 : -1;
+    flipX = diffX >= 0 ? -1 : 1;
   } else if (diffY < -4 && Math.abs(diffX) < 14) {
-    // 画面下（手前）へ歩いてくる ＝ 正面
+    // 手前（画面下）へ歩く ＝ 正面
     selectedVideo = 'marron_front.mp4';
-    flipX = diffX >= 0 ? 1 : -1;
+    flipX = diffX >= 0 ? -1 : 1;
   } else if (diffY > 4) {
-    // 斜め奥へ進む
+    // 斜め奥
     selectedVideo = 'marron_diagonal_back.mp4';
-    flipX = diffX >= 0 ? 1 : -1;
+    flipX = diffX >= 0 ? -1 : 1; // 右に進む時は反転して右を向く
   } else if (diffY < -4) {
-    // 斜め手前へ進む
+    // 斜め手前
     selectedVideo = 'marron_diagonal.mp4';
-    flipX = diffX >= 0 ? 1 : -1;
+    flipX = diffX >= 0 ? -1 : 1;
   } else {
-    // 横歩き（進む方向をしっかり向く）
+    // 横歩き（進む方向を真っ直ぐ向くよう修正）
     selectedVideo = 'marron_walk.mp4';
-    flipX = diffX >= 0 ? 1 : -1;
+    flipX = diffX >= 0 ? -1 : 1;
   }
 
-  // 2. 奥行きスケール計算（手前で大きく、奥で小さく）
-  // targetYが6%（一番手前）のとき約185px、21%（一番奥）のとき約130px
+  // 奥行きに応じたスケール（手前で大きく、奥で小さく）
   const depthFactor = 1.15 - ((targetY - 6) / 15) * 0.35;
   const targetWidth = Math.round(165 * depthFactor);
   marronCanvas.style.width = `${targetWidth}px`;
-
-  // 向きの適用
   marronCanvas.style.transform = `scaleX(${flipX})`;
 
-  // 動画の切り替えと再生
+  // 動画切り替え＆歩行開始
   if (!marronWalkVideo.src.endsWith(selectedVideo)) {
     marronWalkVideo.src = selectedVideo;
   }
   marronWalkVideo.play().catch(() => {});
 
-  // 足音再生（歩行開始）
-  footstepAudio.currentTime = 0;
-  footstepAudio.play().catch(() => {});
+  // BGMがONの時だけ足音を鳴らす
+  if (isHomeBgmOn) {
+    footstepAudio.currentTime = 0;
+    footstepAudio.play().catch(() => {});
+  }
 
-  // 座標移動（CSS transition 4秒）
+  // 移動開始（CSSで3.5秒かけて移動）
+  marronWalker.style.transition = 'left 3.5s ease-in-out, bottom 3.5s ease-in-out';
   marronWalker.style.left = `${targetX}%`;
   marronWalker.style.bottom = `${targetY}%`;
 
   currentX = targetX;
   currentY = targetY;
 
-  // 3. 移動完了時（4秒後）に歩行動画と足音を停止（止まってるのに歩く問題を解消）
+  // 3.5秒後に到着：足を止めて佇む＆足音停止
   walkStopTimer = setTimeout(() => {
     footstepAudio.pause();
-    marronWalkVideo.pause(); // 到着したら足を止めて佇む
-  }, 4000);
+    marronWalkVideo.pause();
+  }, 3500);
 }
 
-// 初回歩行開始
+// 歩行開始＆インターバル（3.5秒歩行 ＋ 約2秒休憩でテンポよく巡回）
 marronWalkVideo.src = 'marron_walk.mp4';
 marronWalkVideo.play().then(() => {
   renderChromaKey();
 }).catch(() => {});
+setInterval(startNextWalkSession, 5800);
 
-// 6.5秒ごとに次の歩行へ（4秒歩行 ＋ 2.5秒その場でお休み）
-setInterval(startNextWalkSession, 6500);
+// マロンの頭上吹き出し表示関数
+let bubbleTimer = null;
+function showBubble(text, duration = 3500) {
+  clearTimeout(bubbleTimer);
+  homeBubble.textContent = text;
+  homeBubble.style.display = 'block';
+  bubbleTimer = setTimeout(() => {
+    homeBubble.style.display = 'none';
+  }, duration);
+}
 
-// マロンをタップした時のセリフ
+// 時間帯ごとの自動つぶやき（12秒ごとにランダムでつぶやく）
+setInterval(() => {
+  // 撫でた直後などで吹き出しが出ている時はスキップ
+  if (homeBubble.style.display === 'block') return;
+  
+  const now = new Date();
+  const category = getCurrentTimeCategory(now.getHours());
+  const msgList = timeBasedMessages[category];
+  const randomMsg = msgList[Math.floor(Math.random() * msgList.length)];
+  showBubble(randomMsg, 3500);
+}, 12000);
+
+// マロンをタップした時の甘えセリフ（撫でた時）
 const marronVoices = [
   "わふっ！なでてくれるの？",
   "クーン…そばにいてくれて嬉しいワン🐾",
@@ -201,13 +261,10 @@ const marronVoices = [
   "マロンはずーっと君の味方だワン！",
   "えへへ、お腹なでて〜！"
 ];
-let bubbleTimer = null;
+
 marronWalker.addEventListener('click', () => {
-  clearTimeout(bubbleTimer);
   const voice = marronVoices[Math.floor(Math.random() * marronVoices.length)];
-  homeBubble.textContent = voice;
-  homeBubble.style.display = 'block';
-  bubbleTimer = setTimeout(() => { homeBubble.style.display = 'none'; }, 3000);
+  showBubble(voice, 3000);
 });
 
 /* ==============================================
@@ -221,7 +278,6 @@ const sleepBgmAudio = document.getElementById('sleepBgmAudio');
 let isLightOff = false;
 let isSleepSoundOn = false;
 
-// 添い寝BGMプレイリスト（1〜4を自動連続再生）
 const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
 let currentBgmIndex = 0;
 

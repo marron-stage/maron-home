@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
-  <!-- favicon 404防止用 -->
   <link rel="icon" href="data:,">
   <style>
     * {
@@ -20,7 +19,7 @@
       height: 100dvh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f7f3eb; /* 真っ黒防止ベースカラー */
+      background-color: #f7f3eb;
       color: #333;
     }
 
@@ -31,7 +30,7 @@
       overflow: hidden;
     }
 
-    /* 最前面 固定タブバー */
+    /* 固定タブバー */
     #tab-bar {
       position: fixed;
       top: 14px;
@@ -83,7 +82,7 @@
     }
 
     /* =======================================
-       1. お家部屋（リビング）
+       1. お家部屋（定位置・軽量）
        ======================================= */
     #home-room {
       position: relative;
@@ -140,31 +139,29 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* 自律歩行マロン（3秒でスムーズ移動） */
-    #marronWalker {
+    /* 定位置のくつろぎマロン（画面下部中央） */
+    #marronSpot {
       position: absolute;
-      bottom: 8%;
+      bottom: 7%;
       left: 50%;
       transform: translateX(-50%);
-      width: auto;
-      height: auto;
+      width: 175px;
+      height: 175px;
       cursor: pointer;
       z-index: 20;
-      transition: left 3s ease-in-out, bottom 3s ease-in-out;
     }
 
     #marronCanvas {
+      width: 100%;
+      height: 100%;
       display: block;
-      width: 165px;
-      height: auto;
       pointer-events: none;
       filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
-      transition: width 3s ease-in-out;
     }
 
     #homeBubble {
       position: absolute;
-      bottom: 105%;
+      bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.95);
@@ -313,7 +310,7 @@
     }
 
     /* =======================================
-       3. 添い寝部屋（完全全画面・BGM特化）
+       3. 添い寝部屋（完全全画面表示）
        ======================================= */
     #sleep-room {
       position: fixed;
@@ -494,17 +491,17 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 自律歩行マロン -->
-      <div id="marronWalker">
+      <!-- 定位置マロン -->
+      <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <video id="marronWalkVideo" playsinline muted loop style="display: none;"></video>
+      <!-- マロン動画ソース（お座り待機） -->
+      <video id="marronHomeVideo" src="marron_sit.mp4" playsinline muted loop style="display: none;"></video>
 
-      <!-- お部屋BGM & 足音 -->
+      <!-- お部屋BGM -->
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
-      <audio id="footstepAudio" src="footstep.MP3" loop></audio>
     </section>
 
     <!-- 2. 相談部屋 -->
@@ -530,7 +527,6 @@
         <button id="lightToggleBtn" class="sleep-btn">🌙 明かりオフ</button>
       </div>
 
-      <!-- 添い寝用：BGMプレイヤー（1〜4曲連続ループ） -->
       <audio id="sleepBgmAudio"></audio>
     </section>
 
@@ -556,7 +552,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       /* ==============================================
-         1. タブ切り替え制御
+         1. タブ切り替え
          ============================================== */
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
@@ -569,28 +565,34 @@
 
           btn.classList.add('active');
           const targetPanel = document.getElementById(targetRoom);
-          if (targetPanel) {
-            targetPanel.classList.add('active');
-          }
+          if (targetPanel) targetPanel.classList.add('active');
         });
       });
 
       /* ==============================================
-         2. お家部屋（時計・時間帯背景・BGM・3秒歩行）
+         2. お家部屋（時間帯背景・時計・BGM・定位置マロン）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
       const dateDisplay = document.getElementById('dateDisplay');
       const homeBgmBtn = document.getElementById('homeBgmBtn');
       const homeAudio = document.getElementById('homeAudio');
-      const footstepAudio = document.getElementById('footstepAudio');
-      const marronWalker = document.getElementById('marronWalker');
+      const marronSpot = document.getElementById('marronSpot');
       const marronCanvas = document.getElementById('marronCanvas');
-      const marronWalkVideo = document.getElementById('marronWalkVideo');
+      const marronHomeVideo = document.getElementById('marronHomeVideo');
       const homeBubble = document.getElementById('homeBubble');
 
       let isHomeBgmOn = false;
-      if (footstepAudio) footstepAudio.volume = 0.35;
+
+      // 既存素材へのフォールバック（marron_sit.mp4が未配置でもエラー停止しない）
+      if (marronHomeVideo) {
+        marronHomeVideo.onerror = () => {
+          if (!marronHomeVideo.src.includes('marron.mp4')) {
+            marronHomeVideo.src = 'marron.mp4';
+            marronHomeVideo.play().catch(() => {});
+          }
+        };
+      }
 
       const timeBasedMessages = {
         morning: ["おはよう！今日もいいお天気だワン🐾", "朝ごはん食べた？いっぱい食べてね！", "のび〜っ！今日も一緒に頑張ろ！"],
@@ -644,29 +646,27 @@
           if (isHomeBgmOn) {
             homeAudio.play().then(() => {
               homeBgmBtn.textContent = '🔇 BGM OFF';
-              if (footstepAudio) footstepAudio.play().catch(() => {});
             }).catch(() => { isHomeBgmOn = false; });
           } else {
             homeAudio.pause();
-            if (footstepAudio) footstepAudio.pause();
             homeBgmBtn.textContent = '🎵 BGM ON';
           }
         });
       }
 
-      // Canvasクロマキー処理
-      if (marronCanvas && marronWalkVideo) {
+      // 定位置マロンのクロマキー透過描画
+      if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
         function renderChromaKey() {
-          if (!marronWalkVideo.paused && !marronWalkVideo.ended) {
-            if (marronCanvas.width !== marronWalkVideo.videoWidth && marronWalkVideo.videoWidth > 0) {
-              marronCanvas.width = marronWalkVideo.videoWidth;
-              marronCanvas.height = marronWalkVideo.videoHeight;
+          if (!marronHomeVideo.paused && !marronHomeVideo.ended) {
+            if (marronCanvas.width !== marronHomeVideo.videoWidth && marronHomeVideo.videoWidth > 0) {
+              marronCanvas.width = marronHomeVideo.videoWidth;
+              marronCanvas.height = marronHomeVideo.videoHeight;
             }
 
             if (marronCanvas.width > 0) {
-              ctx.drawImage(marronWalkVideo, 0, 0, marronCanvas.width, marronCanvas.height);
+              ctx.drawImage(marronHomeVideo, 0, 0, marronCanvas.width, marronCanvas.height);
               const frame = ctx.getImageData(0, 0, marronCanvas.width, marronCanvas.height);
               const l = frame.data.length / 4;
 
@@ -674,6 +674,7 @@
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
                 const b = frame.data[i * 4 + 2];
+                // 青色除去
                 if (b > 110 && b > r * 1.25 && b > g * 1.15) {
                   frame.data[i * 4 + 3] = 0;
                 }
@@ -684,63 +685,9 @@
           requestAnimationFrame(renderChromaKey);
         }
 
-        // 3秒ごとに歩き続ける自律歩行
-        let currentX = 50;
-        let currentY = 8;
-
-        function startNextWalkSession() {
-          let targetX, diffX;
-          let attempts = 0;
-          do {
-            targetX = Math.floor(Math.random() * 56) + 22;
-            diffX = targetX - currentX;
-            attempts++;
-          } while (Math.abs(diffX) < 14 && attempts < 10);
-
-          const targetY = Math.floor(Math.random() * 15) + 6;
-          const diffY = targetY - currentY;
-
-          let selectedVideo = 'marron_walk.mp4';
-          let flipX = diffX >= 0 ? 1 : -1; // 進行方向を向く（ムーンウォーク解消）
-
-          if (diffY > 4 && Math.abs(diffX) < 14) {
-            selectedVideo = 'marron_back.mp4';
-          } else if (diffY < -4 && Math.abs(diffX) < 14) {
-            selectedVideo = 'marron_front.mp4';
-          } else if (diffY > 4) {
-            selectedVideo = 'marron_diagonal_back.mp4';
-          } else if (diffY < -4) {
-            selectedVideo = 'marron_diagonal.mp4';
-          } else {
-            selectedVideo = 'marron_walk.mp4';
-          }
-
-          const depthFactor = 1.15 - ((targetY - 6) / 15) * 0.35;
-          const targetWidth = Math.round(165 * depthFactor);
-          marronCanvas.style.width = `${targetWidth}px`;
-          marronCanvas.style.transform = `scaleX(${flipX})`;
-
-          if (!marronWalkVideo.src.endsWith(selectedVideo)) {
-            marronWalkVideo.src = selectedVideo;
-          }
-          marronWalkVideo.play().catch(() => {});
-
-          if (marronWalker) {
-            marronWalker.style.left = `${targetX}%`;
-            marronWalker.style.bottom = `${targetY}%`;
-          }
-
-          currentX = targetX;
-          currentY = targetY;
-        }
-
-        marronWalkVideo.src = 'marron_walk.mp4';
-        marronWalkVideo.play().then(() => {
+        marronHomeVideo.play().then(() => {
           renderChromaKey();
         }).catch(() => {});
-
-        // 3秒ごとに途切れず歩き続ける
-        setInterval(startNextWalkSession, 3000);
       }
 
       // 吹き出し管理
@@ -755,6 +702,7 @@
         }, duration);
       }
 
+      // 自動つぶやき
       setInterval(() => {
         if (!homeBubble || homeBubble.style.display === 'block') return;
         const category = getCurrentCategory(new Date().getHours());
@@ -762,6 +710,7 @@
         showBubble(list[Math.floor(Math.random() * list.length)], 3500);
       }, 12000);
 
+      // マロンタップ時の甘えセリフ
       const marronVoices = [
         "わふっ！なでてくれるの？",
         "クーン…そばにいてくれて嬉しいワン🐾",
@@ -769,14 +718,14 @@
         "マロンはずーっと君の味方だワン！",
         "えへへ、お腹なでて〜！"
       ];
-      if (marronWalker) {
-        marronWalker.addEventListener('click', () => {
+      if (marronSpot) {
+        marronSpot.addEventListener('click', () => {
           showBubble(marronVoices[Math.floor(Math.random() * marronVoices.length)], 3000);
         });
       }
 
       /* ==============================================
-         3. 添い寝部屋（BGM 1〜4 連続ループ）
+         3. 添い寝部屋（BGMループ）
          ============================================== */
       const lightToggleBtn = document.getElementById('lightToggleBtn');
       const sleepOverlay = document.getElementById('sleepOverlay');

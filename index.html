@@ -131,7 +131,7 @@
 
     .sound-badge {
       position: absolute;
-      top: 25px;
+      top: calc(env(safe-area-inset-top, 10px) + 54px);
       right: 14px;
       background: rgba(0, 0, 0, 0.65);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -221,10 +221,10 @@
       pointer-events: none;
     }
 
-    /* マロンの頭上高め（タブバー下）に表示される吹き出し */
+    /* 相談部屋の吹き出し（窓の下・マロンの頭上にほどよく近い位置：top 25%） */
     .counsel-head-bubble {
       position: absolute;
-      top: calc(env(safe-area-inset-top, 10px) + 90px);
+      top: 25%;
       left: 50%;
       transform: translateX(-50%) scale(0.85);
       background: rgba(13, 17, 30, 0.94);
@@ -677,7 +677,7 @@
       <video id="marronTalkVideo" class="counsel-fullscreen-video" src="marron_talk.mp4" autoplay loop muted playsinline webkit-playsinline></video>
       <div class="counsel-overlay"></div>
 
-      <!-- 上部に引き上げた吹き出し -->
+      <!-- 相談部屋の吹き出し（top: 25%） -->
       <div class="counsel-head-bubble" id="counselHeadBubble">
         今日もおつかれさま！何でもマロンに教えてね。
       </div>

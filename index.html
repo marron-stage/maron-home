@@ -90,28 +90,10 @@
 
     /* ================= 画面1：全画面お部屋 ================= */
     #livingRoom {
-      background-image: url('room.jpg');
       background-size: cover;
       background-position: center bottom;
       background-repeat: no-repeat;
-      transition: filter 1s ease;
-    }
-
-    /* 時間帯別の背景光・環境フィルター */
-    #livingRoom.time-morning {
-      filter: brightness(1.05) saturate(1.05);
-    }
-    #livingRoom.time-day {
-      filter: brightness(1.0) saturate(1.0);
-    }
-    #livingRoom.time-sunset {
-      filter: brightness(0.92) saturate(1.25) sepia(0.25) hue-rotate(-12deg);
-    }
-    #livingRoom.time-night {
-      filter: brightness(0.78) contrast(1.08) saturate(0.92);
-    }
-    #livingRoom.time-midnight {
-      filter: brightness(0.58) contrast(1.15) saturate(0.8) hue-rotate(15deg);
+      transition: background-image 0.8s ease-in-out;
     }
 
     /* 時計バッジ（左上） */
@@ -474,7 +456,7 @@
     <main id="livingRoom" class="screen active">
       <!-- 秒まで表示するリアルタイム時計 -->
       <div class="clock-badge" id="livingClock">
-        <span id="clockIcon">🕒</span>
+        <span id="clockIcon">☀️</span>
         <span id="clockTime">--:--</span>
         <span class="clock-sec" id="clockSec">:--</span>
       </div>
@@ -518,7 +500,7 @@
       </div>
 
       <audio id="bgmAudio" loop preload="auto"></audio>
-      <audio id="sleepBreath" src="sleep_breath.MP3" preload="auto"></audio>
+      <audio id="sleepBreath" src="sleep_breath.MP3" loop preload="auto"></audio>
       <audio id="sleepVoice01" src="sleep_voice01.MP3" preload="auto"></audio>
     </section>
 
@@ -559,8 +541,16 @@
       }
     }
 
-    // 2. 時計機能 ＆ 時間帯ごとの雰囲気・フィルター制御
-    let currentTimeSlot = 'day';
+    // 2. 時計機能 ＆ 5枚の背景画像自動出し分け
+    const roomBackgrounds = {
+      morning: 'room_morning.jpg',
+      day: 'room_day.jpg',
+      sunset: 'room_sunset.jpg',
+      night: 'room_night.jpg',
+      midnight: 'room_midnight.jpg'
+    };
+
+    let currentTimeSlot = '';
 
     function updateLivingClockAndAtmosphere() {
       const now = new Date();
@@ -578,7 +568,7 @@
         clockSec.textContent = `:${s}`;
       }
 
-      // 時間帯の判定とクラス切り替え
+      // 時間帯の判定（朝・昼・夕方・夜・深夜）
       let newSlot = 'day';
       let icon = '☀️';
 
@@ -601,9 +591,13 @@
 
       if (clockIcon) clockIcon.textContent = icon;
 
-      if (currentTimeSlot !== newSlot && livingRoom) {
+      // 時間帯が変わった時に背景画像を切り替え
+      if (currentTimeSlot !== newSlot) {
         currentTimeSlot = newSlot;
-        livingRoom.className = 'screen active time-' + newSlot;
+        if (livingRoom) {
+          const bgImg = roomBackgrounds[newSlot] || 'room.jpg';
+          livingRoom.style.backgroundImage = `url('${bgImg}')`;
+        }
       }
     }
 
@@ -662,7 +656,6 @@
       }, duration);
     }
 
-    // 定期的なつぶやき（現在の時間帯のリストからランダム選択）
     function scheduleRandomSpeech() {
       const delay = Math.random() * (20000 - 12000) + 12000;
       setTimeout(() => {
@@ -677,7 +670,6 @@
     }
     scheduleRandomSpeech();
 
-    // マロンをタップしたときのリアクション
     function onMarronTapped() {
       const tapQuotes = [
         'わふっ！呼んだ？🐾',

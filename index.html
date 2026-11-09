@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>マロンのお家</title>
 
+  <!-- 正式なファビコン画像指定 -->
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
 
@@ -160,18 +161,18 @@
     .marron-speech-bubble {
       position: absolute;
       z-index: 45;
-      background: rgba(15, 23, 42, 0.90);
-      border: 1.5px solid rgba(246, 173, 85, 0.85);
+      background: rgba(15, 23, 42, 0.88);
+      border: 1.5px solid rgba(246, 173, 85, 0.75);
       color: #fef08a;
-      padding: 8px 15px;
-      border-radius: 18px;
-      font-size: 0.82rem;
+      padding: 7px 14px;
+      border-radius: 16px;
+      font-size: 0.78rem;
       font-weight: 500;
       white-space: nowrap;
       pointer-events: none;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
       opacity: 0;
       transform: translate(-50%, -100%) scale(0.85);
       transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -188,125 +189,7 @@
       transform: translateX(-50%);
       border-width: 6px 6px 0;
       border-style: solid;
-      border-color: rgba(246, 173, 85, 0.9) transparent transparent transparent;
-    }
-
-    /* 画面下部の透明おしゃべりバー（マロンを遮らない） */
-    .bottom-talk-bar {
-      position: absolute;
-      bottom: calc(env(safe-area-inset-bottom, 10px) + 12px);
-      left: 12px;
-      right: 12px;
-      max-width: 440px;
-      margin: 0 auto;
-      background: rgba(13, 16, 27, 0.78);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 24px;
-      padding: 8px 12px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-      z-index: 50;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-    .talk-quick-chips {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      white-space: nowrap;
-      scrollbar-width: none;
-    }
-    .talk-quick-chips::-webkit-scrollbar {
-      display: none;
-    }
-    .chip-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #cbd5e1;
-      padding: 4px 11px;
-      border-radius: 14px;
-      font-size: 0.72rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-    .chip-btn:active {
-      background: rgba(246, 173, 85, 0.3);
-      color: #fbd38d;
-      border-color: rgba(246, 173, 85, 0.6);
-    }
-    .talk-input-wrapper {
-      display: flex;
-      gap: 6px;
-      user-select: text;
-      -webkit-user-select: text;
-    }
-    .talk-input-field {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 16px;
-      padding: 7px 12px;
-      color: #f8fafc;
-      font-size: 0.8rem;
-      outline: none;
-    }
-    .talk-input-field:focus {
-      border-color: rgba(246, 173, 85, 0.7);
-    }
-    .talk-submit-btn {
-      background: rgba(246, 173, 85, 0.25);
-      border: 1px solid rgba(246, 173, 85, 0.5);
-      color: #fbd38d;
-      padding: 0 14px;
-      border-radius: 16px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .talk-submit-btn:active {
-      transform: scale(0.95);
-    }
-
-    /* 空へ昇るシャボン玉エフェクト */
-    .bubble-float {
-      position: absolute;
-      z-index: 60;
-      pointer-events: none;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.65), rgba(147, 197, 253, 0.25) 50%, rgba(192, 132, 252, 0.35) 90%);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.35), inset -2px -2px 6px rgba(0, 0, 0, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 16px;
-      color: #ffffff;
-      font-size: 0.78rem;
-      font-weight: 500;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-      animation: floatUpAndFade 4.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-      white-space: nowrap;
-    }
-    @keyframes floatUpAndFade {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, 0) scale(0.4);
-      }
-      15% {
-        opacity: 0.95;
-        transform: translate(-50%, -40px) scale(1);
-      }
-      65% {
-        opacity: 0.85;
-        transform: translate(-60%, -240px) scale(0.98);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-40%, -420px) scale(1.15);
-      }
+      border-color: rgba(246, 173, 85, 0.85) transparent transparent transparent;
     }
 
     /* ================= 画面2：添い寝部屋 ================= */
@@ -584,21 +467,6 @@
 
       <canvas id="marronCanvas" width="300" height="300" onclick="onMarronTapped()"></canvas>
 
-      <!-- 画面下のマロンおしゃべりバー（マロンが隠れない半透明トレイ） -->
-      <div class="bottom-talk-bar">
-        <div class="talk-quick-chips">
-          <button class="chip-btn" onclick="sendTalkMessage('つかれた…')">つかれた…</button>
-          <button class="chip-btn" onclick="sendTalkMessage('がんばった！')">がんばった！</button>
-          <button class="chip-btn" onclick="sendTalkMessage('もやもやする')">もやもやする</button>
-          <button class="chip-btn" onclick="sendTalkMessage('さみしいな')">さみしいな</button>
-          <button class="chip-btn" onclick="sendTalkMessage('眠れないよ')">眠れないよ</button>
-        </div>
-        <div class="talk-input-wrapper">
-          <input type="text" id="talkInputField" class="talk-input-field" placeholder="マロンに気持ちを届ける…" onkeydown="if(event.key==='Enter') submitCustomTalk()">
-          <button class="talk-submit-btn" onclick="submitCustomTalk()">🫧 とばす</button>
-        </div>
-      </div>
-
       <video id="videoWalk" src="marron_walk.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiag" src="marron_diagonal.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
       <video id="videoDiagBack" src="marron_diagonal_back.mp4" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
@@ -819,92 +687,7 @@
       showBubble(text, 3500);
     }
 
-    // 4. シャボン玉手放し ＆ マロンのお返事システム
-    const talkResponses = {
-      tired: [
-        '本当にお疲れさま。生きて今日を終えただけで100点満点だワン！',
-        'よく頑張ったね…。今夜はいっぱいマロンを撫でてゆっくり休んでね。',
-        '辛かったね。肩の力を抜いて、すーはー深呼吸しよ？'
-      ],
-      praise: [
-        'わあ！えらい！すごすぎるワン！！マロンはずっと見てたよ！',
-        'やったね！自分にいっぱいご褒美あげてね！🐾',
-        'さすが！マロンもすっごく誇らしい気持ちだワン！'
-      ],
-      annoyed: [
-        '嫌なことあったんだね…。全部シャボン玉にして空に消しといたワン！',
-        'そっかぁ、それは辛かったね。マロンはずっとあなたの味方だからね。',
-        'もやもやは吐き出して正解！ここに置いていっていいんだよ。'
-      ],
-      lonely: [
-        'マロンはずーっとここにいるよ。絶対にひとりじゃないワン🐾',
-        'ぎゅーってしてあげる！いつでもここに帰っておいでね。',
-        'いつでも呼んでね。マロンはあなたのことが大好きだよ！'
-      ],
-      sleep: [
-        '眠れないときは、目を閉じて添い寝部屋においで？マロンの寝息きこう。',
-        '無理に眠らなくても大丈夫。あたたかいお布団で横になってるだけで休まるよ。',
-        '大丈夫、マロンが朝までずっとそばで見守ってるからね。'
-      ],
-      default: [
-        'うんうん、話してくれてありがとう。全部空へ飛ばしたワン！',
-        'そっかそっか。今日もいろんなことがあったんだね。えらいえらい！',
-        'わふっ！何があってもマロンはあなたの味方だワン🐾'
-      ]
-    };
-
-    function spawnBubble(text) {
-      const livingRoom = document.getElementById('livingRoom');
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble-float';
-      bubble.textContent = `🫧 ${text}`;
-
-      // 画面下部中央から空へ昇る
-      bubble.style.left = '50%';
-      bubble.style.bottom = '85px';
-
-      livingRoom.appendChild(bubble);
-
-      setTimeout(() => {
-        bubble.remove();
-      }, 4200);
-    }
-
-    function sendTalkMessage(text) {
-      if (!text) return;
-
-      // 1. シャボン玉を飛ばす
-      spawnBubble(text);
-
-      // 2. マロンが頭上の吹き出しで返事をする
-      let list = talkResponses.default;
-      if (/疲|つかれ|しんど|限界|だる|死に/.test(text)) {
-        list = talkResponses.tired;
-      } else if (/頑張|がんば|できた|達成|勝|成功/.test(text)) {
-        list = talkResponses.praise;
-      } else if (/イライラ|嫌|むかつ|怒|悲|辛|泣|もやもや/.test(text)) {
-        list = talkResponses.annoyed;
-      } else if (/寂|さみし|孤独|ひと|独/.test(text)) {
-        list = talkResponses.lonely;
-      } else if (/眠れ|寝れ|起き|夜更かし|不眠/.test(text)) {
-        list = talkResponses.sleep;
-      }
-
-      const reply = list[Math.floor(Math.random() * list.length)];
-      setTimeout(() => {
-        showBubble(reply, 6500);
-      }, 500);
-    }
-
-    function submitCustomTalk() {
-      const input = document.getElementById('talkInputField');
-      const text = input.value.trim();
-      if (!text) return;
-      sendTalkMessage(text);
-      input.value = '';
-    }
-
-    // 5. お部屋自律歩行
+    // 4. お部屋自律歩行
     const canvas = document.getElementById('marronCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
@@ -933,7 +716,7 @@
         minX: 20,
         maxX: w - 150,
         minY: h * 0.40,
-        maxY: h * 0.74
+        maxY: h * 0.80
       };
     }
 
@@ -1140,7 +923,7 @@
     startNextWalkSession();
     requestAnimationFrame(renderChromaLoop);
 
-    // 6. 添い寝部屋演出（呼吸15回カウント ＆ 寝言バトンタッチループ）
+    // 5. 添い寝部屋演出（呼吸15回カウント ＆ 寝言バトンタッチループ）
     const bgmAudio = document.getElementById('bgmAudio');
     const breathAudio = document.getElementById('sleepBreath');
     const voice01 = document.getElementById('sleepVoice01');
@@ -1298,7 +1081,7 @@
       }
     }
 
-    // 7. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダル）
+    // 6. 日常部屋（YouTubeショート風 3列グリッド ＆ モーダル）
     const videoList = [
       { id: 'v1', title: 'まったりマロン', src: 'marron.mp4' },
       { id: 'v2', title: 'ココアであったまるワン', src: 'marron_cocoa.mp4' },

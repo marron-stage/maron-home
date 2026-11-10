@@ -209,48 +209,79 @@
     .home-clock-widget {
       position: absolute;
       top: 72px;
-      left: 20px;
-      background: rgba(255, 255, 255, 0.65);
+      left: 18px;
+      background: rgba(255, 255, 255, 0.68);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      padding: 8px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      padding: 6px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.75);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       z-index: 10;
     }
 
     .home-clock {
-      font-size: 1.5rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #4e342e;
       line-height: 1;
     }
 
     .home-date {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: #6d4c41;
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
-    #homeBgmBtn {
+    /* 右上ステータス群（コイン & ミッション & BGM） */
+    .home-top-right {
       position: absolute;
       top: 72px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.65);
+      right: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      z-index: 10;
+    }
+
+    .coin-badge {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid #ffd54f;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #e65100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .home-action-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .home-btn {
+      background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       color: #333;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 18px;
+      font-size: 0.76rem;
       font-weight: 700;
       cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      transition: transform 0.1s ease;
     }
+
+    .home-btn:active { transform: scale(0.94); }
 
     #marronSpot {
       position: absolute;
@@ -262,6 +293,7 @@
       cursor: pointer;
       z-index: 20;
       overflow: visible;
+      touch-action: none;
     }
 
     #marronCanvas {
@@ -302,6 +334,145 @@
       border-style: solid;
       border-color: #a5d6a7 transparent transparent;
       display: block;
+    }
+
+    /* なでなでパーティクル（ハート＆キラキラ） */
+    .pet-particle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.4rem;
+      z-index: 9999;
+      animation: floatUpFade 0.9s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+    }
+
+    @keyframes floatUpFade {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+      }
+      50% {
+        transform: translate(-50%, -120%) scale(1.2) rotate(15deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -200%) scale(0.9) rotate(-15deg);
+      }
+    }
+
+    /* デイリーミッション モーダル */
+    #missionModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mission-box {
+      width: 88%;
+      max-width: 340px;
+      background: #fff;
+      border-radius: 24px;
+      padding: 22px 20px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      border: 2px solid #e8f5e9;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .mission-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .mission-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #2e7d32;
+    }
+
+    .close-mission-btn {
+      background: #f5f5f5;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-weight: 700;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .mission-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mission-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid #eee;
+    }
+
+    .mission-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mission-text {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #444;
+    }
+
+    .mission-reward {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #e65100;
+    }
+
+    .claim-btn {
+      padding: 6px 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 0.74rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: #e0e0e0;
+      color: #888;
+      transition: all 0.2s ease;
+    }
+
+    .claim-btn.ready {
+      background: linear-gradient(135deg, #ff9800, #f57c00);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(245, 124, 0, 0.35);
+      cursor: pointer;
+      animation: pulse 1.2s infinite;
+    }
+
+    .claim-btn.claimed {
+      background: #c8e6c9;
+      color: #2e7d32;
+      cursor: default;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     /* 2. 相談部屋 */
@@ -648,17 +819,58 @@
         <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
       </div>
 
-      <button id="homeBgmBtn">🎵 BGM ON</button>
+      <!-- 右上ステータス（コイン・ミッション・BGM） -->
+      <div class="home-top-right">
+        <div class="coin-badge">
+          <span>🪙</span><span id="coinCountDisplay">0</span>
+        </div>
+        <div class="home-action-row">
+          <button id="missionOpenBtn" class="home-btn">📋 ミッション</button>
+          <button id="homeBgmBtn" class="home-btn">🎵 BGM</button>
+        </div>
+      </div>
 
       <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- 常時muted・playsinline固定 -->
       <video id="marronHomeVideo" playsinline muted autoplay loop style="display: none;"></video>
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
     </section>
+
+    <!-- デイリーミッション画面 -->
+    <div id="missionModal">
+      <div class="mission-box">
+        <div class="mission-header">
+          <div class="mission-title">🐾 デイリーミッション</div>
+          <button class="close-mission-btn" id="closeMissionBtn">✕</button>
+        </div>
+        <div class="mission-list">
+          <div class="mission-item">
+            <div class="mission-info">
+              <span class="mission-text">今日もお家に遊びに来たワン！</span>
+              <span class="mission-reward">報酬: 🪙 +5</span>
+            </div>
+            <button class="claim-btn" id="claimLoginBtn">受取</button>
+          </div>
+          <div class="mission-item">
+            <div class="mission-info">
+              <span class="mission-text">マロンをなでなでした</span>
+              <span class="mission-reward">報酬: 🪙 +3</span>
+            </div>
+            <button class="claim-btn" id="claimPetBtn">未達成</button>
+          </div>
+          <div class="mission-item">
+            <div class="mission-info">
+              <span class="mission-text">相談部屋でお手紙を渡した</span>
+              <span class="mission-reward">報酬: 🪙 +5</span>
+            </div>
+            <button class="claim-btn" id="claimLetterBtn">未達成</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 2. 相談部屋 -->
     <section id="counsel-room" class="room-panel">
@@ -678,7 +890,6 @@
       <div id="sleepMarronSpot">
         <canvas id="sleepCanvas"></canvas>
       </div>
-      <!-- 常時muted・playsinline固定 -->
       <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline style="display: none;"></video>
       <div id="sleepOverlay"></div>
 
@@ -825,10 +1036,8 @@
 
       function onUnlockSuccess() {
         isUnlocked = true;
-
         playAudioBuffer('bark');
 
-        // 動画の再生を確実化
         if (marronHomeVideo) {
           marronHomeVideo.play().catch(() => {});
         }
@@ -860,7 +1069,6 @@
         }
       }
 
-      // e.preventDefault() を削除し、iOS Safariの操作権限を正しく維持
       keyBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           getAudioContext();
@@ -895,7 +1103,179 @@
       }
 
       /* ==============================================
-         2. タブ切り替え & 他タブ時の完全消音
+         2. コイン＆デイリーミッション管理
+         ============================================== */
+      let coins = parseInt(localStorage.getItem('marron_coins') || '0', 10);
+      const coinCountDisplay = document.getElementById('coinCountDisplay');
+      const missionOpenBtn = document.getElementById('missionOpenBtn');
+      const missionModal = document.getElementById('missionModal');
+      const closeMissionBtn = document.getElementById('closeMissionBtn');
+
+      const claimLoginBtn = document.getElementById('claimLoginBtn');
+      const claimPetBtn = document.getElementById('claimPetBtn');
+      const claimLetterBtn = document.getElementById('claimLetterBtn');
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let missionData = JSON.parse(localStorage.getItem('marron_missions') || '{}');
+
+      if (missionData.date !== todayStr) {
+        missionData = {
+          date: todayStr,
+          loginClaimed: false,
+          petDone: false,
+          petClaimed: false,
+          letterDone: false,
+          letterClaimed: false
+        };
+        localStorage.setItem('marron_missions', JSON.stringify(missionData));
+      }
+
+      function updateCoinDisplay() {
+        if (coinCountDisplay) coinCountDisplay.textContent = coins;
+        localStorage.setItem('marron_coins', coins);
+      }
+      updateCoinDisplay();
+
+      function updateMissionUI() {
+        // ログイン
+        if (missionData.loginClaimed) {
+          claimLoginBtn.textContent = '済';
+          claimLoginBtn.className = 'claim-btn claimed';
+        } else {
+          claimLoginBtn.textContent = '受取';
+          claimLoginBtn.className = 'claim-btn ready';
+        }
+
+        // なでなで
+        if (missionData.petClaimed) {
+          claimPetBtn.textContent = '済';
+          claimPetBtn.className = 'claim-btn claimed';
+        } else if (missionData.petDone) {
+          claimPetBtn.textContent = '受取';
+          claimPetBtn.className = 'claim-btn ready';
+        } else {
+          claimPetBtn.textContent = '未達成';
+          claimPetBtn.className = 'claim-btn';
+        }
+
+        // お手紙
+        if (missionData.letterClaimed) {
+          claimLetterBtn.textContent = '済';
+          claimLetterBtn.className = 'claim-btn claimed';
+        } else if (missionData.letterDone) {
+          claimLetterBtn.textContent = '受取';
+          claimLetterBtn.className = 'claim-btn ready';
+        } else {
+          claimLetterBtn.textContent = '未達成';
+          claimLetterBtn.className = 'claim-btn';
+        }
+      }
+      updateMissionUI();
+
+      claimLoginBtn.addEventListener('click', () => {
+        if (!missionData.loginClaimed) {
+          coins += 5;
+          missionData.loginClaimed = true;
+          localStorage.setItem('marron_missions', JSON.stringify(missionData));
+          updateCoinDisplay();
+          updateMissionUI();
+          showBubble("🪙 5コイン受け取ったワン！ありがとう！", 3000);
+        }
+      });
+
+      claimPetBtn.addEventListener('click', () => {
+        if (missionData.petDone && !missionData.petClaimed) {
+          coins += 3;
+          missionData.petClaimed = true;
+          localStorage.setItem('marron_missions', JSON.stringify(missionData));
+          updateCoinDisplay();
+          updateMissionUI();
+          showBubble("🪙 3コイン受け取ったワン！なでなで感謝！", 3000);
+        }
+      });
+
+      claimLetterBtn.addEventListener('click', () => {
+        if (missionData.letterDone && !missionData.letterClaimed) {
+          coins += 5;
+          missionData.letterClaimed = true;
+          localStorage.setItem('marron_missions', JSON.stringify(missionData));
+          updateCoinDisplay();
+          updateMissionUI();
+          showBubble("🪙 5コイン受け取ったワン！お手紙うれしかった！", 3000);
+        }
+      });
+
+      missionOpenBtn.addEventListener('click', () => {
+        updateMissionUI();
+        missionModal.style.display = 'flex';
+      });
+
+      closeMissionBtn.addEventListener('click', () => {
+        missionModal.style.display = 'none';
+      });
+
+      /* ==============================================
+         3. スワイプなでなで＆キラキラハート演出
+         ============================================== */
+      const marronSpot = document.getElementById('marronSpot');
+      const heartIcons = ['💖', '✨', '💕', '🐾', '🌸'];
+      let petMoveCount = 0;
+      let lastPetTime = 0;
+
+      function spawnHeartParticle(x, y) {
+        const p = document.createElement('div');
+        p.className = 'pet-particle';
+        p.textContent = heartIcons[Math.floor(Math.random() * heartIcons.length)];
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+
+      function handlePetMove(clientX, clientY) {
+        if (!isUnlocked || currentActiveRoom !== 'home-room') return;
+        const now = Date.now();
+        if (now - lastPetTime > 65) {
+          lastPetTime = now;
+          spawnHeartParticle(clientX, clientY);
+          petMoveCount++;
+
+          // 12回スワイプするとなでなで成功！
+          if (petMoveCount === 12) {
+            playAudioBuffer('sweet');
+            marronHomeVideo.src = 'marron_sweet.mp4';
+            marronHomeVideo.loop = false;
+            marronHomeVideo.play().catch(() => {});
+            marronHomeVideo.onended = finishAction;
+
+            const sweetReplies = [
+              "えへへ…なでなで気持ちいいワン…🐾",
+              "ク〜ン…もっと撫でてほしいワン！",
+              "大好きなんだワン！しあわせ…💕"
+            ];
+            showBubble(sweetReplies[Math.floor(Math.random() * sweetReplies.length)], 3500);
+
+            if (!missionData.petDone) {
+              missionData.petDone = true;
+              localStorage.setItem('marron_missions', JSON.stringify(missionData));
+              updateMissionUI();
+            }
+          }
+        }
+      }
+
+      marronSpot.addEventListener('pointermove', (e) => {
+        if (e.buttons > 0 || e.pointerType === 'touch') {
+          handlePetMove(e.clientX, e.clientY);
+        }
+      });
+
+      marronSpot.addEventListener('pointerup', () => {
+        petMoveCount = 0;
+      });
+
+      /* ==============================================
+         4. タブ切り替え & 他タブ時の完全消音
          ============================================== */
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
@@ -918,7 +1298,7 @@
       function stopAllAudio() {
         if (homeAudio) homeAudio.pause();
         isHomeBgmOn = false;
-        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM ON';
+        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM';
 
         if (currentSourceNode) {
           try { currentSourceNode.stop(); } catch(e) {}
@@ -976,12 +1356,11 @@
       });
 
       /* ==============================================
-         3. お家部屋（安定お座り ＆ ランダムアクション ＆ 吹き出し）
+         5. お家部屋（クロマキー描画 ＆ アクション）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
       const dateDisplay = document.getElementById('dateDisplay');
-      const marronSpot = document.getElementById('marronSpot');
       const marronCanvas = document.getElementById('marronCanvas');
       const marronHomeVideo = document.getElementById('marronHomeVideo');
       const homeBubble = document.getElementById('homeBubble');
@@ -1137,10 +1516,10 @@
         homeBgmBtn.addEventListener('click', () => {
           isHomeBgmOn = !isHomeBgmOn;
           if (isHomeBgmOn) {
-            homeAudio.play().then(() => { homeBgmBtn.textContent = '🔇 BGM OFF'; }).catch(() => { isHomeBgmOn = false; });
+            homeAudio.play().then(() => { homeBgmBtn.textContent = '🔇 停止'; }).catch(() => { isHomeBgmOn = false; });
           } else {
             homeAudio.pause();
-            homeBgmBtn.textContent = '🎵 BGM ON';
+            homeBgmBtn.textContent = '🎵 BGM';
           }
         });
       }
@@ -1208,19 +1587,18 @@
       }, 16000);
 
       // マロンをタップした時
-      if (marronSpot) {
-        marronSpot.addEventListener('click', () => {
-          if (!isUnlocked || currentActiveRoom !== 'home-room') return;
-          const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
-          if (isMidnight) {
-            playAudioBuffer('sleep');
-            const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
-            showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
-            return;
-          }
-          triggerRandomAction();
-        });
-      }
+      marronSpot.addEventListener('click', (e) => {
+        if (petMoveCount > 0) return;
+        if (!isUnlocked || currentActiveRoom !== 'home-room') return;
+        const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
+        if (isMidnight) {
+          playAudioBuffer('sleep');
+          const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
+          showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
+          return;
+        }
+        triggerRandomAction();
+      });
 
       // 放置時のたまに起きるランダムな仕草
       setInterval(() => {
@@ -1234,7 +1612,7 @@
       }, 25000);
 
       /* ==============================================
-         4. 添い寝部屋（青背景透過 ＋ 連続BGMループ）
+         6. 添い寝部屋
          ============================================== */
       const sleepCanvas = document.getElementById('sleepCanvas');
       const sleepVideo = document.getElementById('sleepVideo');
@@ -1322,7 +1700,7 @@
       }
 
       /* ==============================================
-         5. 相談部屋
+         7. 相談部屋
          ============================================== */
       const talkBubble = document.getElementById('counselingBubble');
       const actionArea = document.getElementById('counselingActionArea');
@@ -1346,6 +1724,13 @@
         sendBtn.addEventListener('click', () => {
           if (actionArea) actionArea.style.display = 'none';
           if (talkBubble) talkBubble.style.display = 'none';
+
+          // お手紙ミッション達成
+          if (!missionData.letterDone) {
+            missionData.letterDone = true;
+            localStorage.setItem('marron_missions', JSON.stringify(missionData));
+            updateMissionUI();
+          }
 
           talkVideo.muted = false;
           talkVideo.src = 'bury_and_bloom.mp4';
@@ -1382,7 +1767,7 @@
       }
 
       /* ==============================================
-         6. 日常部屋
+         8. 日常部屋
          ============================================== */
       const closeCinemaBtn = document.getElementById('closeCinemaBtn');
       const dailyItems = document.querySelectorAll('.daily-item');

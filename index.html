@@ -322,6 +322,7 @@
 
     .home-btn:active { transform: scale(0.94); }
 
+    /* 変形クラスは廃止（フォルム維持） */
     #marronSpot {
       position: absolute;
       bottom: 5%;
@@ -333,12 +334,6 @@
       z-index: 20;
       overflow: visible;
       touch-action: none;
-      transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    /* なでなで時の「ふにふに・ぷるん」アニメーション */
-    #marronSpot.pet-squish {
-      transform: translateX(-50%) scale(1.04, 0.94);
     }
 
     #marronCanvas {
@@ -996,7 +991,6 @@
         return audioCtx;
       }
 
-      // なでなで時の極小タップ擬似振動音（ポコッ）
       function playHapticPop() {
         if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
         try {
@@ -1285,7 +1279,7 @@
       });
 
       /* ==============================================
-         3. なでなでメーター ＆ ぷるぷる手応え演出
+         3. なでなでメーター（約100往復でじっくり達成）
          ============================================== */
       const marronSpot = document.getElementById('marronSpot');
       const petGaugeFill = document.getElementById('petGaugeFill');
@@ -1293,7 +1287,6 @@
 
       let petProgress = 0; // 0 〜 100
       let lastPetTime = 0;
-      let squishTimer = null;
 
       function spawnHeartParticle(x, y) {
         const p = document.createElement('div');
@@ -1308,48 +1301,35 @@
       function handlePetMove(clientX, clientY) {
         if (!isUnlocked || currentActiveRoom !== 'home-room') return;
         const now = Date.now();
-        if (now - lastPetTime > 55) {
+        if (now - lastPetTime > 60) {
           lastPetTime = now;
 
-          // 擬似ハプティクス（ポコッ音）＆ハート
           playHapticPop();
           spawnHeartParticle(clientX, clientY);
 
-          // マロンのふにふに弾力アニメ
-          marronSpot.classList.add('pet-squish');
-          clearTimeout(squishTimer);
-          squishTimer = setTimeout(() => {
-            marronSpot.classList.remove('pet-squish');
-          }, 110);
-
-          // メーター上昇（約12回のスワイプで100%達成）
-          petProgress = Math.min(100, petProgress + 8.5);
+          // ★約100回のストロークで100%になるペース（+1.0%ずつ）
+          petProgress = Math.min(100, petProgress + 1.0);
           petGaugeFill.style.width = `${petProgress}%`;
 
-          // デイリーミッション「なでなで」を達成
           if (!missionData.petDone) {
             missionData.petDone = true;
             localStorage.setItem('marron_missions', JSON.stringify(missionData));
             updateMissionUI();
           }
 
-          // ★100%達成時の大喜びボーナス
           if (petProgress >= 100) {
             petProgress = 0;
             petGaugeFill.style.width = '0%';
 
-            // コイン+1ボーナス！
             coins += 1;
             updateCoinDisplay();
 
-            // 甘え声＆アクション
             playAudioBuffer('sweet');
             marronHomeVideo.src = 'marron_sweet.mp4';
             marronHomeVideo.loop = false;
             marronHomeVideo.play().catch(() => {});
             marronHomeVideo.onended = finishAction;
 
-            // 画面いっぱいにハート吹雪
             for (let i = 0; i < 7; i++) {
               setTimeout(() => {
                 const rx = clientX + (Math.random() * 120 - 60);

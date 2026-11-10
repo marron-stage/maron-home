@@ -177,6 +177,7 @@
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
       display: none;
       z-index: 25;
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     #homeBubble::after {
@@ -564,13 +565,144 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       /* ==============================================
-         1. タブ切り替え
+         0. Web Audio API による子犬の鳴き声シンセ（無音動画対策）
+         ============================================== */
+      let audioCtx = null;
+      function getAudioContext() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      function playSoundEffect(type) {
+        try {
+          const ctx = getAudioContext();
+          const now = ctx.currentTime;
+
+          if (type === 'bark') {
+            // 元気な「ワンワン！」（高めの2連打）
+            [0, 0.16].forEach(delay => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(450, now + delay);
+              osc.frequency.exponentialRampToValueAtTime(850, now + delay + 0.04);
+              osc.frequency.exponentialRampToValueAtTime(320, now + delay + 0.13);
+
+              gain.gain.setValueAtTime(0, now + delay);
+              gain.gain.linearRampToValueAtTime(0.28, now + delay + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.13);
+
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now + delay);
+              osc.stop(now + delay + 0.14);
+            });
+          } else if (type === 'sweet') {
+            // 愛らしい「ク〜ン…」甘え声
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(680, now);
+            osc.frequency.linearRampToValueAtTime(880, now + 0.22);
+            osc.frequency.linearRampToValueAtTime(720, now + 0.65);
+
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.18, now + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.66);
+          } else if (type === 'down') {
+            // ほっとひと息「ふぅ〜…」
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(420, now);
+            osc.frequency.exponentialRampToValueAtTime(230, now + 0.45);
+
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.12, now + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.46);
+          }
+        } catch(e) {}
+      }
+
+      /* ==============================================
+         1. タブ切り替え ＆ 全サウンド完全停止ロジック
          ============================================== */
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
 
+      const homeBgmBtn = document.getElementById('homeBgmBtn');
+      const homeAudio = document.getElementById('homeAudio');
+      const marronHomeVideo = document.getElementById('marronHomeVideo');
+
+      const lightToggleBtn = document.getElementById('lightToggleBtn');
+      const sleepOverlay = document.getElementById('sleepOverlay');
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const sleepBgmAudio = document.getElementById('sleepBgmAudio');
+
+      const talkVideo = document.getElementById('counselingVideo');
+      const cinemaModal = document.getElementById('cinemaModal');
+      const cinemaVideo = document.getElementById('cinemaVideo');
+
+      let isHomeBgmOn = false;
+      let isSleepSoundOn = false;
+      let isLightOff = false;
+
+      // どのタブに行っても他部屋の音を完全に停止
+      function stopAllAudio() {
+        // お家部屋BGM
+        if (homeAudio) {
+          homeAudio.pause();
+        }
+        isHomeBgmOn = false;
+        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM ON';
+
+        // マロン音声ミュート
+        if (marronHomeVideo) {
+          marronHomeVideo.muted = true;
+        }
+
+        // 添い寝BGM
+        if (sleepBgmAudio) {
+          sleepBgmAudio.pause();
+        }
+        isSleepSoundOn = false;
+        if (soundToggleBtn) {
+          soundToggleBtn.textContent = '🎵 添い寝BGM';
+          soundToggleBtn.classList.remove('active');
+        }
+
+        // 相談部屋
+        if (talkVideo) {
+          talkVideo.muted = true;
+        }
+
+        // 日常シネマ動画
+        if (cinemaVideo && cinemaModal) {
+          cinemaModal.style.display = 'none';
+          cinemaVideo.pause();
+          cinemaVideo.src = '';
+        }
+      }
+
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+          stopAllAudio(); // 切り替え時に全サウンド即座にストップ
+
           const targetRoom = btn.getAttribute('data-room');
           tabBtns.forEach(b => b.classList.remove('active'));
           roomPanels.forEach(p => p.classList.remove('active'));
@@ -587,19 +719,16 @@
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
       const dateDisplay = document.getElementById('dateDisplay');
-      const homeBgmBtn = document.getElementById('homeBgmBtn');
-      const homeAudio = document.getElementById('homeAudio');
       const marronSpot = document.getElementById('marronSpot');
       const marronCanvas = document.getElementById('marronCanvas');
-      const marronHomeVideo = document.getElementById('marronHomeVideo');
       const homeBubble = document.getElementById('homeBubble');
 
-      let isHomeBgmOn = false;
       let isPlayingSpecial = false;
+      let actionTimer = null;
 
-      // 3つのランダムアクション定義（ワンワン・クーン・伏せ）
       const randomActions = [
         {
+          type: 'bark',
           video: 'marron_bark.mp4',
           messages: [
             "ワンワン！なでてくれて嬉しいワン！🐾",
@@ -608,6 +737,7 @@
           ]
         },
         {
+          type: 'sweet',
           video: 'marron_sweet.mp4',
           messages: [
             "クーン…そばにいてくれて嬉しいワン🐾",
@@ -616,6 +746,7 @@
           ]
         },
         {
+          type: 'down',
           video: 'marron_down.mp4',
           messages: [
             "ふぅ〜…ちょっとひと休みだワン🐾",
@@ -660,7 +791,6 @@
           dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
         }
 
-        // 深夜0〜5時は睡眠ループ、それ以外はお座り待機
         if (!isPlayingSpecial) {
           const isMidnight = (category === 'midnight');
           const targetBaseVideo = isMidnight ? 'marron_sleep.mp4' : 'marron_sit.mp4';
@@ -673,32 +803,45 @@
       function playBaseVideo(videoSrc) {
         marronHomeVideo.src = videoSrc;
         marronHomeVideo.loop = true;
+        marronHomeVideo.muted = true; // 待機ループは常時ミュート
         marronHomeVideo.play().catch(() => {});
+      }
+
+      function finishAction() {
+        clearTimeout(actionTimer);
+        isPlayingSpecial = false;
+        marronHomeVideo.onended = null;
+        marronHomeVideo.onerror = null;
+        const cat = getCurrentCategory(new Date().getHours());
+        playBaseVideo(cat === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
       }
 
       function triggerRandomAction() {
         if (isPlayingSpecial) return;
         isPlayingSpecial = true;
 
-        // 3つのアクションから均等にランダム抽選
         const selected = randomActions[Math.floor(Math.random() * randomActions.length)];
         const text = selected.messages[Math.floor(Math.random() * selected.messages.length)];
 
+        // 動画の音声をアンミュートして再生
+        marronHomeVideo.muted = false;
         marronHomeVideo.src = selected.video;
         marronHomeVideo.loop = false;
         marronHomeVideo.play().catch(() => {});
 
-        showBubble(text, 3500);
+        // 音声効果（動画が無音でも確実に鳴る）
+        playSoundEffect(selected.type);
 
-        marronHomeVideo.onended = () => {
-          isPlayingSpecial = false;
-          marronHomeVideo.onended = null;
-          const cat = getCurrentCategory(new Date().getHours());
-          playBaseVideo(cat === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
-        };
+        // 吹き出し表示
+        showBubble(text, 3600);
+
+        marronHomeVideo.onended = finishAction;
+        marronHomeVideo.onerror = finishAction;
+
+        // 最大5秒で確実に復帰させる安全ガード
+        actionTimer = setTimeout(finishAction, 5000);
       }
 
-      // 初回起動
       playBaseVideo(getCurrentCategory(new Date().getHours()) === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
       setInterval(updateTimeAndBackground, 1000);
       updateTimeAndBackground();
@@ -737,7 +880,6 @@
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
                 const b = frame.data[i * 4 + 2];
-                // 青色透過
                 if (b > 110 && b > r * 1.25 && b > g * 1.15) {
                   frame.data[i * 4 + 3] = 0;
                 }
@@ -766,16 +908,16 @@
         marronSpot.addEventListener('click', () => {
           const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
           if (isMidnight) {
+            playSoundEffect('sweet');
             const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
             showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
             return;
           }
-          // ワンワン、クーン、伏せからランダム発動
           triggerRandomAction();
         });
       }
 
-      // 放置時のたまに起きるランダムな仕草（約22秒に1回の判定・45%の確率で発動）
+      // 放置時のたまに起きるランダムな仕草
       setInterval(() => {
         const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
         if (isMidnight || isPlayingSpecial) return;
@@ -788,13 +930,6 @@
       /* ==============================================
          3. 添い寝部屋（BGM連続ループ再生）
          ============================================== */
-      const lightToggleBtn = document.getElementById('lightToggleBtn');
-      const sleepOverlay = document.getElementById('sleepOverlay');
-      const soundToggleBtn = document.getElementById('soundToggleBtn');
-      const sleepBgmAudio = document.getElementById('sleepBgmAudio');
-
-      let isLightOff = false;
-      let isSleepSoundOn = false;
       const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
       let currentBgmIndex = 0;
 
@@ -838,7 +973,6 @@
       /* ==============================================
          4. 相談部屋
          ============================================== */
-      const talkVideo = document.getElementById('counselingVideo');
       const talkBubble = document.getElementById('counselingBubble');
       const actionArea = document.getElementById('counselingActionArea');
       const sendBtn = document.getElementById('sendLetterBtn');
@@ -899,8 +1033,6 @@
       /* ==============================================
          5. 日常部屋（完全オンデマンド読み込み）
          ============================================== */
-      const cinemaModal = document.getElementById('cinemaModal');
-      const cinemaVideo = document.getElementById('cinemaVideo');
       const closeCinemaBtn = document.getElementById('closeCinemaBtn');
       const dailyItems = document.querySelectorAll('.daily-item');
 

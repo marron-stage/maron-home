@@ -521,8 +521,8 @@
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- マロン動画ソース（通常待機音声・アクション音声をそのまま出力） -->
-      <video id="marronHomeVideo" playsinline style="display: none;"></video>
+      <!-- マロン動画ソース（初期描画保証のためmutedでスタート） -->
+      <video id="marronHomeVideo" playsinline muted style="display: none;"></video>
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
     </section>
 
@@ -539,12 +539,13 @@
       <button id="counselResetBtn">ありがとう、またお話しするワン🐾</button>
     </section>
 
-    <!-- 3. 添い寝部屋（動画本来の寝息をそのまま出力） -->
+    <!-- 3. 添い寝部屋（ふんわり背景 ＋ 透過クロマキーマロン） -->
     <section id="sleep-room" class="room-panel">
       <div id="sleepMarronSpot">
         <canvas id="sleepCanvas"></canvas>
       </div>
-      <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop playsinline style="display: none;"></video>
+      <!-- 初期描画保証のためmutedでスタート -->
+      <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline style="display: none;"></video>
       <div id="sleepOverlay"></div>
 
       <div class="sleep-controls-top">
@@ -577,6 +578,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       let currentActiveRoom = 'home-room';
+      let userHasInteracted = false;
 
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
@@ -599,34 +601,32 @@
       let isSleepSoundOn = false;
       let isLightOff = false;
 
-      // スマホの音声自動再生ブロック解除
+      // ユーザーの初回タップで音声ロックを完全解除（映像は止めない）
       function unlockAudio() {
+        userHasInteracted = true;
         if (currentActiveRoom === 'home-room' && marronHomeVideo) {
           marronHomeVideo.muted = false;
-          marronHomeVideo.play().catch(() => {});
+          marronHomeVideo.play().catch(() => { marronHomeVideo.muted = true; marronHomeVideo.play(); });
         } else if (currentActiveRoom === 'sleep-room' && sleepVideo) {
           sleepVideo.muted = false;
-          sleepVideo.play().catch(() => {});
+          sleepVideo.play().catch(() => { sleepVideo.muted = true; sleepVideo.play(); });
         }
         document.removeEventListener('click', unlockAudio);
         document.removeEventListener('touchstart', unlockAudio);
       }
-      document.addEventListener('click', unlockAudio, { once: true });
-      document.addEventListener('touchstart', unlockAudio, { once: true });
+      document.addEventListener('click', unlockAudio);
+      document.addEventListener('touchstart', unlockAudio);
 
       /* ==============================================
          1. タブ切り替え & 他タブ時の完全消音
          ============================================== */
       function stopAllAudio() {
-        // お家BGM
         if (homeAudio) homeAudio.pause();
         isHomeBgmOn = false;
         if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM ON';
 
-        // お家マロン音声消音
         if (marronHomeVideo) marronHomeVideo.muted = true;
 
-        // 添い寝BGM & 添い寝動画音声消音
         if (sleepBgmAudio) sleepBgmAudio.pause();
         isSleepSoundOn = false;
         if (soundToggleBtn) {
@@ -635,10 +635,8 @@
         }
         if (sleepVideo) sleepVideo.muted = true;
 
-        // 相談部屋
         if (talkVideo) talkVideo.muted = true;
 
-        // 日常シネマ
         if (cinemaVideo && cinemaModal) {
           cinemaModal.style.display = 'none';
           cinemaVideo.pause();
@@ -648,7 +646,7 @@
 
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          stopAllAudio(); // 切り替え時に全サウンド即座停止
+          stopAllAudio();
 
           currentActiveRoom = btn.getAttribute('data-room');
           tabBtns.forEach(b => b.classList.remove('active'));
@@ -658,29 +656,34 @@
           const targetPanel = document.getElementById(currentActiveRoom);
           if (targetPanel) targetPanel.classList.add('active');
 
-          // 部屋に応じた動画音声の再開
+          // タップされた部屋のマロンの音声をアンミュート（安全再生）
           if (currentActiveRoom === 'home-room') {
             if (marronHomeVideo) {
-              marronHomeVideo.muted = false;
-              marronHomeVideo.play().catch(() => {});
+              if (userHasInteracted) marronHomeVideo.muted = false;
+              marronHomeVideo.play().catch(() => {
+                marronHomeVideo.muted = true;
+                marronHomeVideo.play();
+              });
             }
           } else if (currentActiveRoom === 'sleep-room') {
             if (sleepVideo) {
-              sleepVideo.muted = false;
-              sleepVideo.play().catch(() => {});
+              if (userHasInteracted) sleepVideo.muted = false;
+              sleepVideo.play().catch(() => {
+                sleepVideo.muted = true;
+                sleepVideo.play();
+              });
             }
           }
         });
       });
 
-      // ブラウザがバックグラウンドになったら全消音
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           stopAllAudio();
         } else {
-          if (currentActiveRoom === 'home-room' && marronHomeVideo) {
+          if (currentActiveRoom === 'home-room' && marronHomeVideo && userHasInteracted) {
             marronHomeVideo.muted = false;
-          } else if (currentActiveRoom === 'sleep-room' && sleepVideo) {
+          } else if (currentActiveRoom === 'sleep-room' && sleepVideo && userHasInteracted) {
             sleepVideo.muted = false;
           }
         }
@@ -803,12 +806,16 @@
         }
       }
 
+      // 確実な再生保証（映像を絶対に止めない）
       function playBaseVideo(videoSrc) {
         marronHomeVideo.src = videoSrc;
         marronHomeVideo.loop = true;
-        // お家タブにいる時は動画本来の音声をそのまま鳴らす
-        marronHomeVideo.muted = (currentActiveRoom !== 'home-room');
-        marronHomeVideo.play().catch(() => {});
+        // 未タップ時はブロック回避のためmuted、タップ後はアンミュート
+        marronHomeVideo.muted = (!userHasInteracted || currentActiveRoom !== 'home-room');
+        marronHomeVideo.play().catch(() => {
+          marronHomeVideo.muted = true;
+          marronHomeVideo.play().catch(() => {});
+        });
       }
 
       function finishAction() {
@@ -827,10 +834,14 @@
         const selected = randomActions[Math.floor(Math.random() * randomActions.length)];
         const text = selected.messages[Math.floor(Math.random() * selected.messages.length)];
 
-        marronHomeVideo.muted = false;
         marronHomeVideo.src = selected.video;
         marronHomeVideo.loop = false;
-        marronHomeVideo.play().catch(() => {});
+        if (userHasInteracted) marronHomeVideo.muted = false;
+
+        marronHomeVideo.play().catch(() => {
+          marronHomeVideo.muted = true;
+          marronHomeVideo.play().catch(() => {});
+        });
 
         showBubble(text, 3600);
 
@@ -839,6 +850,7 @@
         actionTimer = setTimeout(finishAction, 5000);
       }
 
+      // 初回起動
       playBaseVideo(getCurrentCategory(new Date().getHours()) === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
       setInterval(updateTimeAndBackground, 1000);
       updateTimeAndBackground();
@@ -886,7 +898,10 @@
           requestAnimationFrame(renderChromaKey);
         }
 
-        marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {});
+        marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {
+          marronHomeVideo.muted = true;
+          marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {});
+        });
       }
 
       // 吹き出し管理
@@ -938,10 +953,9 @@
       }, 25000);
 
       /* ==============================================
-         3. 添い寝部屋（動画本来の寝息をそのまま出力）
+         3. 添い寝部屋（青背景透過 ＋ 確実な再生保証）
          ============================================== */
       const sleepCanvas = document.getElementById('sleepCanvas');
-      const sleepMarronSpot = document.getElementById('sleepMarronSpot');
 
       if (sleepCanvas && sleepVideo) {
         const sCtx = sleepCanvas.getContext('2d', { willReadFrequently: true });
@@ -973,7 +987,11 @@
           requestAnimationFrame(renderSleepChromaKey);
         }
 
-        sleepVideo.play().then(() => { renderSleepChromaKey(); }).catch(() => {});
+        // 初期ロード時はmutedで確実に再生してCanvas描画を開始
+        sleepVideo.muted = true;
+        sleepVideo.play().then(() => {
+          renderSleepChromaKey();
+        }).catch(() => {});
       }
 
       const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];

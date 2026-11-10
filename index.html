@@ -44,12 +44,12 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     #door-lock-screen.unlocked {
       opacity: 0;
-      transform: scale(1.08);
+      transform: scale(1.06);
       pointer-events: none;
     }
 
@@ -124,6 +124,7 @@
       cursor: pointer;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
       transition: all 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .key-btn:active {
@@ -614,30 +615,6 @@
 </head>
 <body>
 
-  <!-- ==============================================
-       事前固定オーディオ要素（大文字・小文字両対応）
-       ============================================== -->
-  <audio id="snd-bark" preload="auto">
-    <source src="bark.mp3" type="audio/mpeg">
-    <source src="bark.MP3" type="audio/mpeg">
-  </audio>
-  <audio id="snd-sweet" preload="auto">
-    <source src="sweet.mp3" type="audio/mpeg">
-    <source src="sweet.MP3" type="audio/mpeg">
-  </audio>
-  <audio id="snd-down" preload="auto">
-    <source src="down.mp3" type="audio/mpeg">
-    <source src="down.MP3" type="audio/mpeg">
-  </audio>
-  <audio id="snd-sit" preload="auto">
-    <source src="sit.mp3" type="audio/mpeg">
-    <source src="sit.MP3" type="audio/mpeg">
-  </audio>
-  <audio id="snd-sleep" preload="auto" loop>
-    <source src="sleep.mp3" type="audio/mpeg">
-    <source src="sleep.MP3" type="audio/mpeg">
-  </audio>
-
   <!-- 0. 玄関ドア・パスワード入力画面 -->
   <div id="door-lock-screen">
     <div class="door-frame" id="doorFrame">
@@ -683,13 +660,11 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 定位置マロン -->
       <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- 動画は常時ミュート固定で映像を絶対保証 -->
       <video id="marronHomeVideo" playsinline muted style="display: none;"></video>
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
     </section>
@@ -707,12 +682,11 @@
       <button id="counselResetBtn">ありがとう、またお話しするワン🐾</button>
     </section>
 
-    <!-- 3. 添い寝部屋（ふんわり背景 ＋ 常時安定マロン） -->
+    <!-- 3. 添い寝部屋 -->
     <section id="sleep-room" class="room-panel">
       <div id="sleepMarronSpot">
         <canvas id="sleepCanvas"></canvas>
       </div>
-      <!-- 動画は常時ミュート固定 -->
       <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline style="display: none;"></video>
       <div id="sleepOverlay"></div>
 
@@ -724,7 +698,7 @@
       <audio id="sleepBgmAudio"></audio>
     </section>
 
-    <!-- 4. 日常部屋（完全オンデマンド） -->
+    <!-- 4. 日常部屋 -->
     <section id="daily-room" class="room-panel">
       <div class="daily-grid">
         <div class="daily-item" data-video="marron.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">まったりマロン</div></div>
@@ -749,62 +723,87 @@
       let isUnlocked = false;
 
       /* ==============================================
-         0. 登録済みオーディオ要素の取得
+         0. iOS Safari 完全対応 Web Audio API エンジン
          ============================================== */
-      const sndBark = document.getElementById('snd-bark');
-      const sndSweet = document.getElementById('snd-sweet');
-      const sndDown = document.getElementById('snd-down');
-      const sndSit = document.getElementById('snd-sit');
-      const sndSleep = document.getElementById('snd-sleep');
+      let audioCtx = null;
+      const audioBuffers = {};
+      let currentSourceNode = null;
+      let sleepLoopNode = null;
 
-      const allSounds = [sndBark, sndSweet, sndDown, sndSit, sndSleep];
-      let currentSfx = null;
-
-      // パスワード入力成功時の「全MP3一括アンロック処理」
-      function unlockAllAudioElements() {
-        allSounds.forEach(audio => {
-          if (!audio) return;
-          audio.volume = 0;
-          const p = audio.play();
-          if (p !== undefined) {
-            p.then(() => {
-              audio.pause();
-              audio.currentTime = 0;
-              audio.volume = 1.0;
-            }).catch(() => {
-              audio.volume = 1.0;
-            });
-          } else {
-            audio.volume = 1.0;
-          }
-        });
+      function getAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
       }
 
-      function playFixedSound(soundElem) {
-        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || !soundElem) return;
+      // MP3バイナリ事前取得（大文字・小文字両対応フォールバック）
+      async function loadSound(name) {
         try {
-          if (currentSfx && currentSfx !== soundElem) {
-            currentSfx.pause();
-            currentSfx.currentTime = 0;
+          const ctx = getAudioContext();
+          let res = await fetch(`${name}.mp3`);
+          if (!res.ok) {
+            res = await fetch(`${name}.MP3`);
           }
-          currentSfx = soundElem;
-          currentSfx.currentTime = 0;
-          currentSfx.play().catch(() => {});
+          if (res.ok) {
+            const arrayBuffer = await res.arrayBuffer();
+            audioBuffers[name] = await ctx.decodeAudioData(arrayBuffer);
+          }
         } catch(e) {}
       }
 
-      function startSleepBreath() {
-        stopSleepBreath();
-        if (isUnlocked && currentActiveRoom === 'sleep-room' && !document.hidden && sndSleep) {
-          sndSleep.currentTime = 0;
-          sndSleep.play().catch(() => {});
-        }
+      // 5つの音声をバックグラウンドで事前ロード
+      ['bark', 'sit', 'sweet', 'down', 'sleep'].forEach(name => loadSound(name));
+
+      // 効果音再生
+      function playAudioBuffer(name) {
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
+        const ctx = getAudioContext();
+        const buffer = audioBuffers[name];
+        if (!ctx || !buffer) return;
+
+        try {
+          if (currentSourceNode) {
+            currentSourceNode.stop();
+            currentSourceNode.disconnect();
+          }
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+          currentSourceNode = source;
+        } catch(e) {}
       }
 
-      function stopSleepBreath() {
-        if (sndSleep) {
-          sndSleep.pause();
-          sndSleep.currentTime = 0;
+      // 添い寝部屋：寝息・寝言ループ再生
+      function startSleepLoop() {
+        stopSleepLoop();
+        if (!isUnlocked || currentActiveRoom !== 'sleep-room' || document.hidden) return;
+        const ctx = getAudioContext();
+        const buffer = audioBuffers['sleep'];
+        if (!ctx || !buffer) return;
+
+        try {
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.loop = true;
+          source.connect(ctx.destination);
+          source.start(0);
+          sleepLoopNode = source;
+        } catch(e) {}
+      }
+
+      function stopSleepLoop() {
+        if (sleepLoopNode) {
+          try {
+            sleepLoopNode.stop();
+            sleepLoopNode.disconnect();
+          } catch(e) {}
+          sleepLoopNode = null;
         }
       }
 
@@ -824,7 +823,7 @@
       const backspaceBtn = document.getElementById('backspaceBtn');
 
       let currentPin = "";
-      const CORRECT_PIN = "9648"; // くろしば
+      const CORRECT_PIN = "9648";
 
       function updateDots() {
         pinDots.forEach((dot, index) => {
@@ -837,25 +836,22 @@
       }
 
       function onUnlockSuccess() {
-        // パスワード入力の1タップで全MP3のロックを一括解除
-        unlockAllAudioElements();
-
         isUnlocked = true;
+
+        // ★タップの瞬間に即時再生（iOSのセキュリティブロックを回避）
+        playAudioBuffer('bark');
+
         doorLockScreen.classList.add('unlocked');
         setTimeout(() => {
           doorLockScreen.style.display = 'none';
-        }, 600);
+        }, 500);
 
-        // ★入室した瞬間は「ワンワン（bark.mp3）」でお出迎え！
-        setTimeout(() => {
-          playFixedSound(sndBark);
-          // ワンワンアクション動画も同時に再生
-          marronHomeVideo.src = 'marron_bark.mp4';
-          marronHomeVideo.loop = false;
-          marronHomeVideo.play().catch(() => {});
-          marronHomeVideo.onended = finishAction;
-          showBubble("ワンワン！おかえり！待ってたワン！🐾", 3600);
-        }, 250);
+        // マロンのお出迎えアクション
+        marronHomeVideo.src = 'marron_bark.mp4';
+        marronHomeVideo.loop = false;
+        marronHomeVideo.play().catch(() => {});
+        marronHomeVideo.onended = finishAction;
+        showBubble("ワンワン！おかえり！待ってたワン！🐾", 3600);
       }
 
       function checkPin() {
@@ -868,32 +864,40 @@
               doorFrame.classList.remove('shake-anim');
               currentPin = "";
               updateDots();
-            }, 400);
+            }, 380);
           }
         }
       }
 
       keyBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
+        // iOS Safariで確実にタッチの瞬間にオーディオマスターを起動
+        const handleInput = (e) => {
+          e.preventDefault();
+          getAudioContext(); // ユーザー操作の瞬間に確実に起動
+
           if (currentPin.length < 4) {
             currentPin += btn.getAttribute('data-key');
             updateDots();
             if (currentPin.length === 4) {
-              setTimeout(checkPin, 120);
+              checkPin(); // 遅延を挟まず直結実行
             }
           }
-        });
+        };
+        btn.addEventListener('touchstart', handleInput, { passive: false });
+        btn.addEventListener('click', handleInput);
       });
 
       if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
+        clearBtn.addEventListener('click', (e) => {
+          e.preventDefault();
           currentPin = "";
           updateDots();
         });
       }
 
       if (backspaceBtn) {
-        backspaceBtn.addEventListener('click', () => {
+        backspaceBtn.addEventListener('click', (e) => {
+          e.preventDefault();
           if (currentPin.length > 0) {
             currentPin = currentPin.slice(0, -1);
             updateDots();
@@ -927,9 +931,9 @@
         isHomeBgmOn = false;
         if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM ON';
 
-        if (currentSfx) {
-          currentSfx.pause();
-          currentSfx.currentTime = 0;
+        if (currentSourceNode) {
+          try { currentSourceNode.stop(); } catch(e) {}
+          currentSourceNode = null;
         }
 
         if (sleepBgmAudio) sleepBgmAudio.pause();
@@ -938,7 +942,7 @@
           soundToggleBtn.textContent = '🎵 添い寝BGM';
           soundToggleBtn.classList.remove('active');
         }
-        stopSleepBreath();
+        stopSleepLoop();
 
         if (talkVideo) talkVideo.muted = true;
 
@@ -951,7 +955,7 @@
 
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          stopAllAudio(); // 切り替え時に全サウンド停止
+          stopAllAudio();
 
           currentActiveRoom = btn.getAttribute('data-room');
           tabBtns.forEach(b => b.classList.remove('active'));
@@ -962,7 +966,7 @@
           if (targetPanel) targetPanel.classList.add('active');
 
           if (currentActiveRoom === 'sleep-room') {
-            startSleepBreath();
+            startSleepLoop();
           }
         });
       });
@@ -971,7 +975,7 @@
         if (document.hidden) {
           stopAllAudio();
         } else if (currentActiveRoom === 'sleep-room') {
-          startSleepBreath();
+          startSleepLoop();
         }
       });
 
@@ -1024,7 +1028,7 @@
       const randomActions = [
         {
           video: 'marron_bark.mp4',
-          soundElem: sndBark,
+          audioKey: 'bark',
           messages: [
             "ワンワン！なでてくれて嬉しいワン！🐾",
             "わふっ！今日も元気いっぱいだワン！",
@@ -1033,7 +1037,7 @@
         },
         {
           video: 'marron_sweet.mp4',
-          soundElem: sndSweet,
+          audioKey: 'sweet',
           messages: [
             "クーン…そばにいてくれて嬉しいワン🐾",
             "えへへ、もっと撫でてほしいワン…",
@@ -1042,7 +1046,7 @@
         },
         {
           video: 'marron_down.mp4',
-          soundElem: sndDown,
+          audioKey: 'down',
           messages: [
             "ふぅ〜…ちょっとひと休みだワン🐾",
             "ペタ〜っ…のんびりするワン。",
@@ -1122,7 +1126,7 @@
         marronHomeVideo.muted = true;
         marronHomeVideo.play().catch(() => {});
 
-        playFixedSound(selected.soundElem);
+        playAudioBuffer(selected.audioKey);
         showBubble(text, 3600);
 
         marronHomeVideo.onended = finishAction;
@@ -1198,7 +1202,7 @@
         const list = timeBasedMessages[category];
         if (list && list.length > 0) {
           const msg = list[Math.floor(Math.random() * list.length)];
-          playFixedSound(sndSit);
+          playAudioBuffer('sit');
           showBubble(msg, 3800);
         }
       }, 16000);
@@ -1209,7 +1213,7 @@
           if (!isUnlocked || currentActiveRoom !== 'home-room') return;
           const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
           if (isMidnight) {
-            playFixedSound(sndSleep);
+            playAudioBuffer('sleep');
             const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
             showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
             return;

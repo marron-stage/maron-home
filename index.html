@@ -139,21 +139,21 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* 定位置のくつろぎマロン */
+    /* つぶれ防止：比率維持マロンスポット */
     #marronSpot {
       position: absolute;
-      bottom: 7%;
+      bottom: 6%;
       left: 50%;
       transform: translateX(-50%);
-      width: 175px;
-      height: 175px;
+      width: 200px; /* 横幅基準 */
+      height: auto;  /* 高さは比率で自動計算 */
       cursor: pointer;
       z-index: 20;
     }
 
     #marronCanvas {
       width: 100%;
-      height: 100%;
+      height: auto;
       display: block;
       pointer-events: none;
       filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
@@ -161,7 +161,7 @@
 
     #homeBubble {
       position: absolute;
-      bottom: 100%;
+      bottom: 102%;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.95);
@@ -377,7 +377,7 @@
     }
 
     /* =======================================
-       4. 日常部屋（6本グリッド・完全オンデマンド）
+       4. 日常部屋（6本グリッド・オンデマンド）
        ======================================= */
     #daily-room {
       position: relative;
@@ -502,13 +502,13 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 定位置マロン -->
+      <!-- つぶれ防止・比率維持マロン -->
       <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <!-- マロン動画ソース（お座り待機） -->
+      <!-- マロン動画ソース -->
       <video id="marronHomeVideo" src="marron_sit.mp4" playsinline muted loop style="display: none;"></video>
 
       <!-- お部屋BGM -->
@@ -541,7 +541,7 @@
       <audio id="sleepBgmAudio"></audio>
     </section>
 
-    <!-- 4. 日常部屋（完全オンデマンド読み込み：初期ダウンロードゼロ） -->
+    <!-- 4. 日常部屋（完全オンデマンド） -->
     <section id="daily-room" class="room-panel">
       <div class="daily-grid">
         <div class="daily-item" data-video="marron.mp4">
@@ -599,7 +599,7 @@
       });
 
       /* ==============================================
-         2. お家部屋（時間帯背景・時計・BGM・定位置マロン）
+         2. お家部屋（背景両対応・アスペクト比維持マロン）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
@@ -638,17 +638,28 @@
         return 'midnight';
       }
 
+      // 背景画像（JPG/PNG 両自動対応）
       function updateTimeAndBackground() {
         const now = new Date();
         const hour = now.getHours();
         const category = getCurrentCategory(hour);
-        const bgImage = `room_${category}.jpg`;
 
         if (homeRoom) {
-          const img = new Image();
-          img.src = bgImage;
-          img.onload = () => { homeRoom.style.backgroundImage = `url('${bgImage}')`; };
-          img.onerror = () => { homeRoom.style.backgroundImage = `url('room.jpg')`; };
+          const imgJpg = new Image();
+          imgJpg.src = `room_${category}.jpg`;
+          imgJpg.onload = () => {
+            homeRoom.style.backgroundImage = `url('room_${category}.jpg')`;
+          };
+          imgJpg.onerror = () => {
+            const imgPng = new Image();
+            imgPng.src = `room_${category}.png`;
+            imgPng.onload = () => {
+              homeRoom.style.backgroundImage = `url('room_${category}.png')`;
+            };
+            imgPng.onerror = () => {
+              homeRoom.style.backgroundImage = `url('room.png')`;
+            };
+          };
         }
 
         if (clockDisplay) {
@@ -682,7 +693,7 @@
         });
       }
 
-      // 定位置マロンのクロマキー透過
+      // アスペクト比を維持したまま透過描画
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -691,6 +702,8 @@
             if (marronCanvas.width !== marronHomeVideo.videoWidth && marronHomeVideo.videoWidth > 0) {
               marronCanvas.width = marronHomeVideo.videoWidth;
               marronCanvas.height = marronHomeVideo.videoHeight;
+              // つぶれ防止：動画本来の縦横比をアスペクト比として適用
+              marronCanvas.style.aspectRatio = `${marronHomeVideo.videoWidth} / ${marronHomeVideo.videoHeight}`;
             }
 
             if (marronCanvas.width > 0) {
@@ -861,7 +874,7 @@
       }
 
       /* ==============================================
-         5. 日常部屋（完全オンデマンド読み込み）
+         5. 日常部屋（オンデマンド読み込み）
          ============================================== */
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');
@@ -872,7 +885,6 @@
         item.addEventListener('click', () => {
           const videoSrc = item.getAttribute('data-video');
           if (cinemaVideo && cinemaModal) {
-            // タップされて初めて動画を読み込む
             cinemaVideo.src = videoSrc;
             cinemaModal.style.display = 'flex';
             cinemaVideo.play().catch(() => {});
@@ -884,7 +896,7 @@
         closeCinemaBtn.addEventListener('click', () => {
           cinemaModal.style.display = 'none';
           cinemaVideo.pause();
-          cinemaVideo.src = ''; // メモリ解放
+          cinemaVideo.src = '';
         });
       }
     });

@@ -82,7 +82,7 @@
     }
 
     /* =======================================
-       1. お家部屋（定位置・軽量）
+       1. お家部屋（PNG直接読み込み・軽量）
        ======================================= */
     #home-room {
       position: relative;
@@ -90,7 +90,7 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transition: background-image 1s ease-in-out;
+      transition: background-image 0.5s ease;
     }
 
     .home-clock-widget {
@@ -139,16 +139,17 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* つぶれ防止：比率維持マロンスポット */
+    /* 耳切れ防止：ゆとりのある描画エリア */
     #marronSpot {
       position: absolute;
-      bottom: 6%;
+      bottom: 5%;
       left: 50%;
       transform: translateX(-50%);
-      width: 200px; /* 横幅基準 */
-      height: auto;  /* 高さは比率で自動計算 */
+      width: 230px; /* 耳を傾けても収まる十分な幅 */
+      height: auto;
       cursor: pointer;
       z-index: 20;
+      overflow: visible; /* 枠外クリップを完全解除 */
     }
 
     #marronCanvas {
@@ -156,12 +157,12 @@
       height: auto;
       display: block;
       pointer-events: none;
-      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.25));
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.22));
     }
 
     #homeBubble {
       position: absolute;
-      bottom: 102%;
+      bottom: 103%;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.95);
@@ -377,7 +378,7 @@
     }
 
     /* =======================================
-       4. 日常部屋（6本グリッド・オンデマンド）
+       4. 日常部屋（完全オンデマンド）
        ======================================= */
     #daily-room {
       position: relative;
@@ -502,7 +503,7 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- つぶれ防止・比率維持マロン -->
+      <!-- 耳切れ防止・ゆとり配置マロン -->
       <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
@@ -599,7 +600,7 @@
       });
 
       /* ==============================================
-         2. お家部屋（背景両対応・アスペクト比維持マロン）
+         2. お家部屋（PNG直接読み込み・比率維持描画）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
@@ -638,27 +639,21 @@
         return 'midnight';
       }
 
-      // 背景画像（JPG/PNG 両自動対応）
+      // PNGのみを直接読み込み（JPEG探索の無駄を完全排除）
       function updateTimeAndBackground() {
         const now = new Date();
         const hour = now.getHours();
         const category = getCurrentCategory(hour);
+        const pngSrc = `room_${category}.png`;
 
         if (homeRoom) {
-          const imgJpg = new Image();
-          imgJpg.src = `room_${category}.jpg`;
-          imgJpg.onload = () => {
-            homeRoom.style.backgroundImage = `url('room_${category}.jpg')`;
+          const img = new Image();
+          img.src = pngSrc;
+          img.onload = () => {
+            homeRoom.style.backgroundImage = `url('${pngSrc}')`;
           };
-          imgJpg.onerror = () => {
-            const imgPng = new Image();
-            imgPng.src = `room_${category}.png`;
-            imgPng.onload = () => {
-              homeRoom.style.backgroundImage = `url('room_${category}.png')`;
-            };
-            imgPng.onerror = () => {
-              homeRoom.style.backgroundImage = `url('room.png')`;
-            };
+          img.onerror = () => {
+            homeRoom.style.backgroundImage = `url('room.png')`;
           };
         }
 
@@ -693,7 +688,7 @@
         });
       }
 
-      // アスペクト比を維持したまま透過描画
+      // マロンのクロマキー透過＆耳切れ防止アスペクト比維持
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -702,7 +697,6 @@
             if (marronCanvas.width !== marronHomeVideo.videoWidth && marronHomeVideo.videoWidth > 0) {
               marronCanvas.width = marronHomeVideo.videoWidth;
               marronCanvas.height = marronHomeVideo.videoHeight;
-              // つぶれ防止：動画本来の縦横比をアスペクト比として適用
               marronCanvas.style.aspectRatio = `${marronHomeVideo.videoWidth} / ${marronHomeVideo.videoHeight}`;
             }
 
@@ -715,6 +709,7 @@
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
                 const b = frame.data[i * 4 + 2];
+                // 青色透過
                 if (b > 110 && b > r * 1.25 && b > g * 1.15) {
                   frame.data[i * 4 + 3] = 0;
                 }

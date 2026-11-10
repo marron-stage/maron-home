@@ -30,7 +30,7 @@
       overflow: hidden;
     }
 
-    /* 固定タブバー */
+    /* 最前面 固定タブバー */
     #tab-bar {
       position: fixed;
       top: 14px;
@@ -139,7 +139,7 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* 定位置のくつろぎマロン（画面下部中央） */
+    /* 定位置のくつろぎマロン */
     #marronSpot {
       position: absolute;
       bottom: 7%;
@@ -310,7 +310,7 @@
     }
 
     /* =======================================
-       3. 添い寝部屋（完全全画面表示）
+       3. 添い寝部屋（BGM特化・完全全画面）
        ======================================= */
     #sleep-room {
       position: fixed;
@@ -377,7 +377,7 @@
     }
 
     /* =======================================
-       4. 日常部屋（6本グリッド）
+       4. 日常部屋（6本グリッド・完全オンデマンド）
        ======================================= */
     #daily-room {
       position: relative;
@@ -405,15 +405,26 @@
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .daily-item video {
+    .daily-thumb-placeholder {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #232323;
+      color: #aaa;
+      gap: 8px;
+    }
+
+    .daily-play-icon {
+      font-size: 1.8rem;
+      color: #4caf50;
     }
 
     .daily-title {
@@ -421,7 +432,7 @@
       bottom: 6px;
       left: 6px;
       right: 6px;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0, 0, 0, 0.65);
       color: #fff;
       font-size: 0.68rem;
       font-weight: 700;
@@ -530,15 +541,33 @@
       <audio id="sleepBgmAudio"></audio>
     </section>
 
-    <!-- 4. 日常部屋（6本グリッド） -->
+    <!-- 4. 日常部屋（完全オンデマンド読み込み：初期ダウンロードゼロ） -->
     <section id="daily-room" class="room-panel">
       <div class="daily-grid">
-        <div class="daily-item" data-video="marron.mp4"><video src="marron.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">まったりマロン</div></div>
-        <div class="daily-item" data-video="marron_cocoa.mp4"><video src="marron_cocoa.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">ココアとマロン</div></div>
-        <div class="daily-item" data-video="marron_wait.mp4"><video src="marron_wait.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">おやつ待て！</div></div>
-        <div class="daily-item" data-video="marron_proposal.mp4"><video src="marron_proposal.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">プロポーズ</div></div>
-        <div class="daily-item" data-video="marron_rescue.mp4"><video src="marron_rescue.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">レスキュー隊</div></div>
-        <div class="daily-item" data-video="marron_autumn.mp4"><video src="marron_autumn.mp4#t=0.001" preload="metadata" muted playsinline></video><div class="daily-title">秋のお散歩</div></div>
+        <div class="daily-item" data-video="marron.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">まったりマロン</div>
+        </div>
+        <div class="daily-item" data-video="marron_cocoa.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">ココアとマロン</div>
+        </div>
+        <div class="daily-item" data-video="marron_wait.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">おやつ待て！</div>
+        </div>
+        <div class="daily-item" data-video="marron_proposal.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">プロポーズ</div>
+        </div>
+        <div class="daily-item" data-video="marron_rescue.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">レスキュー隊</div>
+        </div>
+        <div class="daily-item" data-video="marron_autumn.mp4">
+          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
+          <div class="daily-title">秋のお散歩</div>
+        </div>
       </div>
     </section>
 
@@ -584,7 +613,6 @@
 
       let isHomeBgmOn = false;
 
-      // 既存素材へのフォールバック（marron_sit.mp4が未配置でもエラー停止しない）
       if (marronHomeVideo) {
         marronHomeVideo.onerror = () => {
           if (!marronHomeVideo.src.includes('marron.mp4')) {
@@ -654,7 +682,7 @@
         });
       }
 
-      // 定位置マロンのクロマキー透過描画
+      // 定位置マロンのクロマキー透過
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -674,7 +702,6 @@
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
                 const b = frame.data[i * 4 + 2];
-                // 青色除去
                 if (b > 110 && b > r * 1.25 && b > g * 1.15) {
                   frame.data[i * 4 + 3] = 0;
                 }
@@ -702,7 +729,6 @@
         }, duration);
       }
 
-      // 自動つぶやき
       setInterval(() => {
         if (!homeBubble || homeBubble.style.display === 'block') return;
         const category = getCurrentCategory(new Date().getHours());
@@ -710,7 +736,6 @@
         showBubble(list[Math.floor(Math.random() * list.length)], 3500);
       }, 12000);
 
-      // マロンタップ時の甘えセリフ
       const marronVoices = [
         "わふっ！なでてくれるの？",
         "クーン…そばにいてくれて嬉しいワン🐾",
@@ -836,7 +861,7 @@
       }
 
       /* ==============================================
-         5. 日常部屋
+         5. 日常部屋（完全オンデマンド読み込み）
          ============================================== */
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');
@@ -847,6 +872,7 @@
         item.addEventListener('click', () => {
           const videoSrc = item.getAttribute('data-video');
           if (cinemaVideo && cinemaModal) {
+            // タップされて初めて動画を読み込む
             cinemaVideo.src = videoSrc;
             cinemaModal.style.display = 'flex';
             cinemaVideo.play().catch(() => {});
@@ -858,7 +884,7 @@
         closeCinemaBtn.addEventListener('click', () => {
           cinemaModal.style.display = 'none';
           cinemaVideo.pause();
-          cinemaVideo.src = '';
+          cinemaVideo.src = ''; // メモリ解放
         });
       }
     });

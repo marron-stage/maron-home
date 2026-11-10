@@ -273,7 +273,7 @@
       border-radius: 4px;
     }
 
-    /* 右上ステータス群（コイン & ミッション & BGM） */
+    /* 右上ステータス群（コイン & お知らせ & ミッション & BGM） */
     .home-top-right {
       position: absolute;
       top: 72px;
@@ -302,7 +302,7 @@
 
     .home-action-row {
       display: flex;
-      gap: 6px;
+      gap: 5px;
     }
 
     .home-btn {
@@ -311,7 +311,7 @@
       -webkit-backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.8);
       color: #333;
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: 18px;
       font-size: 0.76rem;
       font-weight: 700;
@@ -322,7 +322,6 @@
 
     .home-btn:active { transform: scale(0.94); }
 
-    /* 変形クラスは廃止（フォルム維持） */
     #marronSpot {
       position: absolute;
       bottom: 5%;
@@ -398,8 +397,8 @@
       }
     }
 
-    /* デイリーミッション モーダル */
-    #missionModal {
+    /* モーダル共通 */
+    .app-modal {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.55);
@@ -410,20 +409,20 @@
       justify-content: center;
     }
 
-    .mission-box {
+    .modal-box {
       width: 88%;
       max-width: 340px;
       background: #fff;
       border-radius: 24px;
-      padding: 22px 20px;
+      padding: 20px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.25);
       border: 2px solid #e8f5e9;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
 
-    .mission-header {
+    .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -431,13 +430,13 @@
       padding-bottom: 8px;
     }
 
-    .mission-title {
+    .modal-title {
       font-size: 1.05rem;
       font-weight: 800;
       color: #2e7d32;
     }
 
-    .close-mission-btn {
+    .modal-close-btn {
       background: #f5f5f5;
       border: none;
       border-radius: 50%;
@@ -448,13 +447,15 @@
       cursor: pointer;
     }
 
-    .mission-list {
+    .mission-list, .news-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
+      max-height: 50vh;
+      overflow-y: auto;
     }
 
-    .mission-item {
+    .mission-item, .news-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -462,6 +463,25 @@
       padding: 10px 12px;
       border-radius: 14px;
       border: 1px solid #eee;
+    }
+
+    .news-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .news-date {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #2e7d32;
+    }
+
+    .news-content {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #444;
+      line-height: 1.4;
     }
 
     .mission-info {
@@ -855,7 +875,7 @@
     <section id="home-room" class="room-panel active">
       <div class="home-clock-widget">
         <div class="home-clock" id="clockDisplay">12:00</div>
-        <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
+        <div class="home-date" id="dateDisplay">2026.11.11 WED</div>
       </div>
 
       <!-- ごきげん度（なでなでメーター） -->
@@ -866,12 +886,13 @@
         </div>
       </div>
 
-      <!-- 右上ステータス（コイン・ミッション・BGM） -->
+      <!-- 右上ステータス（コイン・お知らせ・ミッション・BGM） -->
       <div class="home-top-right">
         <div class="coin-badge">
           <span>🪙</span><span id="coinCountDisplay">0</span>
         </div>
         <div class="home-action-row">
+          <button id="newsOpenBtn" class="home-btn">🔔</button>
           <button id="missionOpenBtn" class="home-btn">📋 ミッション</button>
           <button id="homeBgmBtn" class="home-btn">🎵 BGM</button>
         </div>
@@ -886,12 +907,25 @@
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
     </section>
 
+    <!-- お知らせモーダル -->
+    <div id="newsModal" class="app-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title">🔔 マロンからのお知らせ</div>
+          <button class="modal-close-btn" id="closeNewsBtn">✕</button>
+        </div>
+        <div class="news-list" id="newsListContainer">
+          <!-- JSで自動描画 -->
+        </div>
+      </div>
+    </div>
+
     <!-- デイリーミッション画面 -->
-    <div id="missionModal">
-      <div class="mission-box">
-        <div class="mission-header">
-          <div class="mission-title">🐾 デイリーミッション</div>
-          <button class="close-mission-btn" id="closeMissionBtn">✕</button>
+    <div id="missionModal" class="app-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-title">🐾 デイリーミッション</div>
+          <button class="modal-close-btn" id="closeMissionBtn">✕</button>
         </div>
         <div class="mission-list">
           <div class="mission-item">
@@ -1170,7 +1204,38 @@
       }
 
       /* ==============================================
-         2. コイン＆デイリーミッション管理
+         2. お知らせ（ニュース）機能
+         ============================================== */
+      const newsList = [
+        { date: "2026.11.11", text: "なでなでメーター＆お知らせ機能がついたワン！" },
+        { date: "2026.11.11", text: "玄関に合言葉（9648）ロックがついたワン🐾" },
+        { date: "2026.11.10", text: "マロンのお家がオープンしたワン！" }
+      ];
+
+      const newsOpenBtn = document.getElementById('newsOpenBtn');
+      const newsModal = document.getElementById('newsModal');
+      const closeNewsBtn = document.getElementById('closeNewsBtn');
+      const newsListContainer = document.getElementById('newsListContainer');
+
+      if (newsListContainer) {
+        newsList.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'news-item';
+          div.innerHTML = `<span class="news-date">${item.date}</span><span class="news-content">${item.text}</span>`;
+          newsListContainer.appendChild(div);
+        });
+      }
+
+      newsOpenBtn.addEventListener('click', () => {
+        newsModal.style.display = 'flex';
+      });
+
+      closeNewsBtn.addEventListener('click', () => {
+        newsModal.style.display = 'none';
+      });
+
+      /* ==============================================
+         3. コイン＆デイリーミッション管理
          ============================================== */
       let coins = parseInt(localStorage.getItem('marron_coins') || '0', 10);
       const coinCountDisplay = document.getElementById('coinCountDisplay');
@@ -1279,7 +1344,7 @@
       });
 
       /* ==============================================
-         3. なでなでメーター（約100往復でじっくり達成）
+         4. なでなでメーター（約1000回基準 ＆ なで中の「ク〜ン…」）
          ============================================== */
       const marronSpot = document.getElementById('marronSpot');
       const petGaugeFill = document.getElementById('petGaugeFill');
@@ -1287,6 +1352,7 @@
 
       let petProgress = 0; // 0 〜 100
       let lastPetTime = 0;
+      let lastSweetVoiceTime = 0;
 
       function spawnHeartParticle(x, y) {
         const p = document.createElement('div');
@@ -1307,8 +1373,14 @@
           playHapticPop();
           spawnHeartParticle(clientX, clientY);
 
-          // ★約100回のストロークで100%になるペース（+1.0%ずつ）
-          petProgress = Math.min(100, petProgress + 1.0);
+          // なでている間、約1.8秒ごとに「ク〜ン…」と甘え声を再生
+          if (now - lastSweetVoiceTime > 1800) {
+            lastSweetVoiceTime = now;
+            playAudioBuffer('sweet');
+          }
+
+          // 約1000回のスワイプで100%（1回あたり +0.1%）
+          petProgress = Math.min(100, petProgress + 0.1);
           petGaugeFill.style.width = `${petProgress}%`;
 
           if (!missionData.petDone) {
@@ -1317,6 +1389,7 @@
             updateMissionUI();
           }
 
+          // 1000回達成（100%）
           if (petProgress >= 100) {
             petProgress = 0;
             petGaugeFill.style.width = '0%';
@@ -1339,9 +1412,9 @@
             }
 
             const sweetReplies = [
-              "ごきげんMAXだワン！🪙コイン見つけたよ！💕",
-              "えへへ…しあわせ〜！コインあげるワン！🐾",
-              "大好き！ずっと一緒にいようね！🪙+1"
+              "1000回なでなで達成だワン！🪙コイン見つけたよ！💕",
+              "えへへ…ずっと撫でてくれてありがとう！🪙+1",
+              "マロン、最高にしあわせだワン！大好き！🐾"
             ];
             showBubble(sweetReplies[Math.floor(Math.random() * sweetReplies.length)], 3500);
           }
@@ -1355,7 +1428,7 @@
       });
 
       /* ==============================================
-         4. タブ切り替え & 他タブ時の完全消音
+         5. タブ切り替え & 他タブ時の完全消音
          ============================================== */
       const tabBtns = document.querySelectorAll('.tab-btn');
       const roomPanels = document.querySelectorAll('.room-panel');
@@ -1436,7 +1509,7 @@
       });
 
       /* ==============================================
-         5. お家部屋（クロマキー描画 ＆ アクション）
+         6. お家部屋（クロマキー描画 ＆ アクション）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
@@ -1691,7 +1764,7 @@
       }, 25000);
 
       /* ==============================================
-         6. 添い寝部屋
+         7. 添い寝部屋
          ============================================== */
       const sleepCanvas = document.getElementById('sleepCanvas');
       const sleepVideo = document.getElementById('sleepVideo');
@@ -1779,7 +1852,7 @@
       }
 
       /* ==============================================
-         7. 相談部屋
+         8. 相談部屋
          ============================================== */
       const talkBubble = document.getElementById('counselingBubble');
       const actionArea = document.getElementById('counselingActionArea');
@@ -1845,7 +1918,7 @@
       }
 
       /* ==============================================
-         8. 日常部屋
+         9. 日常部屋
          ============================================== */
       const closeCinemaBtn = document.getElementById('closeCinemaBtn');
       const dailyItems = document.querySelectorAll('.daily-item');

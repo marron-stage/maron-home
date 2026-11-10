@@ -614,6 +614,30 @@
 </head>
 <body>
 
+  <!-- ==============================================
+       事前固定オーディオ要素（大文字・小文字両対応）
+       ============================================== -->
+  <audio id="snd-bark" preload="auto">
+    <source src="bark.mp3" type="audio/mpeg">
+    <source src="bark.MP3" type="audio/mpeg">
+  </audio>
+  <audio id="snd-sweet" preload="auto">
+    <source src="sweet.mp3" type="audio/mpeg">
+    <source src="sweet.MP3" type="audio/mpeg">
+  </audio>
+  <audio id="snd-down" preload="auto">
+    <source src="down.mp3" type="audio/mpeg">
+    <source src="down.MP3" type="audio/mpeg">
+  </audio>
+  <audio id="snd-sit" preload="auto">
+    <source src="sit.mp3" type="audio/mpeg">
+    <source src="sit.MP3" type="audio/mpeg">
+  </audio>
+  <audio id="snd-sleep" preload="auto" loop>
+    <source src="sleep.mp3" type="audio/mpeg">
+    <source src="sleep.MP3" type="audio/mpeg">
+  </audio>
+
   <!-- 0. 玄関ドア・パスワード入力画面 -->
   <div id="door-lock-screen">
     <div class="door-frame" id="doorFrame">
@@ -725,52 +749,69 @@
       let isUnlocked = false;
 
       /* ==============================================
-         0. 独立サウンドエンジン（大文字・小文字 両対応）
+         0. 登録済みオーディオ要素の取得
          ============================================== */
-      let currentSfx = null;
-      let sleepBreathAudio = null;
+      const sndBark = document.getElementById('snd-bark');
+      const sndSweet = document.getElementById('snd-sweet');
+      const sndDown = document.getElementById('snd-down');
+      const sndSit = document.getElementById('snd-sit');
+      const sndSleep = document.getElementById('snd-sleep');
 
-      function playAudioSafe(baseName, isLoop = false) {
-        const audio = new Audio(`${baseName}.mp3`);
-        audio.loop = isLoop;
-        audio.onerror = () => {
-          audio.src = `${baseName}.MP3`;
-          audio.play().catch(() => {});
-        };
-        audio.play().catch(() => {});
-        return audio;
+      const allSounds = [sndBark, sndSweet, sndDown, sndSit, sndSleep];
+      let currentSfx = null;
+
+      // パスワード入力成功時の「全MP3一括アンロック処理」
+      function unlockAllAudioElements() {
+        allSounds.forEach(audio => {
+          if (!audio) return;
+          audio.volume = 0;
+          const p = audio.play();
+          if (p !== undefined) {
+            p.then(() => {
+              audio.pause();
+              audio.currentTime = 0;
+              audio.volume = 1.0;
+            }).catch(() => {
+              audio.volume = 1.0;
+            });
+          } else {
+            audio.volume = 1.0;
+          }
+        });
       }
 
-      function playSfx(baseName) {
-        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
+      function playFixedSound(soundElem) {
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || !soundElem) return;
         try {
-          if (currentSfx) {
+          if (currentSfx && currentSfx !== soundElem) {
             currentSfx.pause();
             currentSfx.currentTime = 0;
           }
-          currentSfx = playAudioSafe(baseName, false);
+          currentSfx = soundElem;
+          currentSfx.currentTime = 0;
+          currentSfx.play().catch(() => {});
         } catch(e) {}
       }
 
       function startSleepBreath() {
         stopSleepBreath();
-        if (isUnlocked && currentActiveRoom === 'sleep-room' && !document.hidden) {
-          sleepBreathAudio = playAudioSafe('sleep', true);
+        if (isUnlocked && currentActiveRoom === 'sleep-room' && !document.hidden && sndSleep) {
+          sndSleep.currentTime = 0;
+          sndSleep.play().catch(() => {});
         }
       }
 
       function stopSleepBreath() {
-        if (sleepBreathAudio) {
-          sleepBreathAudio.pause();
-          sleepBreathAudio.currentTime = 0;
-          sleepBreathAudio = null;
+        if (sndSleep) {
+          sndSleep.pause();
+          sndSleep.currentTime = 0;
         }
       }
 
       /* ==============================================
          1. 玄関ドア・パスワード機能（9648）
          ============================================== */
-      const doorLockScreen = document.getElementById('doorLockScreen') || document.getElementById('door-lock-screen');
+      const doorLockScreen = document.getElementById('door-lock-screen');
       const doorFrame = document.getElementById('doorFrame');
       const pinDots = [
         document.getElementById('dot0'),
@@ -796,15 +837,25 @@
       }
 
       function onUnlockSuccess() {
+        // パスワード入力の1タップで全MP3のロックを一括解除
+        unlockAllAudioElements();
+
         isUnlocked = true;
         doorLockScreen.classList.add('unlocked');
         setTimeout(() => {
           doorLockScreen.style.display = 'none';
         }, 600);
 
-        // 入室した瞬間にお出迎えの声（sit.mp3）を確実に再生
-        playSfx('sit');
-        showBubble("おかえりワン！待ってたよ🐾", 3500);
+        // ★入室した瞬間は「ワンワン（bark.mp3）」でお出迎え！
+        setTimeout(() => {
+          playFixedSound(sndBark);
+          // ワンワンアクション動画も同時に再生
+          marronHomeVideo.src = 'marron_bark.mp4';
+          marronHomeVideo.loop = false;
+          marronHomeVideo.play().catch(() => {});
+          marronHomeVideo.onended = finishAction;
+          showBubble("ワンワン！おかえり！待ってたワン！🐾", 3600);
+        }, 250);
       }
 
       function checkPin() {
@@ -812,7 +863,6 @@
           if (currentPin === CORRECT_PIN) {
             onUnlockSuccess();
           } else {
-            // パスワード不一致時の演出
             doorFrame.classList.add('shake-anim');
             setTimeout(() => {
               doorFrame.classList.remove('shake-anim');
@@ -829,7 +879,7 @@
             currentPin += btn.getAttribute('data-key');
             updateDots();
             if (currentPin.length === 4) {
-              setTimeout(checkPin, 150);
+              setTimeout(checkPin, 120);
             }
           }
         });
@@ -901,7 +951,7 @@
 
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          stopAllAudio();
+          stopAllAudio(); // 切り替え時に全サウンド停止
 
           currentActiveRoom = btn.getAttribute('data-room');
           tabBtns.forEach(b => b.classList.remove('active'));
@@ -974,7 +1024,7 @@
       const randomActions = [
         {
           video: 'marron_bark.mp4',
-          audioBase: 'bark',
+          soundElem: sndBark,
           messages: [
             "ワンワン！なでてくれて嬉しいワン！🐾",
             "わふっ！今日も元気いっぱいだワン！",
@@ -983,7 +1033,7 @@
         },
         {
           video: 'marron_sweet.mp4',
-          audioBase: 'sweet',
+          soundElem: sndSweet,
           messages: [
             "クーン…そばにいてくれて嬉しいワン🐾",
             "えへへ、もっと撫でてほしいワン…",
@@ -992,7 +1042,7 @@
         },
         {
           video: 'marron_down.mp4',
-          audioBase: 'down',
+          soundElem: sndDown,
           messages: [
             "ふぅ〜…ちょっとひと休みだワン🐾",
             "ペタ〜っ…のんびりするワン。",
@@ -1072,7 +1122,7 @@
         marronHomeVideo.muted = true;
         marronHomeVideo.play().catch(() => {});
 
-        playSfx(selected.audioBase);
+        playFixedSound(selected.soundElem);
         showBubble(text, 3600);
 
         marronHomeVideo.onended = finishAction;
@@ -1139,7 +1189,7 @@
         bubbleTimer = setTimeout(() => { homeBubble.style.display = 'none'; }, duration);
       }
 
-      // 時間帯別のランダム吹き出し
+      // 時間帯別のランダム吹き出し（通常待機音 sit.mp3 を再生）
       setInterval(() => {
         if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial) return;
         if (homeBubble && homeBubble.style.display === 'block') return;
@@ -1148,7 +1198,7 @@
         const list = timeBasedMessages[category];
         if (list && list.length > 0) {
           const msg = list[Math.floor(Math.random() * list.length)];
-          playSfx('sit');
+          playFixedSound(sndSit);
           showBubble(msg, 3800);
         }
       }, 16000);
@@ -1159,7 +1209,7 @@
           if (!isUnlocked || currentActiveRoom !== 'home-room') return;
           const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
           if (isMidnight) {
-            playSfx('sleep');
+            playFixedSound(sndSleep);
             const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
             showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
             return;

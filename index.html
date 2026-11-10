@@ -894,7 +894,7 @@
         <div class="home-action-row">
           <button id="newsOpenBtn" class="home-btn">🔔</button>
           <button id="missionOpenBtn" class="home-btn">📋 ミッション</button>
-          <button id="homeBgmBtn" class="home-btn">🎵 BGM</button>
+          <button id="homeBgmBtn" class="home-btn">🎵 BGM停止</button>
         </div>
       </div>
 
@@ -904,7 +904,7 @@
       </div>
 
       <video id="marronHomeVideo" playsinline muted autoplay loop style="display: none;"></video>
-      <audio id="homeAudio" src="bgm1.mp3" loop></audio>
+      <audio id="homeAudio" loop></audio>
     </section>
 
     <!-- お知らせモーダル -->
@@ -914,9 +914,7 @@
           <div class="modal-title">🔔 マロンからのお知らせ</div>
           <button class="modal-close-btn" id="closeNewsBtn">✕</button>
         </div>
-        <div class="news-list" id="newsListContainer">
-          <!-- JSで自動描画 -->
-        </div>
+        <div class="news-list" id="newsListContainer"></div>
       </div>
     </div>
 
@@ -1143,6 +1141,11 @@
           marronHomeVideo.play().catch(() => {});
         }
 
+        // 入室と同時に現在の時間帯BGMをうっすら音量（0.2）で自動再生
+        isHomeBgmOn = true;
+        updateHomeBgmByTime(true);
+        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM停止';
+
         doorLockScreen.classList.add('unlocked');
         setTimeout(() => {
           doorLockScreen.style.display = 'none';
@@ -1207,8 +1210,9 @@
          2. お知らせ（ニュース）機能
          ============================================== */
       const newsList = [
-        { date: "2026.11.11", text: "なでなでメーター＆お知らせ機能がついたワン！" },
-        { date: "2026.11.11", text: "玄関に合言葉（9648）ロックがついたワン🐾" },
+        { date: "2026.11.11", text: "時間帯別の専用BGMがうっすら流れるようになったワン！" },
+        { date: "2026.11.11", text: "なでなでメーター＆お知らせボタンがついたワン🐾" },
+        { date: "2026.11.11", text: "玄関に合言葉（9648）ロックがついたワン！" },
         { date: "2026.11.10", text: "マロンのお家がオープンしたワン！" }
       ];
 
@@ -1373,7 +1377,7 @@
           playHapticPop();
           spawnHeartParticle(clientX, clientY);
 
-          // なでている間、約1.8秒ごとに「ク〜ン…」と甘え声を再生
+          // なでている最中、約1.8秒ごとに「ク〜ン…」と甘え声を再生
           if (now - lastSweetVoiceTime > 1800) {
             lastSweetVoiceTime = now;
             playAudioBuffer('sweet');
@@ -1444,6 +1448,10 @@
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');
 
+      // ★BGM音量をうっすら「0.2（20%）」に設定
+      if (homeAudio) homeAudio.volume = 0.2;
+      if (sleepBgmAudio) sleepBgmAudio.volume = 0.25;
+
       let isHomeBgmOn = false;
       let isSleepSoundOn = false;
       let isLightOff = false;
@@ -1451,7 +1459,7 @@
       function stopAllAudio() {
         if (homeAudio) homeAudio.pause();
         isHomeBgmOn = false;
-        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM';
+        if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM再生';
 
         if (currentSourceNode) {
           try { currentSourceNode.stop(); } catch(e) {}
@@ -1496,6 +1504,10 @@
             if (marronHomeVideo && marronHomeVideo.paused) {
               marronHomeVideo.play().catch(() => {});
             }
+            // お家に戻った時はBGMを自動再開
+            isHomeBgmOn = true;
+            updateHomeBgmByTime(true);
+            if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM停止';
           }
         });
       });
@@ -1505,11 +1517,15 @@
           stopAllAudio();
         } else if (currentActiveRoom === 'sleep-room') {
           startSleepLoop();
+        } else if (currentActiveRoom === 'home-room' && isUnlocked) {
+          isHomeBgmOn = true;
+          updateHomeBgmByTime(true);
+          if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM停止';
         }
       });
 
       /* ==============================================
-         6. お家部屋（クロマキー描画 ＆ アクション）
+         6. お家部屋（5・5・4・5・5時間帯別BGM ＆ クロマキー描画）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
@@ -1519,6 +1535,7 @@
       const homeBubble = document.getElementById('homeBubble');
 
       let isPlayingSpecial = false;
+      let currentBgmCategory = '';
 
       const timeBasedMessages = {
         morning: [
@@ -1583,12 +1600,32 @@
         }
       ];
 
+      // ★黄金配分（5h, 5h, 4h, 5h, 5h）
       function getCurrentCategory(hour) {
-        if (hour >= 5 && hour < 11) return 'morning';
-        if (hour >= 11 && hour < 17) return 'day';
-        if (hour >= 17 && hour < 19) return 'sunset';
-        if (hour >= 19 && hour <= 23) return 'night';
-        return 'midnight';
+        if (hour >= 5 && hour < 10) return 'morning';  // 5:00〜9:59 (5h)
+        if (hour >= 10 && hour < 15) return 'day';     // 10:00〜14:59 (5h)
+        if (hour >= 15 && hour < 19) return 'sunset';  // 15:00〜18:59 (4h)
+        if (hour >= 19 && hour <= 23) return 'night';  // 19:00〜23:59 (5h)
+        return 'midnight';                             // 0:00〜4:59 (5h)
+      }
+
+      // 時間帯別BGMの自動切り替え再生（音量0.2固定・大文字フォールバック対応）
+      function updateHomeBgmByTime(forcePlay = false) {
+        if (!homeAudio || !isUnlocked || currentActiveRoom !== 'home-room') return;
+        const category = getCurrentCategory(new Date().getHours());
+
+        if (currentBgmCategory !== category || forcePlay) {
+          currentBgmCategory = category;
+          homeAudio.volume = 0.2;
+          homeAudio.src = `bgm_${category}.mp3`;
+          homeAudio.onerror = () => {
+            homeAudio.src = `bgm_${category}.MP3`;
+            if (isHomeBgmOn) homeAudio.play().catch(() => {});
+          };
+          if (isHomeBgmOn) {
+            homeAudio.play().catch(() => {});
+          }
+        }
       }
 
       function updateTimeAndBackground() {
@@ -1616,6 +1653,11 @@
           const mon = String(now.getMonth() + 1).padStart(2, '0');
           const d = String(now.getDate()).padStart(2, '0');
           dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
+        }
+
+        // 時間帯BGMの更新確認
+        if (isHomeBgmOn && currentBgmCategory !== category) {
+          updateHomeBgmByTime();
         }
 
         if (!isPlayingSpecial) {
@@ -1665,14 +1707,16 @@
       setInterval(updateTimeAndBackground, 1000);
       updateTimeAndBackground();
 
+      // BGMボタン（停止・再開の切り替え）
       if (homeBgmBtn && homeAudio) {
         homeBgmBtn.addEventListener('click', () => {
           isHomeBgmOn = !isHomeBgmOn;
           if (isHomeBgmOn) {
-            homeAudio.play().then(() => { homeBgmBtn.textContent = '🔇 停止'; }).catch(() => { isHomeBgmOn = false; });
+            updateHomeBgmByTime(true);
+            homeBgmBtn.textContent = '🎵 BGM停止';
           } else {
             homeAudio.pause();
-            homeBgmBtn.textContent = '🎵 BGM';
+            homeBgmBtn.textContent = '🎵 BGM再生';
           }
         });
       }
@@ -1835,6 +1879,7 @@
             if (!sleepBgmAudio.src || sleepBgmAudio.src === '') {
               sleepBgmAudio.src = sleepPlaylist[currentBgmIndex];
             }
+            sleepBgmAudio.volume = 0.25;
             sleepBgmAudio.play().then(() => {
               soundToggleBtn.textContent = '🔇 BGM停止';
               soundToggleBtn.classList.add('active');

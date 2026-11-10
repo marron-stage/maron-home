@@ -30,9 +30,7 @@
       overflow: hidden;
     }
 
-    /* =======================================
-       0. 玄関ドア・パスワードロック画面
-       ======================================= */
+    /* 0. 玄関ドア・パスワードロック画面 */
     #door-lock-screen {
       position: fixed;
       inset: 0;
@@ -198,9 +196,7 @@
       display: block;
     }
 
-    /* =======================================
-       1. お家部屋（リビング）
-       ======================================= */
+    /* 1. お家部屋 */
     #home-room {
       position: relative;
       background-color: #fdf6ee;
@@ -308,9 +304,7 @@
       display: block;
     }
 
-    /* =======================================
-       2. 相談部屋
-       ======================================= */
+    /* 2. 相談部屋 */
     #counsel-room {
       position: relative;
       background: #111;
@@ -427,9 +421,7 @@
       cursor: pointer;
     }
 
-    /* =======================================
-       3. 添い寝部屋（ふんわり背景 ＋ 常時安定マロン）
-       ======================================= */
+    /* 3. 添い寝部屋 */
     #sleep-room {
       position: fixed;
       inset: 0;
@@ -506,9 +498,7 @@
       border-color: rgba(255, 255, 255, 0.8);
     }
 
-    /* =======================================
-       4. 日常部屋（完全オンデマンド）
-       ======================================= */
+    /* 4. 日常部屋 */
     #daily-room {
       position: relative;
       background: #1a1a1a;
@@ -651,7 +641,7 @@
       <button class="tab-btn" data-room="daily-room">📱 日常</button>
     </nav>
 
-    <!-- 1. お家部屋（リビング） -->
+    <!-- 1. お家部屋 -->
     <section id="home-room" class="room-panel active">
       <div class="home-clock-widget">
         <div class="home-clock" id="clockDisplay">12:00</div>
@@ -665,7 +655,8 @@
         <canvas id="marronCanvas"></canvas>
       </div>
 
-      <video id="marronHomeVideo" playsinline muted style="display: none;"></video>
+      <!-- 常時muted・playsinline固定 -->
+      <video id="marronHomeVideo" playsinline muted autoplay loop style="display: none;"></video>
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
     </section>
 
@@ -687,6 +678,7 @@
       <div id="sleepMarronSpot">
         <canvas id="sleepCanvas"></canvas>
       </div>
+      <!-- 常時muted・playsinline固定 -->
       <video id="sleepVideo" src="marron_sleep.mp4" autoplay loop muted playsinline style="display: none;"></video>
       <div id="sleepOverlay"></div>
 
@@ -723,7 +715,7 @@
       let isUnlocked = false;
 
       /* ==============================================
-         0. iOS Safari 完全対応 Web Audio API エンジン
+         0. Web Audio API 音声エンジン
          ============================================== */
       let audioCtx = null;
       const audioBuffers = {};
@@ -741,7 +733,6 @@
         return audioCtx;
       }
 
-      // MP3バイナリ事前取得（大文字・小文字両対応フォールバック）
       async function loadSound(name) {
         try {
           const ctx = getAudioContext();
@@ -756,10 +747,8 @@
         } catch(e) {}
       }
 
-      // 5つの音声をバックグラウンドで事前ロード
       ['bark', 'sit', 'sweet', 'down', 'sleep'].forEach(name => loadSound(name));
 
-      // 効果音再生
       function playAudioBuffer(name) {
         if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
         const ctx = getAudioContext();
@@ -779,7 +768,6 @@
         } catch(e) {}
       }
 
-      // 添い寝部屋：寝息・寝言ループ再生
       function startSleepLoop() {
         stopSleepLoop();
         if (!isUnlocked || currentActiveRoom !== 'sleep-room' || document.hidden) return;
@@ -838,15 +826,18 @@
       function onUnlockSuccess() {
         isUnlocked = true;
 
-        // ★タップの瞬間に即時再生（iOSのセキュリティブロックを回避）
         playAudioBuffer('bark');
+
+        // 動画の再生を確実化
+        if (marronHomeVideo) {
+          marronHomeVideo.play().catch(() => {});
+        }
 
         doorLockScreen.classList.add('unlocked');
         setTimeout(() => {
           doorLockScreen.style.display = 'none';
         }, 500);
 
-        // マロンのお出迎えアクション
         marronHomeVideo.src = 'marron_bark.mp4';
         marronHomeVideo.loop = false;
         marronHomeVideo.play().catch(() => {});
@@ -869,35 +860,33 @@
         }
       }
 
+      // e.preventDefault() を削除し、iOS Safariの操作権限を正しく維持
       keyBtns.forEach(btn => {
-        // iOS Safariで確実にタッチの瞬間にオーディオマスターを起動
-        const handleInput = (e) => {
-          e.preventDefault();
-          getAudioContext(); // ユーザー操作の瞬間に確実に起動
+        btn.addEventListener('click', () => {
+          getAudioContext();
+          if (marronHomeVideo && marronHomeVideo.paused) {
+            marronHomeVideo.play().catch(() => {});
+          }
 
           if (currentPin.length < 4) {
             currentPin += btn.getAttribute('data-key');
             updateDots();
             if (currentPin.length === 4) {
-              checkPin(); // 遅延を挟まず直結実行
+              checkPin();
             }
           }
-        };
-        btn.addEventListener('touchstart', handleInput, { passive: false });
-        btn.addEventListener('click', handleInput);
+        });
       });
 
       if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-          e.preventDefault();
+        clearBtn.addEventListener('click', () => {
           currentPin = "";
           updateDots();
         });
       }
 
       if (backspaceBtn) {
-        backspaceBtn.addEventListener('click', (e) => {
-          e.preventDefault();
+        backspaceBtn.addEventListener('click', () => {
           if (currentPin.length > 0) {
             currentPin = currentPin.slice(0, -1);
             updateDots();
@@ -967,6 +956,13 @@
 
           if (currentActiveRoom === 'sleep-room') {
             startSleepLoop();
+            if (sleepVideo && sleepVideo.paused) {
+              sleepVideo.play().catch(() => {});
+            }
+          } else if (currentActiveRoom === 'home-room') {
+            if (marronHomeVideo && marronHomeVideo.paused) {
+              marronHomeVideo.play().catch(() => {});
+            }
           }
         });
       });
@@ -1154,7 +1150,7 @@
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
         function renderChromaKey() {
-          if (!marronHomeVideo.paused && !marronHomeVideo.ended) {
+          if (marronHomeVideo.readyState >= 2 && !marronHomeVideo.paused && !marronHomeVideo.ended) {
             if (marronCanvas.width !== marronHomeVideo.videoWidth && marronHomeVideo.videoWidth > 0) {
               marronCanvas.width = marronHomeVideo.videoWidth;
               marronCanvas.height = marronHomeVideo.videoHeight;
@@ -1176,11 +1172,15 @@
               }
               ctx.putImageData(frame, 0, 0);
             }
+          } else if (marronHomeVideo.paused && isUnlocked) {
+            marronHomeVideo.play().catch(() => {});
           }
           requestAnimationFrame(renderChromaKey);
         }
 
-        marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {});
+        marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {
+          renderChromaKey();
+        });
       }
 
       // 吹き出し管理
@@ -1193,7 +1193,7 @@
         bubbleTimer = setTimeout(() => { homeBubble.style.display = 'none'; }, duration);
       }
 
-      // 時間帯別のランダム吹き出し（通常待機音 sit.mp3 を再生）
+      // 時間帯別のランダム吹き出し
       setInterval(() => {
         if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial) return;
         if (homeBubble && homeBubble.style.display === 'block') return;
@@ -1237,12 +1237,13 @@
          4. 添い寝部屋（青背景透過 ＋ 連続BGMループ）
          ============================================== */
       const sleepCanvas = document.getElementById('sleepCanvas');
+      const sleepVideo = document.getElementById('sleepVideo');
 
       if (sleepCanvas && sleepVideo) {
         const sCtx = sleepCanvas.getContext('2d', { willReadFrequently: true });
 
         function renderSleepChromaKey() {
-          if (!sleepVideo.paused && !sleepVideo.ended) {
+          if (sleepVideo.readyState >= 2 && !sleepVideo.paused && !sleepVideo.ended) {
             if (sleepCanvas.width !== sleepVideo.videoWidth && sleepVideo.videoWidth > 0) {
               sleepCanvas.width = sleepVideo.videoWidth;
               sleepCanvas.height = sleepVideo.videoHeight;
@@ -1264,12 +1265,16 @@
               }
               sCtx.putImageData(frame, 0, 0);
             }
+          } else if (sleepVideo.paused && isUnlocked && currentActiveRoom === 'sleep-room') {
+            sleepVideo.play().catch(() => {});
           }
           requestAnimationFrame(renderSleepChromaKey);
         }
 
         sleepVideo.muted = true;
-        sleepVideo.play().then(() => { renderSleepChromaKey(); }).catch(() => {});
+        sleepVideo.play().then(() => { renderSleepChromaKey(); }).catch(() => {
+          renderSleepChromaKey();
+        });
       }
 
       const sleepPlaylist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3', 'bgm4.mp3'];
@@ -1377,7 +1382,7 @@
       }
 
       /* ==============================================
-         6. 日常部屋（完全オンデマンド読み込み）
+         6. 日常部屋
          ============================================== */
       const closeCinemaBtn = document.getElementById('closeCinemaBtn');
       const dailyItems = document.querySelectorAll('.daily-item');

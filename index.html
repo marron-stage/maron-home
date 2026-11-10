@@ -139,17 +139,17 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    /* 耳切れ防止：ゆとりのある描画エリア */
+    /* 耳切れ防止・ゆとり配置マロン */
     #marronSpot {
       position: absolute;
       bottom: 5%;
       left: 50%;
       transform: translateX(-50%);
-      width: 230px; /* 耳を傾けても収まる十分な幅 */
+      width: 230px;
       height: auto;
       cursor: pointer;
       z-index: 20;
-      overflow: visible; /* 枠外クリップを完全解除 */
+      overflow: visible;
     }
 
     #marronCanvas {
@@ -503,14 +503,14 @@
 
       <button id="homeBgmBtn">🎵 BGM ON</button>
 
-      <!-- 耳切れ防止・ゆとり配置マロン -->
+      <!-- 定位置マロン -->
       <div id="marronSpot">
         <div id="homeBubble"></div>
         <canvas id="marronCanvas"></canvas>
       </div>
 
       <!-- マロン動画ソース -->
-      <video id="marronHomeVideo" src="marron_sit.mp4" playsinline muted loop style="display: none;"></video>
+      <video id="marronHomeVideo" playsinline muted style="display: none;"></video>
 
       <!-- お部屋BGM -->
       <audio id="homeAudio" src="bgm1.mp3" loop></audio>
@@ -545,30 +545,12 @@
     <!-- 4. 日常部屋（完全オンデマンド） -->
     <section id="daily-room" class="room-panel">
       <div class="daily-grid">
-        <div class="daily-item" data-video="marron.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">まったりマロン</div>
-        </div>
-        <div class="daily-item" data-video="marron_cocoa.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">ココアとマロン</div>
-        </div>
-        <div class="daily-item" data-video="marron_wait.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">おやつ待て！</div>
-        </div>
-        <div class="daily-item" data-video="marron_proposal.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">プロポーズ</div>
-        </div>
-        <div class="daily-item" data-video="marron_rescue.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">レスキュー隊</div>
-        </div>
-        <div class="daily-item" data-video="marron_autumn.mp4">
-          <div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div>
-          <div class="daily-title">秋のお散歩</div>
-        </div>
+        <div class="daily-item" data-video="marron.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">まったりマロン</div></div>
+        <div class="daily-item" data-video="marron_cocoa.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">ココアとマロン</div></div>
+        <div class="daily-item" data-video="marron_wait.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">おやつ待て！</div></div>
+        <div class="daily-item" data-video="marron_proposal.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">プロポーズ</div></div>
+        <div class="daily-item" data-video="marron_rescue.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">レスキュー隊</div></div>
+        <div class="daily-item" data-video="marron_autumn.mp4"><div class="daily-thumb-placeholder"><span class="daily-play-icon">▶</span></div><div class="daily-title">秋のお散歩</div></div>
       </div>
     </section>
 
@@ -600,7 +582,7 @@
       });
 
       /* ==============================================
-         2. お家部屋（PNG直接読み込み・比率維持描画）
+         2. お家部屋（深夜0〜5時睡眠 / 3アクション完全ランダム）
          ============================================== */
       const homeRoom = document.getElementById('home-room');
       const clockDisplay = document.getElementById('clockDisplay');
@@ -613,33 +595,44 @@
       const homeBubble = document.getElementById('homeBubble');
 
       let isHomeBgmOn = false;
+      let isPlayingSpecial = false;
 
-      if (marronHomeVideo) {
-        marronHomeVideo.onerror = () => {
-          if (!marronHomeVideo.src.includes('marron.mp4')) {
-            marronHomeVideo.src = 'marron.mp4';
-            marronHomeVideo.play().catch(() => {});
-          }
-        };
-      }
-
-      const timeBasedMessages = {
-        morning: ["おはよう！今日もいいお天気だワン🐾", "朝ごはん食べた？いっぱい食べてね！", "のび〜っ！今日も一緒に頑張ろ！"],
-        day: ["お昼ご飯はなにかな〜？クーン🐾", "ひと息つこ？無理は禁物だワン！", "日差しが気持ちいいワン…"],
-        sunset: ["今日もおつかれさまだワン！", "夕焼けきれいだワン…お腹すいた！", "1日よく頑張ったね、えらいワン！"],
-        night: ["今日も最後まで生き抜いてえらかったワン。", "夜はのんびり過ごそうね。", "マロンはずーっとそばにいるワン。"],
-        midnight: ["まだ起きてるの？夜更かしはほどほどにね。", "無理しないで眠くなったら寝てね…", "おやすみワン…zzz"]
-      };
+      // 3つのランダムアクション定義（ワンワン・クーン・伏せ）
+      const randomActions = [
+        {
+          video: 'marron_bark.mp4',
+          messages: [
+            "ワンワン！なでてくれて嬉しいワン！🐾",
+            "わふっ！今日も元気いっぱいだワン！",
+            "ワン！一緒にあそぼ〜！"
+          ]
+        },
+        {
+          video: 'marron_sweet.mp4',
+          messages: [
+            "クーン…そばにいてくれて嬉しいワン🐾",
+            "えへへ、もっと撫でてほしいワン…",
+            "ク〜ン…大好きなんだワン！"
+          ]
+        },
+        {
+          video: 'marron_down.mp4',
+          messages: [
+            "ふぅ〜…ちょっとひと休みだワン🐾",
+            "ペタ〜っ…のんびりするワン。",
+            "ここでゴロゴロして待ってるね！"
+          ]
+        }
+      ];
 
       function getCurrentCategory(hour) {
         if (hour >= 5 && hour < 11) return 'morning';
         if (hour >= 11 && hour < 17) return 'day';
         if (hour >= 17 && hour < 19) return 'sunset';
         if (hour >= 19 && hour <= 23) return 'night';
-        return 'midnight';
+        return 'midnight'; // 0:00〜4:59
       }
 
-      // PNGのみを直接読み込み（JPEG探索の無駄を完全排除）
       function updateTimeAndBackground() {
         const now = new Date();
         const hour = now.getHours();
@@ -649,12 +642,8 @@
         if (homeRoom) {
           const img = new Image();
           img.src = pngSrc;
-          img.onload = () => {
-            homeRoom.style.backgroundImage = `url('${pngSrc}')`;
-          };
-          img.onerror = () => {
-            homeRoom.style.backgroundImage = `url('room.png')`;
-          };
+          img.onload = () => { homeRoom.style.backgroundImage = `url('${pngSrc}')`; };
+          img.onerror = () => { homeRoom.style.backgroundImage = `url('room.png')`; };
         }
 
         if (clockDisplay) {
@@ -670,17 +659,56 @@
           const d = String(now.getDate()).padStart(2, '0');
           dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
         }
+
+        // 深夜0〜5時は睡眠ループ、それ以外はお座り待機
+        if (!isPlayingSpecial) {
+          const isMidnight = (category === 'midnight');
+          const targetBaseVideo = isMidnight ? 'marron_sleep.mp4' : 'marron_sit.mp4';
+          if (!marronHomeVideo.src.includes(targetBaseVideo)) {
+            playBaseVideo(targetBaseVideo);
+          }
+        }
       }
+
+      function playBaseVideo(videoSrc) {
+        marronHomeVideo.src = videoSrc;
+        marronHomeVideo.loop = true;
+        marronHomeVideo.play().catch(() => {});
+      }
+
+      function triggerRandomAction() {
+        if (isPlayingSpecial) return;
+        isPlayingSpecial = true;
+
+        // 3つのアクションから均等にランダム抽選
+        const selected = randomActions[Math.floor(Math.random() * randomActions.length)];
+        const text = selected.messages[Math.floor(Math.random() * selected.messages.length)];
+
+        marronHomeVideo.src = selected.video;
+        marronHomeVideo.loop = false;
+        marronHomeVideo.play().catch(() => {});
+
+        showBubble(text, 3500);
+
+        marronHomeVideo.onended = () => {
+          isPlayingSpecial = false;
+          marronHomeVideo.onended = null;
+          const cat = getCurrentCategory(new Date().getHours());
+          playBaseVideo(cat === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
+        };
+      }
+
+      // 初回起動
+      playBaseVideo(getCurrentCategory(new Date().getHours()) === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
       setInterval(updateTimeAndBackground, 1000);
       updateTimeAndBackground();
 
+      // BGMボタン
       if (homeBgmBtn && homeAudio) {
         homeBgmBtn.addEventListener('click', () => {
           isHomeBgmOn = !isHomeBgmOn;
           if (isHomeBgmOn) {
-            homeAudio.play().then(() => {
-              homeBgmBtn.textContent = '🔇 BGM OFF';
-            }).catch(() => { isHomeBgmOn = false; });
+            homeAudio.play().then(() => { homeBgmBtn.textContent = '🔇 BGM OFF'; }).catch(() => { isHomeBgmOn = false; });
           } else {
             homeAudio.pause();
             homeBgmBtn.textContent = '🎵 BGM ON';
@@ -688,7 +716,7 @@
         });
       }
 
-      // マロンのクロマキー透過＆耳切れ防止アスペクト比維持
+      // 定位置マロンのクロマキー透過描画
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -720,9 +748,7 @@
           requestAnimationFrame(renderChromaKey);
         }
 
-        marronHomeVideo.play().then(() => {
-          renderChromaKey();
-        }).catch(() => {});
+        marronHomeVideo.play().then(() => { renderChromaKey(); }).catch(() => {});
       }
 
       // 吹き出し管理
@@ -732,33 +758,35 @@
         clearTimeout(bubbleTimer);
         homeBubble.textContent = text;
         homeBubble.style.display = 'block';
-        bubbleTimer = setTimeout(() => {
-          homeBubble.style.display = 'none';
-        }, duration);
+        bubbleTimer = setTimeout(() => { homeBubble.style.display = 'none'; }, duration);
       }
 
-      setInterval(() => {
-        if (!homeBubble || homeBubble.style.display === 'block') return;
-        const category = getCurrentCategory(new Date().getHours());
-        const list = timeBasedMessages[category];
-        showBubble(list[Math.floor(Math.random() * list.length)], 3500);
-      }, 12000);
-
-      const marronVoices = [
-        "わふっ！なでてくれるの？",
-        "クーン…そばにいてくれて嬉しいワン🐾",
-        "今日も一日お疲れさまだよ！",
-        "マロンはずーっと君の味方だワン！",
-        "えへへ、お腹なでて〜！"
-      ];
+      // マロンをタップした時
       if (marronSpot) {
         marronSpot.addEventListener('click', () => {
-          showBubble(marronVoices[Math.floor(Math.random() * marronVoices.length)], 3000);
+          const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
+          if (isMidnight) {
+            const sleepReplies = ["むにゃ…まだ起きてるの？", "すやすや…zzz", "マロンの夢見てね…クーン…"];
+            showBubble(sleepReplies[Math.floor(Math.random() * sleepReplies.length)], 3000);
+            return;
+          }
+          // ワンワン、クーン、伏せからランダム発動
+          triggerRandomAction();
         });
       }
 
+      // 放置時のたまに起きるランダムな仕草（約22秒に1回の判定・45%の確率で発動）
+      setInterval(() => {
+        const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
+        if (isMidnight || isPlayingSpecial) return;
+
+        if (Math.random() < 0.45) {
+          triggerRandomAction();
+        }
+      }, 22000);
+
       /* ==============================================
-         3. 添い寝部屋（BGMループ）
+         3. 添い寝部屋（BGM連続ループ再生）
          ============================================== */
       const lightToggleBtn = document.getElementById('lightToggleBtn');
       const sleepOverlay = document.getElementById('sleepOverlay');
@@ -869,7 +897,7 @@
       }
 
       /* ==============================================
-         5. 日常部屋（オンデマンド読み込み）
+         5. 日常部屋（完全オンデマンド読み込み）
          ============================================== */
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');

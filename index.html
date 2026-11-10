@@ -234,6 +234,45 @@
       margin-top: 2px;
     }
 
+    /* ごきげん度（なでなでメーター） */
+    .pet-gauge-container {
+      position: absolute;
+      top: 136px;
+      left: 18px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(8px);
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      z-index: 10;
+    }
+
+    .pet-gauge-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #e91e63;
+    }
+
+    .pet-gauge-track {
+      width: 75px;
+      height: 7px;
+      background: #fce4ec;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .pet-gauge-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff80ab, #f50057);
+      transition: width 0.15s ease;
+      border-radius: 4px;
+    }
+
     /* 右上ステータス群（コイン & ミッション & BGM） */
     .home-top-right {
       position: absolute;
@@ -294,6 +333,12 @@
       z-index: 20;
       overflow: visible;
       touch-action: none;
+      transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* なでなで時の「ふにふに・ぷるん」アニメーション */
+    #marronSpot.pet-squish {
+      transform: translateX(-50%) scale(1.04, 0.94);
     }
 
     #marronCanvas {
@@ -336,7 +381,6 @@
       display: block;
     }
 
-    /* なでなでパーティクル（ハート＆キラキラ） */
     .pet-particle {
       position: fixed;
       pointer-events: none;
@@ -819,6 +863,14 @@
         <div class="home-date" id="dateDisplay">2026.11.10 TUE</div>
       </div>
 
+      <!-- ごきげん度（なでなでメーター） -->
+      <div class="pet-gauge-container">
+        <span class="pet-gauge-label">💖 ごきげん</span>
+        <div class="pet-gauge-track">
+          <div class="pet-gauge-fill" id="petGaugeFill"></div>
+        </div>
+      </div>
+
       <!-- 右上ステータス（コイン・ミッション・BGM） -->
       <div class="home-top-right">
         <div class="coin-badge">
@@ -926,7 +978,7 @@
       let isUnlocked = false;
 
       /* ==============================================
-         0. Web Audio API 音声エンジン
+         0. Web Audio API 音声エンジン ＆ 擬似触覚音
          ============================================== */
       let audioCtx = null;
       const audioBuffers = {};
@@ -942,6 +994,27 @@
           audioCtx.resume();
         }
         return audioCtx;
+      }
+
+      // なでなで時の極小タップ擬似振動音（ポコッ）
+      function playHapticPop() {
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
+        try {
+          const ctx = getAudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(120, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.05);
+
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.05);
+        } catch(e) {}
       }
 
       async function loadSound(name) {
@@ -1137,7 +1210,6 @@
       updateCoinDisplay();
 
       function updateMissionUI() {
-        // ログイン
         if (missionData.loginClaimed) {
           claimLoginBtn.textContent = '済';
           claimLoginBtn.className = 'claim-btn claimed';
@@ -1146,7 +1218,6 @@
           claimLoginBtn.className = 'claim-btn ready';
         }
 
-        // なでなで
         if (missionData.petClaimed) {
           claimPetBtn.textContent = '済';
           claimPetBtn.className = 'claim-btn claimed';
@@ -1158,7 +1229,6 @@
           claimPetBtn.className = 'claim-btn';
         }
 
-        // お手紙
         if (missionData.letterClaimed) {
           claimLetterBtn.textContent = '済';
           claimLetterBtn.className = 'claim-btn claimed';
@@ -1215,12 +1285,15 @@
       });
 
       /* ==============================================
-         3. スワイプなでなで＆キラキラハート演出
+         3. なでなでメーター ＆ ぷるぷる手応え演出
          ============================================== */
       const marronSpot = document.getElementById('marronSpot');
+      const petGaugeFill = document.getElementById('petGaugeFill');
       const heartIcons = ['💖', '✨', '💕', '🐾', '🌸'];
-      let petMoveCount = 0;
+
+      let petProgress = 0; // 0 〜 100
       let lastPetTime = 0;
+      let squishTimer = null;
 
       function spawnHeartParticle(x, y) {
         const p = document.createElement('div');
@@ -1235,31 +1308,62 @@
       function handlePetMove(clientX, clientY) {
         if (!isUnlocked || currentActiveRoom !== 'home-room') return;
         const now = Date.now();
-        if (now - lastPetTime > 65) {
+        if (now - lastPetTime > 55) {
           lastPetTime = now;
-          spawnHeartParticle(clientX, clientY);
-          petMoveCount++;
 
-          // 12回スワイプするとなでなで成功！
-          if (petMoveCount === 12) {
+          // 擬似ハプティクス（ポコッ音）＆ハート
+          playHapticPop();
+          spawnHeartParticle(clientX, clientY);
+
+          // マロンのふにふに弾力アニメ
+          marronSpot.classList.add('pet-squish');
+          clearTimeout(squishTimer);
+          squishTimer = setTimeout(() => {
+            marronSpot.classList.remove('pet-squish');
+          }, 110);
+
+          // メーター上昇（約12回のスワイプで100%達成）
+          petProgress = Math.min(100, petProgress + 8.5);
+          petGaugeFill.style.width = `${petProgress}%`;
+
+          // デイリーミッション「なでなで」を達成
+          if (!missionData.petDone) {
+            missionData.petDone = true;
+            localStorage.setItem('marron_missions', JSON.stringify(missionData));
+            updateMissionUI();
+          }
+
+          // ★100%達成時の大喜びボーナス
+          if (petProgress >= 100) {
+            petProgress = 0;
+            petGaugeFill.style.width = '0%';
+
+            // コイン+1ボーナス！
+            coins += 1;
+            updateCoinDisplay();
+
+            // 甘え声＆アクション
             playAudioBuffer('sweet');
             marronHomeVideo.src = 'marron_sweet.mp4';
             marronHomeVideo.loop = false;
             marronHomeVideo.play().catch(() => {});
             marronHomeVideo.onended = finishAction;
 
+            // 画面いっぱいにハート吹雪
+            for (let i = 0; i < 7; i++) {
+              setTimeout(() => {
+                const rx = clientX + (Math.random() * 120 - 60);
+                const ry = clientY + (Math.random() * 80 - 40);
+                spawnHeartParticle(rx, ry);
+              }, i * 60);
+            }
+
             const sweetReplies = [
-              "えへへ…なでなで気持ちいいワン…🐾",
-              "ク〜ン…もっと撫でてほしいワン！",
-              "大好きなんだワン！しあわせ…💕"
+              "ごきげんMAXだワン！🪙コイン見つけたよ！💕",
+              "えへへ…しあわせ〜！コインあげるワン！🐾",
+              "大好き！ずっと一緒にいようね！🪙+1"
             ];
             showBubble(sweetReplies[Math.floor(Math.random() * sweetReplies.length)], 3500);
-
-            if (!missionData.petDone) {
-              missionData.petDone = true;
-              localStorage.setItem('marron_missions', JSON.stringify(missionData));
-              updateMissionUI();
-            }
           }
         }
       }
@@ -1268,10 +1372,6 @@
         if (e.buttons > 0 || e.pointerType === 'touch') {
           handlePetMove(e.clientX, e.clientY);
         }
-      });
-
-      marronSpot.addEventListener('pointerup', () => {
-        petMoveCount = 0;
       });
 
       /* ==============================================
@@ -1588,7 +1688,6 @@
 
       // マロンをタップした時
       marronSpot.addEventListener('click', (e) => {
-        if (petMoveCount > 0) return;
         if (!isUnlocked || currentActiveRoom !== 'home-room') return;
         const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
         if (isMidnight) {
@@ -1725,7 +1824,6 @@
           if (actionArea) actionArea.style.display = 'none';
           if (talkBubble) talkBubble.style.display = 'none';
 
-          // お手紙ミッション達成
           if (!missionData.letterDone) {
             missionData.letterDone = true;
             localStorage.setItem('marron_missions', JSON.stringify(missionData));

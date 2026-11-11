@@ -617,21 +617,38 @@
       line-height: 1.4;
     }
 
-    #sendLetterBtn {
+    /* 2分岐ボタングループ */
+    .counsel-btn-row {
+      display: flex;
+      gap: 8px;
       width: 100%;
-      padding: 12px;
+    }
+
+    .counsel-btn {
+      flex: 1;
+      padding: 12px 6px;
       border-radius: 16px;
       border: none;
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.82rem;
       cursor: pointer;
-      background: linear-gradient(135deg, #4caf50, #2e7d32);
       color: #fff;
-      box-shadow: 0 4px 14px rgba(46, 125, 50, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.1s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    #sendLetterBtn:active { transform: scale(0.97); }
+    .counsel-btn:active { transform: scale(0.97); }
+
+    .counsel-btn.bury {
+      background: linear-gradient(135deg, #4caf50, #2e7d32);
+    }
+
+    .counsel-btn.praise {
+      background: linear-gradient(135deg, #ffa726, #f57c00);
+    }
 
     #counselResetBtn {
       position: absolute;
@@ -958,7 +975,10 @@
 
       <div id="counselingActionArea">
         <textarea id="counselingInput" placeholder="マロンに手紙を書いてみてね（愚痴も、嬉しかったことも何でもいいワン）..."></textarea>
-        <button id="sendLetterBtn">✉️ マロンに手紙を渡す</button>
+        <div class="counsel-btn-row">
+          <button id="sendBuryBtn" class="counsel-btn bury">🌱 モヤモヤを埋める</button>
+          <button id="sendPraiseBtn" class="counsel-btn praise">✨ 嬉しい報告をする</button>
+        </div>
       </div>
 
       <button id="counselResetBtn">ありがとう、またお話しするワン🐾</button>
@@ -1209,6 +1229,7 @@
          2. お知らせ（ニュース）機能
          ============================================== */
       const newsList = [
+        { date: "2026.11.11", text: "相談部屋で「モヤモヤを埋める」「嬉しい報告」が選べるようになったワン！" },
         { date: "2026.11.11", text: "なでなで専用の喜ぶマロンのアニメーションがついたワン！" },
         { date: "2026.11.11", text: "時間帯別の専用BGMがうっすら流れるようになったワン！" },
         { date: "2026.11.11", text: "なでなでメーター＆お知らせボタンがついたワン🐾" },
@@ -1370,7 +1391,6 @@
         setTimeout(() => p.remove(), 900);
       }
 
-      // なでなで専用動画（marron_pet.mp4）を開始
       function startPetVideo() {
         if (!isPettingActive) {
           isPettingActive = true;
@@ -1386,7 +1406,6 @@
           }
         }
         clearTimeout(petStopTimer);
-        // なでるのをやめてから約1.1秒後に通常状態へ戻す
         petStopTimer = setTimeout(() => {
           stopPetVideo();
         }, 1100);
@@ -1410,16 +1429,13 @@
           playHapticPop();
           spawnHeartParticle(clientX, clientY);
 
-          // なでなで中専用動画の再生をキープ
           startPetVideo();
 
-          // なでている間、約1.8秒ごとに甘え声（sweet）
           if (now - lastSweetVoiceTime > 1800) {
             lastSweetVoiceTime = now;
             playAudioBuffer('sweet');
           }
 
-          // 約1000回のスワイプで100%（1回あたり +0.1%）
           petProgress = Math.min(100, petProgress + 0.1);
           petGaugeFill.style.width = `${petProgress}%`;
 
@@ -1429,7 +1445,6 @@
             updateMissionUI();
           }
 
-          // 1000回達成（100%）
           if (petProgress >= 100) {
             petProgress = 0;
             petGaugeFill.style.width = '0%';
@@ -1750,7 +1765,7 @@
         });
       }
 
-      // お家マロンの青背景（ブルーバック）クロマキー透過描画
+      // お家マロンの青背景クロマキー透過描画
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -1767,7 +1782,6 @@
               const frame = ctx.getImageData(0, 0, marronCanvas.width, marronCanvas.height);
               const l = frame.data.length / 4;
 
-              // 青色（ブルーバック）を判定して透明化
               for (let i = 0; i < l; i++) {
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
@@ -1928,11 +1942,12 @@
       }
 
       /* ==============================================
-         8. 相談部屋
+         8. 相談部屋（モヤモヤ浄化 ＆ 嬉しい報告ハイタッチ）
          ============================================== */
       const talkBubble = document.getElementById('counselingBubble');
       const actionArea = document.getElementById('counselingActionArea');
-      const sendBtn = document.getElementById('sendLetterBtn');
+      const sendBuryBtn = document.getElementById('sendBuryBtn');
+      const sendPraiseBtn = document.getElementById('sendPraiseBtn');
       const resetBtn = document.getElementById('counselResetBtn');
       const counselInput = document.getElementById('counselingInput');
 
@@ -1944,28 +1959,62 @@
         "ぜーんぶ土に還してきれいなお花にしちゃった！胸のつかえ、少しは軽くなったかな？ずっとそばにいるワン。",
         "無理に前を向かなくていいんだよ。立ち止まって、マロンをなでなでして、深呼吸しよ。",
         "手紙を届けてくれてありがとう。心に溜まってたトゲトゲ、マロンがペロペロしてまるくしといたワン！",
-        "世の中のみんなが敵になっても、マロンはずーっとあなたの味方だからね。約束だワン。",
-        "嬉しいことも、悔しいことも、全部マロンに話してくれてありがとう。あなたの一番の理解者でいるワン！"
+        "世の中のみんなが敵になっても、マロンはずーっとあなたの味方だからね。約束だワン。"
       ];
 
-      if (sendBtn && talkVideo) {
-        sendBtn.addEventListener('click', () => {
+      const praiseMessages = [
+        "やったーーーーっ！！すごいワン！！大成功だワン！🐾🎉",
+        "マロンも飛び上がるくらい嬉しいワン！イエーイ！ハイタッチ！！✨",
+        "あなたの頑張りをマロンはずっと見てたワン！本当にえらい！誇らしいワン！💕",
+        "嬉しい報告ありがとう！しあわせのお裾分けに、🪙コイン1枚プレゼントだワン！🐾",
+        "最高だワン！！今日は特別なお祝いだね！これからもずっと応援してるワン！🎉✨"
+      ];
+
+      function triggerCelebrationParticles() {
+        const icons = ['🎉', '✨', '🪙', '🐾', '💖', '⭐'];
+        for (let i = 0; i < 15; i++) {
+          setTimeout(() => {
+            const p = document.createElement('div');
+            p.className = 'pet-particle';
+            p.textContent = icons[Math.floor(Math.random() * icons.length)];
+            p.style.left = `${window.innerWidth * 0.2 + Math.random() * window.innerWidth * 0.6}px`;
+            p.style.top = `${window.innerHeight * 0.3 + Math.random() * window.innerHeight * 0.4}px`;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 900);
+          }, i * 65);
+        }
+      }
+
+      function markLetterMission() {
+        if (!missionData.letterDone) {
+          missionData.letterDone = true;
+          localStorage.setItem('marron_missions', JSON.stringify(missionData));
+          updateMissionUI();
+        }
+      }
+
+      // ルート1: 🌱 モヤモヤを埋める
+      if (sendBuryBtn && talkVideo) {
+        sendBuryBtn.addEventListener('click', () => {
           if (actionArea) actionArea.style.display = 'none';
           if (talkBubble) talkBubble.style.display = 'none';
-
-          if (!missionData.letterDone) {
-            missionData.letterDone = true;
-            localStorage.setItem('marron_missions', JSON.stringify(missionData));
-            updateMissionUI();
-          }
+          markLetterMission();
 
           talkVideo.muted = false;
           talkVideo.src = 'bury_and_bloom.mp4';
+          talkVideo.onerror = () => {
+            talkVideo.src = 'bury_and_bloom.MP4';
+            talkVideo.play().catch(() => {});
+          };
           talkVideo.loop = false;
           talkVideo.play().catch(() => {});
 
           talkVideo.onended = () => {
             talkVideo.src = 'marron_happy_loop.mp4';
+            talkVideo.onerror = () => {
+              talkVideo.src = 'marron_happy_loop.MP4';
+              talkVideo.play().catch(() => {});
+            };
             talkVideo.loop = true;
             talkVideo.play().catch(() => {});
 
@@ -1978,9 +2027,69 @@
         });
       }
 
+      // ルート2: ✨ 嬉しい報告をする（手紙を読む ➔ ハイタッチ・ループ ＋ コイン+1）
+      if (sendPraiseBtn && talkVideo) {
+        sendPraiseBtn.addEventListener('click', () => {
+          if (actionArea) actionArea.style.display = 'none';
+          if (talkBubble) talkBubble.style.display = 'none';
+          markLetterMission();
+
+          talkVideo.muted = false;
+
+          // まず手紙を読む動画（marron_read.mp4）を再生
+          talkVideo.src = 'marron_read.mp4';
+          talkVideo.loop = false;
+
+          const startHighTouchLoop = () => {
+            talkVideo.onended = null;
+            talkVideo.onerror = null;
+
+            // ハイタッチ動画（marron_hightouch.mp4）をループ再生
+            talkVideo.src = 'marron_hightouch.mp4';
+            talkVideo.onerror = () => {
+              talkVideo.src = 'marron_hightouch.MP4';
+              talkVideo.onerror = () => {
+                // 万が一ハイタッチ動画がない場合は既存のハッピーループへフォールバック
+                talkVideo.src = 'marron_happy_loop.mp4';
+                talkVideo.play().catch(() => {});
+              };
+              talkVideo.play().catch(() => {});
+            };
+            talkVideo.loop = true;
+            talkVideo.play().catch(() => {});
+
+            // お祝いボーナスコイン+1！
+            coins += 1;
+            updateCoinDisplay();
+
+            // クラッカー＆キラキラ演出
+            triggerCelebrationParticles();
+            playAudioBuffer('bark');
+
+            if (talkBubble) {
+              talkBubble.textContent = praiseMessages[Math.floor(Math.random() * praiseMessages.length)];
+              talkBubble.style.display = 'block';
+            }
+            if (resetBtn) resetBtn.style.display = 'block';
+          };
+
+          talkVideo.onended = startHighTouchLoop;
+          // 手紙読み動画がまだない場合は直接ハイタッチへ
+          talkVideo.onerror = () => {
+            talkVideo.src = 'marron_read.MP4';
+            talkVideo.onerror = startHighTouchLoop;
+            talkVideo.play().catch(startHighTouchLoop);
+          };
+
+          talkVideo.play().catch(startHighTouchLoop);
+        });
+      }
+
+      // リセット（待機状態 marron_talk.mp4 へ戻る）
       if (resetBtn && talkVideo) {
         resetBtn.addEventListener('click', () => {
           talkVideo.onended = null;
+          talkVideo.onerror = null;
           talkVideo.muted = true;
           talkVideo.src = 'marron_talk.mp4';
           talkVideo.loop = true;

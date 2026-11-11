@@ -1141,7 +1141,6 @@
           marronHomeVideo.play().catch(() => {});
         }
 
-        // 入室と同時に現在の時間帯BGMをうっすら音量（0.2）で自動再生
         isHomeBgmOn = true;
         updateHomeBgmByTime(true);
         if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM停止';
@@ -1210,6 +1209,7 @@
          2. お知らせ（ニュース）機能
          ============================================== */
       const newsList = [
+        { date: "2026.11.11", text: "なでなで専用の喜ぶマロンのアニメーションがついたワン！" },
         { date: "2026.11.11", text: "時間帯別の専用BGMがうっすら流れるようになったワン！" },
         { date: "2026.11.11", text: "なでなでメーター＆お知らせボタンがついたワン🐾" },
         { date: "2026.11.11", text: "玄関に合言葉（9648）ロックがついたワン！" },
@@ -1348,7 +1348,7 @@
       });
 
       /* ==============================================
-         4. なでなでメーター（約1000回基準 ＆ なで中の「ク〜ン…」）
+         4. なでなでメーター ＆ 専用アニメーション（marron_pet.mp4）
          ============================================== */
       const marronSpot = document.getElementById('marronSpot');
       const petGaugeFill = document.getElementById('petGaugeFill');
@@ -1357,6 +1357,8 @@
       let petProgress = 0; // 0 〜 100
       let lastPetTime = 0;
       let lastSweetVoiceTime = 0;
+      let isPettingActive = false;
+      let petStopTimer = null;
 
       function spawnHeartParticle(x, y) {
         const p = document.createElement('div');
@@ -1368,6 +1370,37 @@
         setTimeout(() => p.remove(), 900);
       }
 
+      // なでなで専用動画（marron_pet.mp4）を開始
+      function startPetVideo() {
+        if (!isPettingActive) {
+          isPettingActive = true;
+          isPlayingSpecial = true;
+          if (!marronHomeVideo.src.includes('marron_pet')) {
+            marronHomeVideo.src = 'marron_pet.mp4';
+            marronHomeVideo.onerror = () => {
+              marronHomeVideo.src = 'marron_pet.MP4';
+              marronHomeVideo.play().catch(() => {});
+            };
+            marronHomeVideo.loop = true;
+            marronHomeVideo.play().catch(() => {});
+          }
+        }
+        clearTimeout(petStopTimer);
+        // なでるのをやめてから約1.1秒後に通常状態へ戻す
+        petStopTimer = setTimeout(() => {
+          stopPetVideo();
+        }, 1100);
+      }
+
+      function stopPetVideo() {
+        if (isPettingActive) {
+          isPettingActive = false;
+          isPlayingSpecial = false;
+          const cat = getCurrentCategory(new Date().getHours());
+          playBaseVideo(cat === 'midnight' ? 'marron_sleep.mp4' : 'marron_sit.mp4');
+        }
+      }
+
       function handlePetMove(clientX, clientY) {
         if (!isUnlocked || currentActiveRoom !== 'home-room') return;
         const now = Date.now();
@@ -1377,7 +1410,10 @@
           playHapticPop();
           spawnHeartParticle(clientX, clientY);
 
-          // なでている最中、約1.8秒ごとに「ク〜ン…」と甘え声を再生
+          // なでなで中専用動画の再生をキープ
+          startPetVideo();
+
+          // なでている間、約1.8秒ごとに甘え声（sweet）
           if (now - lastSweetVoiceTime > 1800) {
             lastSweetVoiceTime = now;
             playAudioBuffer('sweet');
@@ -1402,10 +1438,6 @@
             updateCoinDisplay();
 
             playAudioBuffer('sweet');
-            marronHomeVideo.src = 'marron_sweet.mp4';
-            marronHomeVideo.loop = false;
-            marronHomeVideo.play().catch(() => {});
-            marronHomeVideo.onended = finishAction;
 
             for (let i = 0; i < 7; i++) {
               setTimeout(() => {
@@ -1448,7 +1480,6 @@
       const cinemaModal = document.getElementById('cinemaModal');
       const cinemaVideo = document.getElementById('cinemaVideo');
 
-      // ★BGM音量をうっすら「0.2（20%）」に設定
       if (homeAudio) homeAudio.volume = 0.2;
       if (sleepBgmAudio) sleepBgmAudio.volume = 0.25;
 
@@ -1486,6 +1517,7 @@
       tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           stopAllAudio();
+          stopPetVideo();
 
           currentActiveRoom = btn.getAttribute('data-room');
           tabBtns.forEach(b => b.classList.remove('active'));
@@ -1504,7 +1536,6 @@
             if (marronHomeVideo && marronHomeVideo.paused) {
               marronHomeVideo.play().catch(() => {});
             }
-            // お家に戻った時はBGMを自動再開
             isHomeBgmOn = true;
             updateHomeBgmByTime(true);
             if (homeBgmBtn) homeBgmBtn.textContent = '🎵 BGM停止';
@@ -1515,6 +1546,7 @@
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           stopAllAudio();
+          stopPetVideo();
         } else if (currentActiveRoom === 'sleep-room') {
           startSleepLoop();
         } else if (currentActiveRoom === 'home-room' && isUnlocked) {
@@ -1600,7 +1632,6 @@
         }
       ];
 
-      // ★黄金配分（5h, 5h, 4h, 5h, 5h）
       function getCurrentCategory(hour) {
         if (hour >= 5 && hour < 10) return 'morning';  // 5:00〜9:59 (5h)
         if (hour >= 10 && hour < 15) return 'day';     // 10:00〜14:59 (5h)
@@ -1609,7 +1640,6 @@
         return 'midnight';                             // 0:00〜4:59 (5h)
       }
 
-      // 時間帯別BGMの自動切り替え再生（音量0.2固定・大文字フォールバック対応）
       function updateHomeBgmByTime(forcePlay = false) {
         if (!homeAudio || !isUnlocked || currentActiveRoom !== 'home-room') return;
         const category = getCurrentCategory(new Date().getHours());
@@ -1655,12 +1685,11 @@
           dateDisplay.textContent = `${y}.${mon}.${d} ${days[now.getDay()]}`;
         }
 
-        // 時間帯BGMの更新確認
         if (isHomeBgmOn && currentBgmCategory !== category) {
           updateHomeBgmByTime();
         }
 
-        if (!isPlayingSpecial) {
+        if (!isPlayingSpecial && !isPettingActive) {
           const isMidnight = (category === 'midnight');
           const targetBaseVideo = isMidnight ? 'marron_sleep.mp4' : 'marron_sit.mp4';
           if (!marronHomeVideo.src.includes(targetBaseVideo)) {
@@ -1677,6 +1706,7 @@
       }
 
       function finishAction() {
+        if (isPettingActive) return;
         isPlayingSpecial = false;
         marronHomeVideo.onended = null;
         marronHomeVideo.onerror = null;
@@ -1685,7 +1715,7 @@
       }
 
       function triggerRandomAction() {
-        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial) return;
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial || isPettingActive) return;
         isPlayingSpecial = true;
 
         const selected = randomActions[Math.floor(Math.random() * randomActions.length)];
@@ -1707,7 +1737,6 @@
       setInterval(updateTimeAndBackground, 1000);
       updateTimeAndBackground();
 
-      // BGMボタン（停止・再開の切り替え）
       if (homeBgmBtn && homeAudio) {
         homeBgmBtn.addEventListener('click', () => {
           isHomeBgmOn = !isHomeBgmOn;
@@ -1721,7 +1750,7 @@
         });
       }
 
-      // お家マロンのクロマキー透過描画
+      // お家マロンの青背景（ブルーバック）クロマキー透過描画
       if (marronCanvas && marronHomeVideo) {
         const ctx = marronCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -1738,6 +1767,7 @@
               const frame = ctx.getImageData(0, 0, marronCanvas.width, marronCanvas.height);
               const l = frame.data.length / 4;
 
+              // 青色（ブルーバック）を判定して透明化
               for (let i = 0; i < l; i++) {
                 const r = frame.data[i * 4 + 0];
                 const g = frame.data[i * 4 + 1];
@@ -1771,7 +1801,7 @@
 
       // 時間帯別のランダム吹き出し
       setInterval(() => {
-        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial) return;
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPlayingSpecial || isPettingActive) return;
         if (homeBubble && homeBubble.style.display === 'block') return;
 
         const category = getCurrentCategory(new Date().getHours());
@@ -1785,6 +1815,7 @@
 
       // マロンをタップした時
       marronSpot.addEventListener('click', (e) => {
+        if (isPettingActive) return;
         if (!isUnlocked || currentActiveRoom !== 'home-room') return;
         const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
         if (isMidnight) {
@@ -1798,7 +1829,7 @@
 
       // 放置時のたまに起きるランダムな仕草
       setInterval(() => {
-        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden) return;
+        if (!isUnlocked || currentActiveRoom !== 'home-room' || document.hidden || isPettingActive) return;
         const isMidnight = getCurrentCategory(new Date().getHours()) === 'midnight';
         if (isMidnight || isPlayingSpecial) return;
 
